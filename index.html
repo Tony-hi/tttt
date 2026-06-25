@@ -1075,7 +1075,7 @@ const Game = {
   targetCamera:{x:0, z:0, y:0},
 
   power:0, charging:false, chargeStart:0,
-  CHARGE_DURATION: 2.5,
+  CHARGE_DURATION: 3.5,
 
   score:0, combo:0, perfectStreak:0,
   particles:[],
@@ -1086,9 +1086,9 @@ const Game = {
   CHAR_SIZE: 56,
 
   GRAVITY: 2000,
-  MIN_JUMP_DIST: 20,
+  MIN_JUMP_DIST: 5,
   MAX_JUMP_DIST: 340,
-  MIN_JUMP_HEIGHT: 70,
+  MIN_JUMP_HEIGHT: 55,
   MAX_JUMP_HEIGHT: 260,
 
   isoToScreen(x, z, y){
@@ -1356,10 +1356,8 @@ const Game = {
     const py = this.char.prevY;
 
     for(const b of this.blocks){
-      if(b === this.char.landedOn) continue;
-
       const topY = b.height * (1 - b.squash * 0.3);
-      if(py >= topY - 2 && cy <= topY + 2){
+      if(py >= topY - 1 && cy <= topY + 2){
         const dx = this.char.x - b.x;
         const dz = this.char.z - b.z;
         const halfS = b.halfSize - 2;
