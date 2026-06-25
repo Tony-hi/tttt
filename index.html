@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#EFEAF7">
+<title>跳跃吧螃蟹先生！</title>
+<style>
+/* ============ Reset & Base ============ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;touch-action:none;overscroll-behavior:none}
+body{
+  font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  font-weight:700;color:#2A2640;background:#E8E3F5;
+  user-select:none;-webkit-user-select:none;-webkit-user-drag:none;
+}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input{font:inherit;outline:none}
+svg{display:block}
+
+/* ============ Variables ============ */
+:root{
+  --bg-1:#EFEAF7;--bg-2:#DCD3EE;
+  --primary:#2C3E8F;--primary-2:#4F66B5;
+  --green:#3DBE6F;--green-2:#2DAA59;
+  --gold:#F4C25C;--gold-2:#D8A03A;
+  --text:#2A2640;--text-mute:#6B6584;
+  --card:#FFFFFF;--modal:#3A3550;
+  --shadow:0 4px 16px rgba(80,60,140,.12);
+  --shadow-lg:0 10px 30px rgba(80,60,140,.22);
+  --r-sm:14px;--r-md:22px;--r-lg:28px;--r-xl:40px;
+}
+
+/* ============ App Container ============ */
+.app{position:fixed;inset:0;overflow:hidden}
+.app-inner{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,var(--bg-1) 0%,var(--bg-2) 100%);
+  overflow:hidden;
+}
+@media(orientation:landscape){
+  .app{background:linear-gradient(180deg,#C9BEDF 0%,#B0A4D2 100%)}
+  .app-inner{
+    width:min(100vw,56.25vh);height:min(100vh,177.78vw);
+    top:50%;left:50%;transform:translate(-50%,-50%);
+    box-shadow:var(--shadow-lg);border-radius:8px;
+  }
+}
+
+/* ============ Views ============ */
+.view{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .28s ease;overflow:hidden}
+.view.active{opacity:1;pointer-events:auto}
+
+/* ============ Home View ============ */
+.view-home{display:flex;flex-direction:column;align-items:center;padding:0 24px}
+.home-deco-blob{position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.35);filter:blur(8px);pointer-events:none}
+.home-deco-blob2{position:absolute;bottom:80px;right:30px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.28);filter:blur(6px);pointer-events:none}
+.home-title{padding-top:9vh;text-align:center;position:relative;z-index:2}
+.home-title h1{
+  font-size:clamp(54px,14vw,84px);color:#fff;font-weight:900;letter-spacing:6px;line-height:1;
+  text-shadow:0 4px 14px rgba(80,60,140,.18);
+}
+.home-title p{font-size:clamp(30px,8.5vw,50px);color:#fff;font-weight:800;margin-top:10px;letter-spacing:3px}
+.home-character{
+  position:absolute;left:-22px;bottom:5vh;width:200px;height:240px;pointer-events:none;z-index:1;
+}
+.home-character svg{width:100%;height:100%}
+.home-start-wrap{position:absolute;top:50%;left:50%;transform:translate(-50%,10%);z-index:3}
+.btn-start{
+  display:flex;align-items:center;gap:14px;
+  background:#fff;color:var(--text);
+  padding:18px 38px;border-radius:var(--r-xl);
+  box-shadow:0 6px 22px rgba(80,60,140,.18);
+  font-size:22px;font-weight:800;
+  transition:transform .15s ease,box-shadow .15s ease;
+}
+.btn-start:active{transform:scale(.97);box-shadow:0 3px 10px rgba(80,60,140,.18)}
+.btn-start .arrow{color:var(--green);display:flex;align-items:center;justify-content:center}
+.btn-start .arrow svg{width:28px;height:28px}
+.home-more{
+  position:absolute;bottom:4vh;left:50%;transform:translateX(-50%);
+  color:rgba(255,255,255,.92);font-size:18px;font-weight:700;padding:14px 24px;
+  display:flex;align-items:center;gap:6px;z-index:3;
+}
+.home-more:active{opacity:.7}
+
+/* ============ Menu View ============ */
+.view-menu{padding:0}
+.btn-back{
+  position:absolute;top:18px;left:18px;
+  width:48px;height:48px;border-radius:50%;
+  background:var(--primary);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(44,62,143,.35);
+  z-index:5;
+}
+.btn-back:active{background:var(--primary-2);transform:scale(.95)}
+.btn-back svg{width:22px;height:22px}
+.page-title{font-size:24px;color:var(--text);font-weight:800;padding-top:24px;text-align:center}
+.menu-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:16px;
+  padding:32px 20px 24px;max-width:480px;margin:0 auto;
+}
+.menu-card{
+  background:var(--card);border-radius:var(--r-lg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  padding:24px 16px;min-height:130px;
+  box-shadow:var(--shadow);
+  transition:transform .15s ease,box-shadow .15s ease;
+}
+.menu-card:active{transform:scale(.96);box-shadow:0 2px 8px rgba(80,60,140,.12)}
+.menu-card .icon{width:54px;height:54px;color:var(--primary);display:flex;align-items:center;justify-content:center}
+.menu-card .icon svg{width:100%;height:100%}
+.menu-card span{font-size:18px;color:var(--primary);font-weight:800}
+.menu-card.wide{flex-direction:row;min-height:88px;justify-content:flex-start;padding:0 22px;gap:16px}
+.menu-card.wide .icon{width:38px;height:38px;flex-shrink:0}
+.menu-card.wide span{font-size:18px}
+.menu-card.wide .arrow-right{margin-left:auto;color:var(--primary-2);display:flex;align-items:center}
+
+/* ============ Shop View ============ */
+.shop-header,.lottery-header{position:relative;padding:18px 20px;display:flex;align-items:center;justify-content:center}
+.coin-display{
+  position:absolute;right:20px;top:50%;transform:translateY(-50%);
+  display:flex;align-items:center;gap:6px;
+  background:#fff;padding:8px 16px;border-radius:24px;
+  box-shadow:var(--shadow);
+  font-size:18px;color:var(--text);font-weight:800;
+}
+.coin-display svg{width:22px;height:22px;color:var(--gold-2)}
+.shop-stage{
+  position:relative;
+  display:flex;align-items:center;justify-content:center;
+  height:42vh;min-height:280px;padding:0 16px;
+}
+.shop-character{
+  width:60vw;max-width:300px;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+.shop-character canvas{width:100%;height:100%}
+.shop-name-overlay{
+  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  background:rgba(255,255,255,.85);color:var(--text);
+  font-size:14px;padding:4px 14px;border-radius:14px;
+  white-space:nowrap;
+}
+.btn-arrow{
+  width:46px;height:46px;border-radius:50%;
+  background:#fff;display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow);color:var(--text);
+  flex-shrink:0;
+}
+.btn-arrow:active{transform:scale(.94);background:#F0EDF7}
+.btn-arrow svg{width:18px;height:18px}
+.shop-preview{
+  display:flex;gap:12px;overflow-x:auto;
+  padding:8px 20px 12px;margin:0 0 8px;
+  scrollbar-width:none;
+}
+.shop-preview::-webkit-scrollbar{display:none}
+.preview-item{
+  flex:0 0 auto;width:74px;height:74px;border-radius:18px;
+  background:#fff;box-shadow:var(--shadow);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;padding:8px;
+  border:3px solid transparent;
+  transition:border-color .15s ease,transform .15s ease;
+}
+.preview-item.selected{border-color:var(--green)}
+.preview-item.locked .lock{position:absolute;bottom:4px;right:4px;background:rgba(42,38,64,.85);color:#fff;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px}
+.btn-action-wrap{padding:0 24px 32px}
+.btn-action{
+  width:100%;padding:18px;border-radius:var(--r-lg);
+  background:#fff;color:var(--text);
+  box-shadow:0 4px 14px rgba(80,60,140,.15);
+  font-size:20px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn-action:disabled{background:#E5E0EF;color:var(--text-mute);box-shadow:none}
+.btn-action:active:not(:disabled){transform:scale(.99)}
+.btn-action .price{color:var(--gold-2);display:inline-flex;align-items:center;gap:4px}
+.btn-action .price svg{width:20px;height:20px}
+
+/* ============ Lottery View ============ */
+.view-lottery{display:flex;flex-direction:column}
+.lottery-stage{
+  flex:1;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;overflow:hidden;
+}
+.lottery-character{position:relative;width:60vw;max-width:280px;height:340px;display:flex;align-items:center;justify-content:center}
+.lottery-character canvas{width:100%;height:100%}
+.lottery-text{
+  position:absolute;right:14%;top:50%;transform:translateY(-50%);
+  writing-mode:vertical-rl;font-size:30px;color:var(--gold-2);font-weight:900;
+  letter-spacing:6px;
+  text-shadow:0 2px 6px rgba(216,160,58,.35);
+  font-family:"Noto Serif SC","Songti SC","STSong",serif;
+}
+.coin-floater{
+  position:absolute;color:var(--gold-2);font-size:24px;
+  animation:float 3s ease-in-out infinite;
+  pointer-events:none;
+  filter:drop-shadow(0 2px 4px rgba(216,160,58,.4));
+}
+@keyframes float{
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  50%{transform:translateY(-14px) rotate(8deg)}
+}
+.btn-gold{
+  margin:0 24px 36px;width:calc(100% - 48px);
+  padding:18px;border-radius:var(--r-lg);
+  background:linear-gradient(180deg,var(--gold) 0%,var(--gold-2) 100%);
+  color:#fff;font-size:20px;font-weight:800;
+  box-shadow:0 6px 16px rgba(216,160,58,.4);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-gold:active{transform:scale(.99)}
+.btn-gold:disabled{opacity:.5;filter:grayscale(.3)}
+.btn-gold svg{width:22px;height:22px}
+
+.lottery-anim{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:10}
+.lottery-anim .bubble{background:rgba(255,255,255,.95);color:var(--text);padding:16px 28px;border-radius:24px;font-size:22px;font-weight:800;box-shadow:var(--shadow-lg);animation:lottery-anim 1.2s ease forwards}
+@keyframes lottery-anim{
+  0%{transform:scale(.5) rotate(-15deg);opacity:0}
+  20%{transform:scale(1.1) rotate(5deg);opacity:1}
+  60%{transform:scale(1) rotate(0);opacity:1}
+  100%{transform:scale(1.6);opacity:0}
+}
+
+/* ============ Play View ============ */
+.view-play{background:var(--bg-1)}
+#game-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.hud-score{
+  position:absolute;top:24px;left:50%;transform:translateX(-50%);
+  font-size:60px;font-weight:900;color:var(--text);
+  font-variant-numeric:tabular-nums;
+  text-shadow:0 3px 8px rgba(80,60,140,.12);
+  pointer-events:none;letter-spacing:4px;
+  font-family:"Impact","DIN Alternate",-apple-system,sans-serif;
+}
+.hud-power{
+  position:absolute;bottom:8vh;left:10%;width:80%;
+  height:18px;border-radius:18px;
+  background:rgba(255,255,255,.55);
+  box-shadow:var(--shadow);
+  overflow:hidden;pointer-events:none;
+  border:2px solid rgba(255,255,255,.7);
+}
+.hud-power-fill{
+  width:0%;height:100%;
+  background:linear-gradient(90deg,var(--green) 0%,var(--gold) 60%,#E85A4F 100%);
+  border-radius:18px;
+  transition:width .04s linear;
+}
+.hud-hint{
+  position:absolute;bottom:13vh;left:50%;transform:translateX(-50%);
+  color:var(--text-mute);font-size:14px;font-weight:700;
+  pointer-events:none;opacity:.8;
+  animation:hint-pulse 1.5s ease-in-out infinite;
+}
+@keyframes hint-pulse{0%,100%{opacity:.5}50%{opacity:.9}}
+.hud-pause{
+  position:absolute;top:24px;right:20px;
+  width:44px;height:44px;border-radius:50%;
+  background:rgba(255,255,255,.88);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow);
+}
+.hud-pause:active{transform:scale(.94)}
+.hud-pause svg{width:22px;height:22px;color:var(--text)}
+
+.score-popup{
+  position:absolute;font-size:24px;font-weight:900;color:var(--green-2);
+  pointer-events:none;animation:score-up 1.2s ease-out forwards;
+  text-shadow:0 2px 6px rgba(80,60,140,.15);
+}
+@keyframes score-up{
+  0%{transform:translate(-50%,0) scale(.6);opacity:0}
+  20%{transform:translate(-50%,-10px) scale(1.2);opacity:1}
+  100%{transform:translate(-50%,-60px) scale(.9);opacity:0}
+}
+
+/* ============ Modals ============ */
+.modal{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.show{display:flex}
+.modal-mask{position:absolute;inset:0;background:rgba(40,30,60,.6);backdrop-filter:blur(6px)}
+.modal-card{
+  position:relative;background:var(--modal);
+  border-radius:var(--r-lg);padding:32px 24px;
+  width:100%;max-width:360px;text-align:center;color:#fff;
+  box-shadow:var(--shadow-lg);
+  animation:pop-in .3s cubic-bezier(.34,1.56,.64,1);
+}
+.modal-card.light{background:#fff;color:var(--text)}
+@keyframes pop-in{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}
+.modal-card h3{font-size:30px;font-weight:900;margin-bottom:16px;letter-spacing:2px}
+.modal-card p{font-size:16px;line-height:1.7;color:rgba(255,255,255,.9);text-align:left}
+.modal-card.light p{color:var(--text-mute);text-align:left}
+
+.gameover-stats{display:flex;gap:14px;margin:20px 0 16px}
+.stat{flex:1;background:rgba(255,255,255,.08);border-radius:18px;padding:14px 8px}
+.modal-card.light .stat{background:#F5F2FA}
+.stat-label{font-size:13px;color:rgba(255,255,255,.7);margin-bottom:6px;font-weight:700}
+.modal-card.light .stat-label{color:var(--text-mute)}
+.stat-value{font-size:30px;font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:1px}
+.gameover-coins{display:flex;align-items:center;justify-content:center;gap:8px;font-size:20px;margin-bottom:20px;font-weight:800}
+.gameover-coins svg{width:26px;height:26px;color:var(--gold)}
+.gameover-buttons{display:flex;flex-direction:column;gap:12px}
+.modal-btn{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:16px;border-radius:var(--r-md);
+  background:#fff;color:var(--text);font-size:18px;font-weight:800;
+  box-shadow:0 4px 12px rgba(80,60,140,.18);
+}
+.modal-btn:active{transform:scale(.98)}
+.modal-btn .ico{width:24px;height:24px;color:var(--green);display:flex;align-items:center;justify-content:center}
+.modal-btn .ico svg{width:100%;height:100%}
+.modal-btn small{font-size:12px;color:var(--text-mute);margin-left:6px;font-weight:700}
+.modal-btn.secondary{background:#F5F2FA;color:var(--text);box-shadow:none}
+
+.redeem-input{
+  width:100%;padding:14px 16px;margin:16px 0 8px;
+  border:2px solid #E5E0EF;border-radius:var(--r-md);
+  font-size:18px;font-weight:700;color:var(--text);
+  background:#F5F2FA;outline:none;
+  text-align:center;letter-spacing:1px;
+}
+.redeem-input:focus{border-color:var(--primary)}
+.redeem-buttons{display:flex;gap:10px}
+.redeem-buttons .modal-btn{flex:1}
+.redeem-msg{min-height:22px;font-size:14px;color:var(--green-2);margin-bottom:8px;font-weight:700}
+
+.result-content{padding:10px 0 20px}
+.result-content .result-icon{font-size:72px;margin-bottom:8px;line-height:1}
+.result-content .result-title{font-size:24px;font-weight:900;color:var(--text);margin-bottom:4px}
+.result-content .result-sub{font-size:16px;color:var(--text-mute);font-weight:700}
+
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.shake{animation:shake .4s ease}
+
+.toast{
+  position:fixed;left:50%;bottom:18%;transform:translateX(-50%);
+  background:rgba(42,38,64,.92);color:#fff;padding:12px 24px;border-radius:24px;
+  font-size:15px;font-weight:700;z-index:300;
+  box-shadow:var(--shadow-lg);
+  animation:toast-in .25s ease,toast-out .25s ease 1.6s forwards;
+  pointer-events:none;
+}
+@keyframes toast-in{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes toast-out{to{opacity:0;transform:translate(-50%,-10px)}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h12M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H7M11 6L5 12l6 6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-tri-left" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" fill="currentColor"/></symbol>
+    <symbol id="i-tri-right" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="currentColor"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15.5-6.3M21 12a9 9 0 0 1-15.5 6.3M17 3v4h-4M7 21v-4h4" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9z" fill="currentColor"/></symbol>
+    <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#F4C25C" stroke="#D8A03A" stroke-width="1.5"/><circle cx="12" cy="12" r="7" fill="none" stroke="#D8A03A" stroke-width="1.2"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="900" fill="#D8A03A">$</text></symbol>
+    <symbol id="i-planet" viewBox="0 0 48 48"><circle cx="24" cy="24" r="11" fill="none" stroke="currentColor" stroke-width="2.5"/><ellipse cx="24" cy="24" rx="18" ry="6" fill="none" stroke="currentColor" stroke-width="2.5" transform="rotate(-20 24 24)"/><circle cx="20" cy="22" r="2" fill="currentColor"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 48 48"><path d="M12 6h24v36l-12-8-12 8V6z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><line x1="18" y1="16" x2="30" y2="16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><line x1="18" y1="22" x2="30" y2="22" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-book" viewBox="0 0 48 48"><path d="M6 10c0-2 2-4 4-4h12v32H10c-2 0-4-2-4-4V10z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M42 10c0-2-2-4-4-4H26v32h12c2 0 4-2 4-4V10z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><line x1="12" y1="14" x2="18" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="20" x2="18" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="30" y1="14" x2="36" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="30" y1="20" x2="36" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+    <symbol id="i-gift" viewBox="0 0 48 48"><rect x="6" y="18" width="36" height="24" rx="3" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="6" y1="26" x2="42" y2="26" stroke="currentColor" stroke-width="2.5"/><line x1="24" y1="18" x2="24" y2="42" stroke="currentColor" stroke-width="2.5"/><path d="M24 18c-3-6-10-6-10-2s4 4 10 2zM24 18c3-6 10-6 10-2s-4 4-10 2z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<div class="app">
+  <div class="app-inner" id="app-inner">
+
+    <section class="view view-home active" id="view-home">
+      <div class="home-deco-blob"></div>
+      <div class="home-deco-blob2"></div>
+      <div class="home-title">
+        <h1>跳跃吧</h1>
+        <p>螃蟹先生！</p>
+      </div>
+      <div class="home-character">
+        <svg viewBox="0 0 200 240">
+          <g>
+            <polygon points="20,150 130,150 130,210 20,210" fill="#A6AFC6"/>
+            <polygon points="20,150 130,150 158,128 48,128" fill="#D2D6E2"/>
+            <polygon points="130,150 158,128 158,188 130,210" fill="#7C8499"/>
+            <polyline points="20,150 48,128 158,128" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+            <line x1="20" y1="150" x2="20" y2="210" stroke="#6B7280" stroke-width="1" opacity="0.5"/>
+          </g>
+          <g transform="translate(75,128)">
+            <line x1="-12" y1="0" x2="-4" y2="-50" stroke="#3A4570" stroke-width="6" stroke-linecap="round"/>
+            <line x1="12" y1="0" x2="4" y2="-50" stroke="#3A4570" stroke-width="6" stroke-linecap="round"/>
+            <circle cx="-12" cy="0" r="3" fill="#1F2746"/>
+            <circle cx="12" cy="0" r="3" fill="#1F2746"/>
+            <circle cx="0" cy="-48" r="14" fill="#F8E9D0" stroke="#2A2640" stroke-width="2"/>
+            <circle cx="0" cy="-66" r="5" fill="#3A4570" stroke="#2A2640" stroke-width="1.5"/>
+            <circle cx="0" cy="-66" r="2" fill="#1F2746"/>
+            <rect x="-2" y="-80" width="4" height="14" rx="2" fill="#3A4570"/>
+            <circle cx="0" cy="-82" r="4" fill="#3DBE6F" stroke="#2A2640" stroke-width="1"/>
+            <path d="M-9 -55 L-3 -52" stroke="#2A2640" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M9 -55 L3 -52" stroke="#2A2640" stroke-width="3.5" stroke-linecap="round"/>
+            <circle cx="-4" cy="-47" r="1.6" fill="#2A2640"/>
+            <circle cx="4" cy="-47" r="1.6" fill="#2A2640"/>
+            <circle cx="-7" cy="-43" r="2.5" fill="#F08080" opacity="0.7"/>
+            <circle cx="7" cy="-43" r="2.5" fill="#F08080" opacity="0.7"/>
+            <path d="M-4 -42 Q0 -38 4 -42" fill="none" stroke="#2A2640" stroke-width="1.6" stroke-linecap="round"/>
+          </g>
+        </svg>
+      </div>
+      <div class="home-start-wrap">
+        <button class="btn-start" id="btn-start">
+          <span class="arrow"><svg><use href="#i-arrow-right"/></svg></span>
+          <span>点击开始</span>
+        </button>
+      </div>
+      <div class="home-more" id="btn-more">更多 &gt;</div>
+    </section>
+
+    <section class="view view-menu" id="view-menu">
+      <button class="btn-back" id="btn-back-home" aria-label="返回">
+        <svg><use href="#i-arrow-left"/></svg>
+      </button>
+      <h2 class="page-title">更多</h2>
+      <div class="menu-grid">
+        <div class="menu-card" data-target="shop">
+          <div class="icon"><svg><use href="#i-planet"/></svg></div>
+          <span>商店</span>
+        </div>
+        <div class="menu-card" data-target="lottery">
+          <div class="icon"><svg><use href="#i-bookmark"/></svg></div>
+          <span>抽签</span>
+        </div>
+        <div class="menu-card wide" data-target="tutorial">
+          <div class="icon"><svg><use href="#i-book"/></svg></div>
+          <span>教程</span>
+          <span class="arrow-right"><svg width="20" height="20"><use href="#i-chevron-right"/></svg></span>
+        </div>
+        <div class="menu-card wide" data-target="redeem">
+          <div class="icon"><svg><use href="#i-gift"/></svg></div>
+          <span>兑换码</span>
+          <span class="arrow-right"><svg width="20" height="20"><use href="#i-chevron-right"/></svg></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="view view-shop" id="view-shop">
+      <div class="shop-header">
+        <button class="btn-back" id="btn-back-menu-shop" aria-label="返回">
+          <svg><use href="#i-arrow-left"/></svg>
+        </button>
+        <h2 class="page-title" id="shop-skin-name">圆规叔叔</h2>
+        <div class="coin-display">
+          <svg><use href="#i-coin"/></svg>
+          <span id="shop-coins">0</span>
+        </div>
+      </div>
+      <div class="shop-stage">
+        <button class="btn-arrow" id="btn-skin-prev" aria-label="上一个">
+          <svg><use href="#i-tri-left"/></svg>
+        </button>
+        <div class="shop-character">
+          <canvas id="shop-canvas"></canvas>
+          <div class="shop-name-overlay" id="shop-skin-overlay">圆规叔叔</div>
+        </div>
+        <button class="btn-arrow" id="btn-skin-next" aria-label="下一个">
+          <svg><use href="#i-tri-right"/></svg>
+        </button>
+      </div>
+      <div class="shop-preview" id="shop-preview"></div>
+      <div class="btn-action-wrap">
+        <button class="btn-action" id="btn-skin-action">使用中</button>
+      </div>
+    </section>
+
+    <section class="view view-lottery" id="view-lottery">
+      <div class="lottery-header">
+        <button class="btn-back" id="btn-back-menu-lottery" aria-label="返回">
+          <svg><use href="#i-arrow-left"/></svg>
+        </button>
+        <h2 class="page-title">抽签</h2>
+        <div class="coin-display">
+          <svg><use href="#i-coin"/></svg>
+          <span id="lottery-coins">0</span>
+        </div>
+      </div>
+      <div class="lottery-stage" id="lottery-stage">
+        <div class="coin-floater" style="top:8%;left:12%;animation-delay:0s">¥</div>
+        <div class="coin-floater" style="top:18%;right:18%;animation-delay:.4s">$</div>
+        <div class="coin-floater" style="bottom:14%;left:8%;animation-delay:.8s">¥</div>
+        <div class="coin-floater" style="bottom:24%;right:10%;animation-delay:1.2s">$</div>
+        <div class="coin-floater" style="top:38%;left:6%;animation-delay:1.6s">¥</div>
+        <div class="coin-floater" style="top:60%;right:6%;animation-delay:2s">$</div>
+        <div class="lottery-character">
+          <canvas id="lottery-canvas"></canvas>
+        </div>
+        <div class="lottery-text">燔<br>阳<br>灵<br>签</div>
+      </div>
+      <button class="btn-gold" id="btn-lottery">
+        <svg><use href="#i-coin"/></svg>
+        抽签:100金币
+      </button>
+    </section>
+
+    <section class="view view-play" id="view-play">
+      <canvas id="game-canvas"></canvas>
+      <div class="hud-score" id="hud-score">00</div>
+      <div class="hud-hint" id="hud-hint">长按屏幕蓄力</div>
+      <div class="hud-power"><div class="hud-power-fill" id="hud-power-fill"></div></div>
+      <button class="hud-pause" id="btn-pause" aria-label="返回首页">
+        <svg><use href="#i-arrow-left"/></svg>
+      </button>
+    </section>
+
+    <div class="modal" id="modal-gameover">
+      <div class="modal-mask"></div>
+      <div class="modal-card">
+        <h3>真棒！</h3>
+        <div class="gameover-stats">
+          <div class="stat">
+            <div class="stat-label">历史最高</div>
+            <div class="stat-value" id="stat-best">00</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">本次得分</div>
+            <div class="stat-value" id="stat-current">00</div>
+          </div>
+        </div>
+        <div class="gameover-coins">
+          <svg><use href="#i-coin"/></svg>
+          <span id="stat-coins">0</span>
+        </div>
+        <div class="gameover-buttons">
+          <button class="modal-btn" id="btn-restart">
+            <span class="ico"><svg><use href="#i-refresh"/></svg></span>
+            <span>重新开始</span>
+          </button>
+          <button class="modal-btn" id="btn-revive">
+            <span class="ico"><svg><use href="#i-heart"/></svg></span>
+            <span>复活一次</span>
+            <small>100金币</small>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="modal-tutorial">
+      <div class="modal-mask"></div>
+      <div class="modal-card light">
+        <h3>教程</h3>
+        <p>① 长按屏幕任意位置开始蓄力<br>② 蓄力条显示当前跳跃力度<br>③ 松开手指角色向前跳跃<br>④ 落在方块上即可得分+金币<br>⑤ 落空则本局结束<br>⑥ 连续跳跃触发连击加成</p>
+        <div style="height:16px"></div>
+        <button class="modal-btn" id="btn-close-tutorial">我知道了</button>
+      </div>
+    </div>
+
+    <div class="modal" id="modal-redeem">
+      <div class="modal-mask"></div>
+      <div class="modal-card light">
+        <h3>兑换码</h3>
+        <p>请输入正确的兑换码以领取奖励，每个兑换码仅可使用一次。</p>
+        <input type="text" class="redeem-input" id="redeem-input" placeholder="请输入兑换码" autocomplete="off" maxlength="20">
+        <div class="redeem-msg" id="redeem-msg"></div>
+        <div class="redeem-buttons">
+          <button class="modal-btn" id="btn-redeem-submit">确认</button>
+          <button class="modal-btn secondary" id="btn-redeem-cancel">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="modal-result">
+      <div class="modal-mask"></div>
+      <div class="modal-card light">
+        <div class="result-content" id="result-content">
+          <div class="result-icon" id="result-icon">🎉</div>
+          <div class="result-title" id="result-title">恭喜!</div>
+          <div class="result-sub" id="result-sub">获得奖励</div>
+        </div>
+        <button class="modal-btn" id="btn-close-result">收下奖励</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* ============ 1. Storage Layer ============ */
+const Storage = {
+  K_COINS:'jbc.coins', K_BEST:'jbc.bestScore', K_SKINS:'jbc.unlockedSkins', K_CURRENT:'jbc.currentSkin',
+  getCoins(){const v=parseInt(localStorage.getItem(this.K_COINS)||'0',10);return isNaN(v)?0:v;},
+  setCoins(n){localStorage.setItem(this.K_COINS,String(Math.max(0,n|0)));},
+  addCoins(n){this.setCoins(this.getCoins()+n);},
+  getBest(){const v=parseInt(localStorage.getItem(this.K_BEST)||'0',10);return isNaN(v)?0:v;},
+  setBest(n){localStorage.setItem(this.K_BEST,String(Math.max(0,n|0)));},
+  getUnlocked(){try{return JSON.parse(localStorage.getItem(this.K_SKINS)||'["compass"]');}catch(e){return ['compass'];}},
+  setUnlocked(arr){localStorage.setItem(this.K_SKINS,JSON.stringify(arr));},
+  unlock(id){const arr=this.getUnlocked();if(!arr.includes(id)){arr.push(id);this.setUnlocked(arr);}},
+  hasSkin(id){return this.getUnlocked().includes(id);},
+  getCurrent(){return localStorage.getItem(this.K_CURRENT)||'compass';},
+  setCurrent(id){localStorage.setItem(this.K_CURRENT,id);}
+};
+
+/* ============ 2. Skins ============ */
+const SKINS = [
+  { id:'compass', name:'圆规叔叔', price:0 },
+  { id:'pawn',    name:'象棋-兵',   price:200 }
+];
+
+/* ============ 3. Character drawing (origin = feet center) ============ */
+function drawCompassCharacter(ctx,size,t){
+  const s=size/110;
+  ctx.save();
+  ctx.rotate(Math.sin(t*0.005)*0.04);
+  ctx.lineCap='round';
+  ctx.lineWidth=5.5*s;
+  ctx.strokeStyle='#3A4570';
+  ctx.beginPath();
+  ctx.moveTo(-10*s,0); ctx.lineTo(-4*s,-42*s);
+  ctx.moveTo(10*s,0);  ctx.lineTo(4*s,-42*s);
+  ctx.stroke();
+  ctx.fillStyle='#1F2746';
+  ctx.beginPath();
+  ctx.arc(-10*s,0,3*s,0,Math.PI*2);
+  ctx.arc(10*s,0,3*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#F8E9D0';
+  ctx.beginPath(); ctx.arc(0,-55*s,15*s,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#2A2640'; ctx.lineWidth=1.8*s; ctx.stroke();
+  ctx.fillStyle='#3A4570';
+  ctx.beginPath(); ctx.arc(0,-75*s,4.5*s,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#2A2640'; ctx.lineWidth=1.2*s; ctx.stroke();
+  ctx.fillStyle='#1F2746';
+  ctx.beginPath(); ctx.arc(0,-75*s,1.8*s,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#3A4570'; ctx.fillRect(-1.8*s,-94*s,3.6*s,16*s);
+  ctx.fillStyle='#3DBE6F';
+  ctx.beginPath(); ctx.arc(0,-96*s,4.2*s,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#2A2640'; ctx.lineWidth=1*s; ctx.stroke();
+  ctx.strokeStyle='#2A2640'; ctx.lineWidth=3.2*s; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(-9*s,-62*s); ctx.lineTo(-3*s,-59*s);
+  ctx.moveTo(9*s,-62*s);  ctx.lineTo(3*s,-59*s);
+  ctx.stroke();
+  ctx.fillStyle='#2A2640';
+  ctx.beginPath();
+  ctx.arc(-4.5*s,-54*s,1.5*s,0,Math.PI*2);
+  ctx.arc(4.5*s,-54*s,1.5*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='rgba(232,100,100,0.65)';
+  ctx.beginPath();
+  ctx.arc(-8*s,-50*s,2.5*s,0,Math.PI*2);
+  ctx.arc(8*s,-50*s,2.5*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='#2A2640'; ctx.lineWidth=1.6*s; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.arc(0,-51*s,4.5*s,0,Math.PI,false);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawPawnCharacter(ctx,size,t){
+  const s=size/110;
+  ctx.save();
+  ctx.rotate(Math.sin(t*0.005)*0.04);
+  ctx.fillStyle='rgba(0,0,0,0.18)';
+  ctx.beginPath();
+  ctx.ellipse(0,2,22*s,4*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#6B4226';
+  ctx.beginPath();
+  ctx.ellipse(0,0,22*s,6*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#8B5A36';
+  ctx.strokeStyle='#2A1810';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.moveTo(-20*s,0); ctx.lineTo(20*s,0);
+  ctx.quadraticCurveTo(18*s,-22*s,14*s,-32*s);
+  ctx.lineTo(10*s,-38*s); ctx.lineTo(10*s,-44*s);
+  ctx.quadraticCurveTo(9*s,-50*s,7*s,-54*s);
+  ctx.bezierCurveTo(7*s,-68*s,-7*s,-68*s,-7*s,-54*s);
+  ctx.quadraticCurveTo(-9*s,-50*s,-10*s,-44*s);
+  ctx.lineTo(-10*s,-38*s); ctx.lineTo(-14*s,-32*s);
+  ctx.quadraticCurveTo(-18*s,-22*s,-20*s,0);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.18)';
+  ctx.beginPath();
+  ctx.moveTo(-18*s,-2);
+  ctx.quadraticCurveTo(-15*s,-22*s,-11*s,-32*s);
+  ctx.lineTo(-9*s,-32*s);
+  ctx.quadraticCurveTo(-12*s,-22*s,-15*s,-2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle='#2A1810'; ctx.lineWidth=2.4*s; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(-4.5*s,-64*s); ctx.lineTo(-1*s,-62*s);
+  ctx.moveTo(4.5*s,-64*s);  ctx.lineTo(1*s,-62*s);
+  ctx.stroke();
+  ctx.fillStyle='#2A1810';
+  ctx.beginPath();
+  ctx.arc(-2.5*s,-58*s,0.9*s,0,Math.PI*2);
+  ctx.arc(2.5*s,-58*s,0.9*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='rgba(232,100,100,0.65)';
+  ctx.beginPath();
+  ctx.arc(-4.5*s,-54*s,1.6*s,0,Math.PI*2);
+  ctx.arc(4.5*s,-54*s,1.6*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='#2A1810'; ctx.lineWidth=1.2*s;
+  ctx.beginPath();
+  ctx.arc(0,-55*s,2.5*s,0,Math.PI,false);
+  ctx.stroke();
+  ctx.fillStyle='#D8A03A';
+  ctx.beginPath();
+  ctx.arc(0,-68*s,1.8*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawCharacter(ctx,skinId,size,t){
+  if(skinId==='pawn') drawPawnCharacter(ctx,size,t);
+  else drawCompassCharacter(ctx,size,t);
+}
+
+/* ============ 4. Router ============ */
+const Router = {
+  current:'home',
+  show(viewId){
+    if(this.current===viewId) return;
+    const from=document.getElementById('view-'+this.current);
+    const to=document.getElementById('view-'+viewId);
+    if(from) from.classList.remove('active');
+    if(to)   to.classList.add('active');
+    this.current=viewId;
+    if(viewId==='shop')    Shop.render();
+    if(viewId==='lottery') Lottery.render();
+    if(viewId==='play')    Game.start();
+  }
+};
+
+/* ============ 5. Shop ============ */
+const Shop = {
+  index:0,
+  get current(){ return SKINS[this.index]; },
+  render(){
+    this.index = Math.max(0, SKINS.findIndex(s=>s.id===Storage.getCurrent()));
+    if(this.index<0) this.index=0;
+    document.getElementById('shop-coins').textContent = Storage.getCoins();
+    this.drawMain();
+    this.drawPreview();
+    this.updateAction();
+    this._ro=this._ro||new ResizeObserver(()=>{this.drawMain();this.drawPreview();});
+    const stage=document.querySelector('.shop-stage');
+    if(stage && !stage.dataset.bound) { this._ro.observe(stage); stage.dataset.bound='1'; }
+  },
+  drawMain(){
+    const cv=document.getElementById('shop-canvas');
+    const rect=cv.getBoundingClientRect();
+    if(rect.width<10) return;
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    cv.width=rect.width*dpr; cv.height=rect.height*dpr;
+    const ctx=cv.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,rect.width,rect.height);
+    ctx.fillStyle='rgba(0,0,0,0.10)';
+    ctx.beginPath();
+    ctx.ellipse(rect.width/2,rect.height*0.86,50,10,0,0,Math.PI*2);
+    ctx.fill();
+    ctx.save();
+    ctx.translate(rect.width/2,rect.height*0.78);
+    drawCharacter(ctx,this.current.id,Math.min(rect.width*0.6,rect.height*0.7),performance.now());
+    ctx.restore();
+    document.getElementById('shop-skin-name').textContent=this.current.name;
+    document.getElementById('shop-skin-overlay').textContent=this.current.name;
+  },
+  drawPreview(){
+    const wrap=document.getElementById('shop-preview');
+    wrap.innerHTML='';
+    SKINS.forEach((s,i)=>{
+      const item=document.createElement('div');
+      item.className='preview-item';
+      if(s.id===this.current.id) item.classList.add('selected');
+      if(!Storage.hasSkin(s.id)) item.classList.add('locked');
+      const cv=document.createElement('canvas');
+      cv.width=100; cv.height=100;
+      const ctx=cv.getContext('2d');
+      ctx.save();
+      ctx.translate(50,86);
+      drawCharacter(ctx,s.id,78,performance.now());
+      ctx.restore();
+      item.appendChild(cv);
+      if(!Storage.hasSkin(s.id)){
+        const lock=document.createElement('div');
+        lock.className='lock'; lock.textContent='🔒';
+        item.appendChild(lock);
+      }
+      item.addEventListener('click',()=>{
+        this.index=i;
+        this.drawMain();
+        this.drawPreview();
+        this.updateAction();
+      });
+      wrap.appendChild(item);
+    });
+  },
+  updateAction(){
+    const btn=document.getElementById('btn-skin-action');
+    const s=this.current;
+    if(s.id===Storage.getCurrent()){
+      btn.innerHTML='使用中';
+      btn.disabled=true;
+      btn.onclick=null;
+    } else if(Storage.hasSkin(s.id)){
+      btn.innerHTML='使 用';
+      btn.disabled=false;
+      btn.onclick=()=>this.equip();
+    } else {
+      btn.innerHTML=`<span class="price"><svg><use href="#i-coin"/></svg>${s.price} 解锁</span>`;
+      btn.disabled=Storage.getCoins()<s.price;
+      btn.onclick=()=>this.unlock();
+    }
+  },
+  equip(){
+    Storage.setCurrent(this.current.id);
+    this.updateAction();
+    this.drawPreview();
+    toast('已穿戴 '+this.current.name);
+  },
+  unlock(){
+    const s=this.current;
+    if(Storage.getCoins()<s.price){toast('金币不足');return;}
+    Storage.setCoins(Storage.getCoins()-s.price);
+    Storage.unlock(s.id);
+    Storage.setCurrent(s.id);
+    this.updateAction();
+    this.drawPreview();
+    document.getElementById('shop-coins').textContent=Storage.getCoins();
+    toast('已解锁 '+s.name);
+  }
+};
+
+/* ============ 6. Lottery ============ */
+const LOTTERY_COST=100;
+const LOTTERY_POOL=[
+  {type:'coins',value:50,  weight:40},
+  {type:'coins',value:100, weight:30},
+  {type:'coins',value:200, weight:15},
+  {type:'coins',value:500, weight:5 },
+  {type:'skin', value:'pawn',weight:10}
+];
+const Lottery = {
+  rolling:false,
+  render(){
+    document.getElementById('lottery-coins').textContent=Storage.getCoins();
+    this.draw();
+  },
+  draw(){
+    const cv=document.getElementById('lottery-canvas');
+    const rect=cv.getBoundingClientRect();
+    if(rect.width<10) return;
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    cv.width=rect.width*dpr; cv.height=rect.height*dpr;
+    const ctx=cv.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,rect.width,rect.height);
+    const cx=rect.width/2, cy=rect.height*0.5;
+    const grd=ctx.createRadialGradient(cx,cy,10,cx,cy,rect.width*0.7);
+    grd.addColorStop(0,'rgba(244,194,92,0.5)');
+    grd.addColorStop(1,'rgba(244,194,92,0)');
+    ctx.fillStyle=grd;
+    ctx.beginPath(); ctx.arc(cx,cy,rect.width*0.7,0,Math.PI*2); ctx.fill();
+    drawLotteryCharacter(ctx,cx,cy,rect.width,rect.height,performance.now());
+  },
+  roll(){
+    if(this.rolling) return;
+    if(Storage.getCoins()<LOTTERY_COST){toast('金币不足');return;}
+    this.rolling=true;
+    Storage.setCoins(Storage.getCoins()-LOTTERY_COST);
+    document.getElementById('lottery-coins').textContent=Storage.getCoins();
+    const stage=document.getElementById('lottery-stage');
+    const anim=document.createElement('div');
+    anim.className='lottery-anim';
+    anim.innerHTML='<div class="bubble">抽签中…</div>';
+    stage.appendChild(anim);
+    setTimeout(()=>anim.remove(),1200);
+    setTimeout(()=>{
+      const total=LOTTERY_POOL.reduce((s,p)=>s+p.weight,0);
+      let r=Math.random()*total, pick=LOTTERY_POOL[0];
+      for(const p of LOTTERY_POOL){r-=p.weight;if(r<=0){pick=p;break;}}
+      this.grant(pick);
+      this.rolling=false;
+    },1100);
+  },
+  grant(pick){
+    let title,sub,icon;
+    if(pick.type==='coins'){
+      Storage.addCoins(pick.value);
+      title='恭喜获得金币';
+      sub='+'+pick.value+' 金币';
+      icon='💰';
+    } else {
+      const skin=SKINS.find(s=>s.id===pick.value);
+      if(!skin){title='再接再厉';sub='+50 金币';icon='🎁';Storage.addCoins(50);}
+      else if(Storage.hasSkin(skin.id)){
+        title='已拥有该皮肤';
+        sub='返还 200 金币';
+        icon='🎁';
+        Storage.addCoins(200);
+      } else {
+        Storage.unlock(skin.id);
+        title='恭喜获得新皮肤';
+        sub=skin.name;
+        icon='👑';
+      }
+    }
+    document.getElementById('lottery-coins').textContent=Storage.getCoins();
+    showResult(icon,title,sub);
+  }
+};
+
+function drawLotteryCharacter(ctx,cx,cy,w,h,t){
+  const s=Math.min(w,h)*0.0055;
+  ctx.save();
+  ctx.translate(cx,cy+h*0.22);
+  ctx.scale(s,s);
+  // Robe
+  ctx.fillStyle='#5C3A78';
+  ctx.beginPath();
+  ctx.moveTo(-40,0);
+  ctx.quadraticCurveTo(-44,-40,-34,-70);
+  ctx.lineTo(34,-70);
+  ctx.quadraticCurveTo(44,-40,40,0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle='#3A2650'; ctx.lineWidth=1.5; ctx.stroke();
+  // Inner robe
+  ctx.fillStyle='#8C5FA8';
+  ctx.beginPath();
+  ctx.moveTo(-30,-2);
+  ctx.quadraticCurveTo(-32,-38,-24,-68);
+  ctx.lineTo(24,-68);
+  ctx.quadraticCurveTo(32,-38,30,-2);
+  ctx.closePath();
+  ctx.fill();
+  // Belt
+  ctx.fillStyle='#3A2650';
+  ctx.fillRect(-30,-32,60,5);
+  // Face
+  ctx.fillStyle='#F8E9D0';
+  ctx.beginPath();
+  ctx.ellipse(0,-82,16,19,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='#2A2640'; ctx.lineWidth=1.5; ctx.stroke();
+  // Hair main
+  ctx.fillStyle='#F0F0F5';
+  ctx.beginPath();
+  ctx.moveTo(-22,-92);
+  ctx.quadraticCurveTo(-26,-110,-8,-110);
+  ctx.quadraticCurveTo(0,-118,8,-110);
+  ctx.quadraticCurveTo(26,-110,22,-92);
+  ctx.lineTo(18,-80);
+  ctx.lineTo(14,-100);
+  ctx.lineTo(8,-82);
+  ctx.lineTo(0,-100);
+  ctx.lineTo(-8,-82);
+  ctx.lineTo(-14,-100);
+  ctx.lineTo(-18,-80);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle='#D0D0D8'; ctx.lineWidth=1; ctx.stroke();
+  // Side hair
+  ctx.fillStyle='#F0F0F5';
+  ctx.beginPath();
+  ctx.moveTo(-22,-90);
+  ctx.quadraticCurveTo(-30,-70,-22,-50);
+  ctx.lineTo(-16,-50);
+  ctx.quadraticCurveTo(-22,-70,-18,-88);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(22,-90);
+  ctx.quadraticCurveTo(30,-70,22,-50);
+  ctx.lineTo(16,-50);
+  ctx.quadraticCurveTo(22,-70,18,-88);
+  ctx.closePath();
+  ctx.fill();
+  // Eyebrows
+  ctx.strokeStyle='#2A2640'; ctx.lineWidth=2; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(-10,-88); ctx.lineTo(-4,-86);
+  ctx.moveTo(10,-88);  ctx.lineTo(4,-86);
+  ctx.stroke();
+  // Eyes
+  ctx.fillStyle='#2A2640';
+  ctx.beginPath();
+  ctx.arc(-5,-82,1.4,0,Math.PI*2);
+  ctx.arc(5,-82,1.4,0,Math.PI*2);
+  ctx.fill();
+  // Cheeks
+  ctx.fillStyle='rgba(232,100,100,0.6)';
+  ctx.beginPath();
+  ctx.arc(-9,-76,2.5,0,Math.PI*2);
+  ctx.arc(9,-76,2.5,0,Math.PI*2);
+  ctx.fill();
+  // Mouth
+  ctx.strokeStyle='#2A2640'; ctx.lineWidth=1.4;
+  ctx.beginPath();
+  ctx.arc(0,-77,2.5,0,Math.PI,false);
+  ctx.stroke();
+  // Hairpins
+  ctx.fillStyle='#E85A4F';
+  ctx.beginPath();
+  ctx.arc(-15,-100,2.5,0,Math.PI*2);
+  ctx.arc(15,-100,2.5,0,Math.PI*2);
+  ctx.fill();
+  // Left hand
+  ctx.fillStyle='#F8E9D0';
+  ctx.beginPath(); ctx.arc(-28,-50,6,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#2A2640'; ctx.lineWidth=1.2; ctx.stroke();
+  // Right hand + utility knife
+  ctx.fillStyle='#F8E9D0';
+  ctx.beginPath(); ctx.arc(28,-50,6,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#2A2640'; ctx.lineWidth=1.2; ctx.stroke();
+  ctx.save();
+  ctx.translate(28,-50);
+  ctx.rotate(Math.sin(t*0.003)*0.12);
+  ctx.fillStyle='#E85A4F';
+  ctx.fillRect(-3,-2,16,8);
+  ctx.strokeStyle='#2A2640'; ctx.lineWidth=1;
+  ctx.strokeRect(-3,-2,16,8);
+  ctx.fillStyle='#C8D0DE';
+  ctx.beginPath();
+  ctx.moveTo(13,-2); ctx.lineTo(28,-1); ctx.lineTo(28,5); ctx.lineTo(13,6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle='#A8B0BE';
+  ctx.beginPath();
+  ctx.moveTo(28,-1); ctx.lineTo(34,2); ctx.lineTo(28,5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+  // Aura
+  ctx.fillStyle='rgba(244,194,92,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0,-20,55,14,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+
+/* ============ 7. Game Engine ============ */
+const Game = {
+  canvas:null, ctx:null, W:0, H:0, dpr:1,
+  running:false, rafId:0, lastT:0,
+  blocks:[],
+  char:{x:0,y:0,vx:0,vy:0,rot:0,onGround:true,bounceT:0,landedOn:null,combo:0},
+  cameraX:0,
+  power:0, charging:false, chargeStart:0,
+  score:0, best:0, hintShown:false,
+
+  init(){
+    this.canvas=document.getElementById('game-canvas');
+    this.ctx=this.canvas.getContext('2d');
+    this.resize();
+    window.addEventListener('resize',()=>this.resize());
+    window.addEventListener('orientationchange',()=>setTimeout(()=>this.resize(),300));
+  },
+  resize(){
+    const rect=this.canvas.getBoundingClientRect();
+    this.dpr=Math.min(window.devicePixelRatio||1,2);
+    this.canvas.width=Math.max(1,Math.floor(rect.width*this.dpr));
+    this.canvas.height=Math.max(1,Math.floor(rect.height*this.dpr));
+    this.ctx.setTransform(this.dpr,0,0,this.dpr,0,0);
+    this.W=rect.width; this.H=rect.height;
+    this.groundY=this.H*0.7;
+  },
+  start(){
+    if(this.running){ this.resize(); }
+    this.running=true;
+    this.score=0; this.combo=0;
+    this.blocks=[];
+    this.char={x:0,y:this.groundY,vx:0,vy:0,rot:0,onGround:true,bounceT:0,landedOn:null,combo:0};
+    this.cameraX=0;
+    this.charging=false; this.power=0; this.hintShown=false;
+    document.getElementById('hud-power-fill').style.width='0%';
+    document.getElementById('hud-hint').style.display='block';
+    // First block under character
+    this.blocks.push({x:0,y:this.groundY,w:120,h:50,type:0});
+    this.nextBlockX=120;
+    this.lastType=-1;
+    this.spawnBlocks(10);
+    this.char.x=60;
+    this.updateCamera();
+    this.updateScore();
+    cancelAnimationFrame(this.rafId);
+    this.lastT=performance.now();
+    this.loop();
+  },
+  spawnBlocks(n){
+    const T=[
+      {wMin:75,wMax:100,gapMin:80, gapMax:140,type:0,weight:50},
+      {wMin:50,wMax:70, gapMin:100,gapMax:170,type:1,weight:30},
+      {wMin:85,wMax:120,gapMin:170,gapMax:220,type:2,weight:20}
+    ];
+    for(let i=0;i<n;i++){
+      let pool=T.slice();
+      if(this.lastType>=0 && Math.random()<0.6){
+        pool=pool.filter((_,idx)=>idx!==this.lastType);
+      }
+      const total=pool.reduce((s,t)=>s+t.weight,0);
+      let r=Math.random()*total, chosen=pool[0];
+      for(const t of pool){r-=t.weight;if(r<=0){chosen=t;break;}}
+      const idx=T.indexOf(chosen);
+      const w=chosen.wMin+Math.random()*(chosen.wMax-chosen.wMin);
+      const gap=chosen.gapMin+Math.random()*(chosen.gapMax-chosen.gapMin);
+      const dy=(Math.random()-0.5)*30;
+      const newX=this.nextBlockX+gap;
+      this.blocks.push({x:newX,y:this.groundY+dy,w:w,h:50,type:chosen.type});
+      this.nextBlockX=newX+w;
+      this.lastType=idx;
+    }
+  },
+  updateCamera(){
+    this.cameraX=this.char.x-this.W*0.3;
+    if(this.cameraX<-this.W*0.2) this.cameraX=-this.W*0.2;
+  },
+  screenX(worldX){ return worldX-this.cameraX; },
+
+  onPressStart(){
+    if(!this.running) return;
+    if(!this.char.onGround) return;
+    this.charging=true;
+    this.chargeStart=performance.now();
+    document.getElementById('hud-hint').style.display='none';
+  },
+  onPressEnd(){
+    if(!this.charging) return;
+    this.charging=false;
+    const elapsed=(performance.now()-this.chargeStart)/1000;
+    const power=Math.min(elapsed/1.4,1);
+    this.power=power;
+    this.jump(power);
+    document.getElementById('hud-power-fill').style.width='0%';
+  },
+  jump(power){
+    this.char.onGround=false;
+    // Tune: vx 220-360 px/s, vy -380 to -640 px/s
+    this.char.vx=220+power*260;
+    this.char.vy=-380-power*320;
+    this.char.rot=0;
+    this.char.rotSpeed=0.10+power*0.18;
+  },
+
+  loop(){
+    if(!this.running) return;
+    const now=performance.now();
+    let dt=(now-this.lastT)/1000;
+    if(dt>0.05) dt=0.05;
+    this.lastT=now;
+    this.update(dt);
+    this.draw();
+    this.rafId=requestAnimationFrame(()=>this.loop());
+  },
+
+  update(dt){
+    // Charging bar
+    if(this.charging){
+      const elapsed=(performance.now()-this.chargeStart)/1000;
+      const p=Math.min(elapsed/1.4,1);
+      document.getElementById('hud-power-fill').style.width=(p*100)+'%';
+    }
+
+    if(!this.char.onGround){
+      // Physics
+      this.char.vy += 1500*dt; // gravity
+      this.char.x += this.char.vx*dt;
+      this.char.y += this.char.vy*dt;
+      this.char.rot += this.char.rotSpeed;
+
+      // Landing check
+      for(const b of this.blocks){
+        if(b===this.char.landedOn) continue;
+        if(this.char.x>=b.x && this.char.x<=b.x+b.w){
+          if(this.char.vy>0 && this.char.y>=b.y){
+            this.landOn(b);
+            break;
+          }
+        }
+      }
+
+      // Fall off
+      if(this.char.y>this.H+200){
+        this.end();
+      }
+    } else {
+      // Standing: subtle bounce
+      if(this.char.bounceT>0){
+        this.char.bounceT-=dt;
+        if(this.char.bounceT<0) this.char.bounceT=0;
+      }
+    }
+
+    // Camera
+    this.updateCamera();
+
+    // Spawn ahead
+    while(this.nextBlockX-this.cameraX<this.W*2){
+      this.spawnBlocks(4);
+    }
+    // Cleanup behind
+    this.blocks=this.blocks.filter(b=>b.x+b.w>this.cameraX-200);
+  },
+
+  landOn(b){
+    this.char.y=b.y;
+    this.char.vy=0;
+    this.char.onGround=true;
+    this.char.rot=0;
+    this.char.landedOn=b;
+    this.char.bounceT=0.25;
+
+    // Score
+    const base=[1,3,5][b.type]||1;
+    const comboBonus=(this.combo>=1)?2:0;
+    const gain=base+comboBonus;
+    this.combo++;
+    this.score+=gain;
+    Storage.addCoins(gain);
+    if(this.score>Storage.getBest()) Storage.setBest(this.score);
+
+    this.updateScore();
+    this.popupScore(this.screenX(this.char.x), this.H*0.3, '+'+gain);
+    if(navigator.vibrate) try{ navigator.vibrate(20); }catch(e){}
+  },
+
+  popupScore(x,y,text){
+    const el=document.createElement('div');
+    el.className='score-popup';
+    el.textContent=text;
+    el.style.left=x+'px';
+    el.style.top=y+'px';
+    document.getElementById('view-play').appendChild(el);
+    setTimeout(()=>el.remove(),1200);
+  },
+
+  updateScore(){
+    const s = this.score < 100 ? String(this.score).padStart(2,'0') : String(this.score);
+    document.getElementById('hud-score').textContent = s;
+  },
+
+  end(revive){
+    this.running=false;
+    cancelAnimationFrame(this.rafId);
+    // Update best in modal
+    const best=Storage.getBest();
+    const fmt = (n) => n < 100 ? String(n).padStart(2,'0') : String(n);
+    document.getElementById('stat-best').textContent = fmt(best);
+    document.getElementById('stat-current').textContent = fmt(this.score);
+    document.getElementById('stat-coins').textContent=Storage.getCoins();
+    const reviveBtn=document.getElementById('btn-revive');
+    reviveBtn.disabled=Storage.getCoins()<100;
+    if(revive) return; // resumed
+    setTimeout(()=>{
+      document.getElementById('modal-gameover').classList.add('show');
+    },500);
+    if(navigator.vibrate) try{ navigator.vibrate([40,60,40]); }catch(e){}
+  },
+
+  draw(){
+    const ctx=this.ctx;
+    // Sky gradient
+    const grd=ctx.createLinearGradient(0,0,0,this.H);
+    grd.addColorStop(0,'#F4EFFA');
+    grd.addColorStop(1,'#E0D6F0');
+    ctx.fillStyle=grd;
+    ctx.fillRect(0,0,this.W,this.H);
+
+    // Decorative distant clouds
+    this.drawClouds(ctx);
+
+    // Ground baseline (faint)
+    ctx.strokeStyle='rgba(120,100,170,0.15)';
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(0,this.groundY+50);
+    ctx.lineTo(this.W,this.groundY+50);
+    ctx.stroke();
+
+    // Blocks
+    for(const b of this.blocks){
+      this.drawBlock(ctx,b);
+    }
+
+    // Character
+    this.drawChar(ctx);
+  },
+  drawClouds(ctx){
+    const cam=this.cameraX;
+    const off=cam*0.1;
+    ctx.fillStyle='rgba(255,255,255,0.5)';
+    for(const c of [{x:120-off*0.5,y:80,r:30},{x:340-off*0.7,y:140,r:22},{x:560-off*0.3,y:60,r:28}]){
+      ctx.beginPath();
+      ctx.arc(c.x,c.y,c.r,0,Math.PI*2);
+      ctx.arc(c.x+c.r*0.7,c.y+4,c.r*0.7,0,Math.PI*2);
+      ctx.arc(c.x-c.r*0.6,c.y+4,c.r*0.6,0,Math.PI*2);
+      ctx.fill();
+    }
+  },
+  drawBlock(ctx,b){
+    const sx=this.screenX(b.x);
+    if(sx>this.W+50 || sx+b.w<-50) return;
+    const top=b.y, depth=24;
+    const topColor='#D2D6E2';
+    const frontColor='#A6AFC6';
+    const sideColor='#7C8499';
+    // Front face
+    ctx.fillStyle=frontColor;
+    ctx.fillRect(sx,top, b.w,depth);
+    // Top face (isometric: skew)
+    ctx.fillStyle=topColor;
+    ctx.beginPath();
+    ctx.moveTo(sx,top);
+    ctx.lineTo(sx+12,top-8);
+    ctx.lineTo(sx+b.w+12,top-8);
+    ctx.lineTo(sx+b.w,top);
+    ctx.closePath();
+    ctx.fill();
+    // Right face
+    ctx.fillStyle=sideColor;
+    ctx.beginPath();
+    ctx.moveTo(sx+b.w,top);
+    ctx.lineTo(sx+b.w+12,top-8);
+    ctx.lineTo(sx+b.w+12,top+depth-8);
+    ctx.lineTo(sx+b.w,top+depth);
+    ctx.closePath();
+    ctx.fill();
+    // Top edge highlight
+    ctx.strokeStyle='rgba(255,255,255,0.45)';
+    ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.moveTo(sx,top);
+    ctx.lineTo(sx+12,top-8);
+    ctx.lineTo(sx+b.w+12,top-8);
+    ctx.stroke();
+    // Block-type accent dot (small)
+    const colors=['#3DBE6F','#F4C25C','#E85A4F'];
+    ctx.fillStyle=colors[b.type]||'#fff';
+    ctx.beginPath();
+    ctx.arc(sx+b.w/2, top-12, 3, 0, Math.PI*2);
+    ctx.fill();
+  },
+  drawChar(ctx){
+    const sx=this.screenX(this.char.x);
+    const charH=70;
+    const baseY=this.char.y;
+    const bounce=this.char.bounceT>0 ? Math.sin((0.25-this.char.bounceT)/0.25*Math.PI)*6 : 0;
+    const y=baseY-bounce;
+    ctx.save();
+    ctx.translate(sx, y);
+    ctx.rotate(this.char.rot);
+    // shadow
+    ctx.fillStyle='rgba(0,0,0,0.18)';
+    ctx.beginPath();
+    ctx.ellipse(0,0,18,4,0,0,Math.PI*2);
+    ctx.fill();
+    drawCharacter(ctx, Storage.getCurrent(), charH, performance.now());
+    ctx.restore();
+  }
+};
+
+/* ============ 8. UI Wiring ============ */
+function showModal(id){ document.getElementById(id).classList.add('show'); }
+function hideModal(id){ document.getElementById(id).classList.remove('show'); }
+function showResult(icon,title,sub){
+  document.getElementById('result-icon').textContent=icon;
+  document.getElementById('result-title').textContent=title;
+  document.getElementById('result-sub').textContent=sub;
+  showModal('modal-result');
+}
+function toast(msg){
+  const t=document.createElement('div');
+  t.className='toast';
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2000);
+}
+
+/* ============ 9. Redeem codes ============ */
+const REDEEM_CODES={
+  'WELCOME100':{type:'coins',value:200,used:false},
+  'CRAB888':   {type:'coins',value:888,used:false},
+  'FANYANG':   {type:'coins',value:500,used:false},
+  'GIVEMECHESS':{type:'skin',value:'pawn',used:false}
+};
+const K_REDEEM='jbc.redeemUsed';
+function getRedeemUsed(){try{return JSON.parse(localStorage.getItem(K_REDEEM)||'[]');}catch(e){return[];}}
+function setRedeemUsed(arr){localStorage.setItem(K_REDEEM,JSON.stringify(arr));}
+function tryRedeem(code){
+  code=code.trim().toUpperCase();
+  const c=REDEEM_CODES[code];
+  if(!c) return {ok:false,msg:'兑换码无效'};
+  const used=getRedeemUsed();
+  if(used.includes(code)) return {ok:false,msg:'该兑换码已使用'};
+  if(c.type==='coins'){
+    Storage.addCoins(c.value);
+    used.push(code); setRedeemUsed(used);
+    return {ok:true,msg:'获得 '+c.value+' 金币'};
+  } else if(c.type==='skin'){
+    Storage.unlock(c.value);
+    used.push(code); setRedeemUsed(used);
+    const s=SKINS.find(x=>x.id===c.value);
+    return {ok:true,msg:'解锁皮肤：'+(s?s.name:c.value)};
+  }
+  return {ok:false,msg:'未知奖励'};
+}
+
+/* ============ 10. Init ============ */
+function init(){
+  // Home buttons
+  document.getElementById('btn-start').addEventListener('click',()=>Router.show('play'));
+  document.getElementById('btn-more').addEventListener('click',()=>Router.show('menu'));
+
+  // Back buttons
+  document.getElementById('btn-back-home').addEventListener('click',()=>Router.show('home'));
+  document.getElementById('btn-back-menu-shop').addEventListener('click',()=>Router.show('menu'));
+  document.getElementById('btn-back-menu-lottery').addEventListener('click',()=>Router.show('menu'));
+
+  // Menu cards
+  document.querySelectorAll('.menu-card').forEach(card=>{
+    card.addEventListener('click',()=>{
+      const t=card.dataset.target;
+      if(t==='shop')    Router.show('shop');
+      else if(t==='lottery') Router.show('lottery');
+      else if(t==='tutorial') showModal('modal-tutorial');
+      else if(t==='redeem')   showModal('modal-redeem');
+    });
+  });
+
+  // Shop arrows
+  document.getElementById('btn-skin-prev').addEventListener('click',()=>{
+    Shop.index=(Shop.index-1+SKINS.length)%SKINS.length;
+    Shop.drawMain(); Shop.drawPreview(); Shop.updateAction();
+  });
+  document.getElementById('btn-skin-next').addEventListener('click',()=>{
+    Shop.index=(Shop.index+1)%SKINS.length;
+    Shop.drawMain(); Shop.drawPreview(); Shop.updateAction();
+  });
+
+  // Lottery
+  document.getElementById('btn-lottery').addEventListener('click',()=>Lottery.roll());
+  document.getElementById('btn-close-result').addEventListener('click',()=>hideModal('modal-result'));
+
+  // Tutorial
+  document.getElementById('btn-close-tutorial').addEventListener('click',()=>hideModal('modal-tutorial'));
+
+  // Redeem
+  document.getElementById('btn-redeem-submit').addEventListener('click',()=>{
+    const code=document.getElementById('redeem-input').value;
+    const msgEl=document.getElementById('redeem-msg');
+    const r=tryRedeem(code);
+    msgEl.textContent=r.msg;
+    msgEl.style.color=r.ok?'var(--green-2)':'#E85A4F';
+    if(r.ok){
+      document.getElementById('redeem-input').value='';
+      if(Shop._lastRendered){
+        document.getElementById('shop-coins').textContent=Storage.getCoins();
+      }
+      setTimeout(()=>{hideModal('modal-redeem');msgEl.textContent='';},900);
+    }
+  });
+  document.getElementById('btn-redeem-cancel').addEventListener('click',()=>hideModal('modal-redeem'));
+
+  // Gameover
+  document.getElementById('btn-restart').addEventListener('click',()=>{
+    hideModal('modal-gameover');
+    Game.start();
+  });
+  document.getElementById('btn-revive').addEventListener('click',()=>{
+    if(Storage.getCoins()<100){toast('金币不足');return;}
+    Storage.setCoins(Storage.getCoins()-100);
+    document.getElementById('stat-coins').textContent=Storage.getCoins();
+    hideModal('modal-gameover');
+    Game.revive();
+  });
+
+  // Pause → back to home (saves data automatically)
+  document.getElementById('btn-pause').addEventListener('click',()=>{
+    Game.running=false; cancelAnimationFrame(Game.rafId);
+    Router.show('menu');
+  });
+
+  // Game touch controls
+  const play=document.getElementById('view-play');
+  const onDown=(e)=>{
+    if(e.target.closest('.hud-pause')) return;
+    e.preventDefault();
+    Game.onPressStart();
+  };
+  const onUp=(e)=>{
+    if(Game.charging){ e.preventDefault(); Game.onPressEnd(); }
+  };
+  play.addEventListener('touchstart',onDown,{passive:false});
+  play.addEventListener('mousedown',onDown);
+  document.addEventListener('touchend',onUp,{passive:false});
+  document.addEventListener('mouseup',onUp);
+  document.addEventListener('touchcancel',onUp);
+
+  // Init game
+  Game.init();
+}
+
+Game.revive=function(){
+  // Place character on the last landed block (or at current x, snapped to last block)
+  const lastB=this.char.landedOn;
+  if(lastB){
+    this.char.x=Math.min(this.char.x, lastB.x+lastB.w-2);
+    this.char.x=Math.max(this.char.x, lastB.x+2);
+    this.char.y=lastB.y;
+  } else {
+    // Fall back: place on first block
+    const b=this.blocks[0];
+    if(b){ this.char.x=b.x+b.w/2; this.char.y=b.y; }
+  }
+  this.char.vx=0; this.char.vy=0; this.char.rot=0;
+  this.char.onGround=true;
+  this.updateCamera();
+  this.running=true;
+  this.lastT=performance.now();
+  this.loop();
+};
+
+window.addEventListener('DOMContentLoaded',init);
+
+/* =====================================================================
+   使用说明 / Usage
+   =====================================================================
+
+   1. 直接用手机/电脑浏览器打开 index.html 即可运行，无需任何服务器。
+   2. 横屏时游戏区域自动按 9:16 比例居中，两侧用淡紫色背景填充。
+   3. 玩法：长按屏幕任意位置开始蓄力，松开手指角色向前跳跃。
+   4. 计分：普通方块 +1 / 窄小方块 +3 / 大间距方块 +5；连击额外 +2/跳。
+   5. 金币与得分同步增长，可在商店解锁新皮肤，或在抽签页抽取奖励。
+   6. 所有金币、皮肤、历史最高分均通过 localStorage 永久保存在本机。
+   7. 内置兑换码：WELCOME100 / CRAB888 / FANYANG / GIVEMECHESS。
+*/
+</script>
+
+</body>
+</html>
