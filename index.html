@@ -666,22 +666,19 @@ svg{display:block}
             <line x1="20" y1="150" x2="20" y2="210" stroke="#6B7280" stroke-width="1" opacity="0.5"/>
           </g>
           <g transform="translate(75,128)">
-            <line x1="-12" y1="0" x2="-4" y2="-50" stroke="#3A4570" stroke-width="6" stroke-linecap="round"/>
-            <line x1="12" y1="0" x2="4" y2="-50" stroke="#3A4570" stroke-width="6" stroke-linecap="round"/>
-            <circle cx="-12" cy="0" r="3" fill="#1F2746"/>
-            <circle cx="12" cy="0" r="3" fill="#1F2746"/>
-            <circle cx="0" cy="-48" r="14" fill="#F8E9D0" stroke="#2A2640" stroke-width="2"/>
-            <circle cx="0" cy="-66" r="5" fill="#3A4570" stroke="#2A2640" stroke-width="1.5"/>
-            <circle cx="0" cy="-66" r="2" fill="#1F2746"/>
-            <rect x="-2" y="-80" width="4" height="14" rx="2" fill="#3A4570"/>
-            <circle cx="0" cy="-82" r="4" fill="#3DBE6F" stroke="#2A2640" stroke-width="1"/>
-            <path d="M-9 -55 L-3 -52" stroke="#2A2640" stroke-width="3.5" stroke-linecap="round"/>
-            <path d="M9 -55 L3 -52" stroke="#2A2640" stroke-width="3.5" stroke-linecap="round"/>
-            <circle cx="-4" cy="-47" r="1.6" fill="#2A2640"/>
-            <circle cx="4" cy="-47" r="1.6" fill="#2A2640"/>
-            <circle cx="-7" cy="-43" r="2.5" fill="#F08080" opacity="0.7"/>
-            <circle cx="7" cy="-43" r="2.5" fill="#F08080" opacity="0.7"/>
-            <path d="M-4 -42 Q0 -38 4 -42" fill="none" stroke="#2A2640" stroke-width="1.6" stroke-linecap="round"/>
+            <rect x="-20" y="-55" width="40" height="55" rx="7" fill="#A8A8A8" stroke="#707070" stroke-width="2"/>
+            <rect x="-20" y="-55" width="40" height="15" rx="7" fill="#909090"/>
+            <circle cx="-8" cy="-32" r="3.5" fill="#505050"/>
+            <circle cx="8" cy="-32" r="3.5" fill="#505050"/>
+            <circle cx="-7" cy="-33" r="1.2" fill="#fff"/>
+            <circle cx="9" cy="-33" r="1.2" fill="#fff"/>
+            <path d="M-12 -40 L-4 -38" stroke="#505050" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M12 -40 L4 -38" stroke="#505050" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="-12" cy="-25" r="3" fill="#C86464" opacity="0.5"/>
+            <circle cx="12" cy="-25" r="3" fill="#C86464" opacity="0.5"/>
+            <path d="M-5 -18 L5 -18" stroke="#505050" stroke-width="2" stroke-linecap="round"/>
+            <rect x="-15" y="0" width="5" height="4" fill="#888"/>
+            <rect x="10" y="0" width="5" height="4" fill="#888"/>
           </g>
         </svg>
       </div>
@@ -984,11 +981,11 @@ const Storage = {
   addCoins(n){this.setCoins(this.getCoins()+n);},
   getBest(){const v=parseInt(localStorage.getItem(this.K_BEST)||'0',10);return isNaN(v)?0:v;},
   setBest(n){localStorage.setItem(this.K_BEST,String(Math.max(0,n|0)));},
-  getUnlocked(){try{return JSON.parse(localStorage.getItem(this.K_SKINS)||'["compass"]');}catch(e){return ['compass'];}},
+  getUnlocked(){try{return JSON.parse(localStorage.getItem(this.K_SKINS)||'["block"]');}catch(e){return ['block'];}},
   setUnlocked(arr){localStorage.setItem(this.K_SKINS,JSON.stringify(arr));},
   unlock(id){const arr=this.getUnlocked();if(!arr.includes(id)){arr.push(id);this.setUnlocked(arr);}},
   hasSkin(id){return this.getUnlocked().includes(id);},
-  getCurrent(){return localStorage.getItem(this.K_CURRENT)||'compass';},
+  getCurrent(){return localStorage.getItem(this.K_CURRENT)||'block';},
   setCurrent(id){localStorage.setItem(this.K_CURRENT,id);},
   getUnlockedWalls(){try{return JSON.parse(localStorage.getItem(this.K_WALLPAPERS)||'["purple"]');}catch(e){return ['purple'];}},
   setUnlockedWalls(arr){localStorage.setItem(this.K_WALLPAPERS,JSON.stringify(arr));},
@@ -1004,7 +1001,8 @@ const Storage = {
 
 /* ============ 2. Skins & Wallpapers ============ */
 const SKINS = [
-  { id:'compass', name:'圆规叔叔', price:0 },
+  { id:'block',   name:'方块君',   price:0 },
+  { id:'compass', name:'圆规叔叔', price:150 },
   { id:'pawn',    name:'象棋-兵',   price:200 },
   { id:'pencil',  name:'铅笔头',   price:300 },
   { id:'eraser',  name:'橡皮君',   price:250 },
@@ -1067,6 +1065,60 @@ function drawCompassCharacter(ctx,size,t){
   ctx.beginPath();
   ctx.arc(0,-51*s,4.5*s,0,Math.PI,false);
   ctx.stroke();
+  ctx.restore();
+}
+
+function drawBlockGuyCharacter(ctx,size,t){
+  const s=size/110;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0,2,20*s,4*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#A8A8A8';
+  ctx.strokeStyle='#707070';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.roundRect(-18*s,-55*s,36*s,55*s,6*s);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle='#909090';
+  ctx.beginPath();
+  ctx.roundRect(-18*s,-55*s,36*s,14*s,6*s);
+  ctx.fill();
+  ctx.fillStyle='#505050';
+  ctx.beginPath();
+  ctx.arc(-7*s,-32*s,3*s,0,Math.PI*2);
+  ctx.arc(7*s,-32*s,3*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();
+  ctx.arc(-6*s,-33*s,1*s,0,Math.PI*2);
+  ctx.arc(8*s,-33*s,1*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='#505050';
+  ctx.lineWidth=2*s;
+  ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(-11*s,-40*s);
+  ctx.lineTo(-4*s,-38*s);
+  ctx.moveTo(11*s,-40*s);
+  ctx.lineTo(4*s,-38*s);
+  ctx.stroke();
+  ctx.fillStyle='rgba(200,100,100,0.5)';
+  ctx.beginPath();
+  ctx.arc(-11*s,-25*s,2.5*s,0,Math.PI*2);
+  ctx.arc(11*s,-25*s,2.5*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='#505050';
+  ctx.lineWidth=1.5*s;
+  ctx.beginPath();
+  ctx.moveTo(-5*s,-18*s);
+  ctx.lineTo(5*s,-18*s);
+  ctx.stroke();
+  ctx.fillStyle='#888';
+  ctx.fillRect(-14*s,0,4*s,4*s);
+  ctx.fillRect(10*s,0,4*s,4*s);
   ctx.restore();
 }
 
@@ -1345,11 +1397,13 @@ function drawRulerCharacter(ctx,size,t){
 }
 
 function drawCharacter(ctx,skinId,size,t){
-  if(skinId==='pawn') drawPawnCharacter(ctx,size,t);
+  if(skinId==='block') drawBlockGuyCharacter(ctx,size,t);
+  else if(skinId==='compass') drawCompassCharacter(ctx,size,t);
+  else if(skinId==='pawn') drawPawnCharacter(ctx,size,t);
   else if(skinId==='pencil') drawPencilCharacter(ctx,size,t);
   else if(skinId==='eraser') drawEraserCharacter(ctx,size,t);
   else if(skinId==='ruler') drawRulerCharacter(ctx,size,t);
-  else drawCompassCharacter(ctx,size,t);
+  else drawBlockGuyCharacter(ctx,size,t);
 }
 
 /* ============ 4. Router ============ */
