@@ -1373,6 +1373,8 @@ const Game = {
   landOn(b, dx, dz){
     const wasNew = b !== this.char.landedOn;
 
+    this.char.x = b.x;
+    this.char.z = b.z;
     this.char.y = b.height * (1 - (b.squash||0) * 0.3);
     this.char.vy = 0;
     this.char.vx = 0;
