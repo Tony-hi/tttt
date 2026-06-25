@@ -1244,7 +1244,7 @@ const Game = {
     if(!this.charging) return;
     this.charging=false;
     const elapsed=(performance.now()-this.chargeStart)/1000;
-    const power=Math.min(elapsed/this.CHARGE_DURATION, 1);
+    const power=elapsed/this.CHARGE_DURATION;
     this.power=power;
     this.jump(power);
     document.getElementById('hud-power-fill').style.width='0%';
@@ -1296,11 +1296,11 @@ const Game = {
       const elapsed=(performance.now()-this.chargeStart)/1000;
       const p=Math.min(elapsed/this.CHARGE_DURATION, 1);
       document.getElementById('hud-power-fill').style.width=(p*100)+'%';
-      this.char.squash = p * 0.5;
+      this.char.squash = Math.min(elapsed/this.CHARGE_DURATION, 1.5) * 0.5;
       if(this.char.landedOn){
-        this.char.landedOn.squash = p * 0.35;
+        this.char.landedOn.squash = Math.min(elapsed/this.CHARGE_DURATION, 1.5) * 0.35;
       }
-      if(Math.random() < 0.5) this.spawnChargeParticle(p);
+      if(Math.random() < 0.5) this.spawnChargeParticle(Math.min(p, 1));
     } else {
       if(this.char.squash > 0){
         this.char.squash = Math.max(0, this.char.squash - dt * 5);
