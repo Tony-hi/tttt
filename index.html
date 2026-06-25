@@ -1020,16 +1020,16 @@ const Storage = {
   K_BENEFITS:'jbc.benefitSwitches', K_HISTORY:'jbc.redeemHistory',
   getCoins(){const v=parseInt(localStorage.getItem(this.K_COINS)||'0',10);return isNaN(v)?0:v;},
   setCoins(n){localStorage.setItem(this.K_COINS,String(Math.max(0,n|0)));},
-  addCoins(n){this.setCoins(this.getCoins()+n);},
+  addCoins(n){const bonus=this.getBenefitEnabled('coinBonus',false)?Math.floor(n*0.5):0;this.setCoins(this.getCoins()+n+bonus);return bonus;},
   getBest(){const v=parseInt(localStorage.getItem(this.K_BEST)||'0',10);return isNaN(v)?0:v;},
   setBest(n){localStorage.setItem(this.K_BEST,String(Math.max(0,n|0)));},
-  getUnlocked(){try{return JSON.parse(localStorage.getItem(this.K_SKINS)||'["block"]');}catch(e){return ['block'];}},
+  getUnlocked(){try{return JSON.parse(localStorage.getItem(this.K_SKINS)||'["block","compass","pawn"]');}catch(e){return ['block','compass','pawn'];}},
   setUnlocked(arr){localStorage.setItem(this.K_SKINS,JSON.stringify(arr));},
   unlock(id){const arr=this.getUnlocked();if(!arr.includes(id)){arr.push(id);this.setUnlocked(arr);}},
   hasSkin(id){return this.getUnlocked().includes(id);},
   getCurrent(){return localStorage.getItem(this.K_CURRENT)||'block';},
   setCurrent(id){localStorage.setItem(this.K_CURRENT,id);},
-  getUnlockedWalls(){try{return JSON.parse(localStorage.getItem(this.K_WALLPAPERS)||'["purple"]');}catch(e){return ['purple'];}},
+  getUnlockedWalls(){try{return JSON.parse(localStorage.getItem(this.K_WALLPAPERS)||'["purple","pink","blue"]');}catch(e){return ['purple','pink','blue'];}},
   setUnlockedWalls(arr){localStorage.setItem(this.K_WALLPAPERS,JSON.stringify(arr));},
   unlockWall(id){const arr=this.getUnlockedWalls();if(!arr.includes(id)){arr.push(id);this.setUnlockedWalls(arr);}},
   hasWall(id){return this.getUnlockedWalls().includes(id);},
@@ -1053,8 +1053,8 @@ const Storage = {
 /* ============ 2. Skins & Wallpapers ============ */
 const SKINS = [
   { id:'block',   name:'方块君',   price:0 },
-  { id:'compass', name:'圆规叔叔', price:150 },
-  { id:'pawn',    name:'象棋-兵',   price:200 },
+  { id:'compass', name:'圆规叔叔', price:0 },
+  { id:'pawn',    name:'象棋-兵',   price:0 },
   { id:'pencil',  name:'铅笔头',   price:300 },
   { id:'eraser',  name:'橡皮君',   price:250 },
   { id:'ruler',   name:'直尺先生', price:350 },
@@ -1063,8 +1063,8 @@ const SKINS = [
 
 const WALLPAPERS = [
   { id:'purple', name:'淡紫初心', price:0,   bg1:'#EFEAF7', bg2:'#DCD3EE', dot:'rgba(255,255,255,0.3)' },
-  { id:'pink',   name:'粉樱梦境', price:150, bg1:'#FDE8EF', bg2:'#F5CBD9', dot:'rgba(255,255,255,0.35)' },
-  { id:'blue',   name:'海盐晴空', price:150, bg1:'#E3F0FA', bg2:'#C2DDF0', dot:'rgba(255,255,255,0.35)' },
+  { id:'pink',   name:'粉樱梦境', price:0, bg1:'#FDE8EF', bg2:'#F5CBD9', dot:'rgba(255,255,255,0.35)' },
+  { id:'blue',   name:'海盐晴空', price:0, bg1:'#E3F0FA', bg2:'#C2DDF0', dot:'rgba(255,255,255,0.35)' },
   { id:'green',  name:'薄荷森林', price:200, bg1:'#E3F5EC', bg2:'#BFE5D0', dot:'rgba(255,255,255,0.3)' },
   { id:'orange', name:'暖阳橙橙', price:200, bg1:'#FFF0E0', bg2:'#FFD8B0', dot:'rgba(255,255,255,0.35)' },
   { id:'dark',   name:'深夜星空', price:300, bg1:'#3A3358', bg2:'#2A2440', dot:'rgba(255,255,255,0.2)' }
@@ -2384,14 +2384,19 @@ const Game = {
       }
 
       this.combo++;
-      this.score += gain;
-      Storage.addCoins(gain);
+      const doubleScore = Storage.getBenefitEnabled('doubleScore', false);
+      const finalGain = doubleScore ? gain * 2 : gain;
+      this.score += finalGain;
+      const coinBonus = Storage.addCoins(finalGain);
       if(this.score > Storage.getBest()) Storage.setBest(this.score);
       this.updateScore();
 
       const sx = this.screenX(b.x, b.z);
       const sy = this.screenY(b.x, b.z, b.height);
-      this.addFloatText(sx, sy - 20, '+' + gain, perfect ? '#FFD700' : '#3DBE6F');
+      this.addFloatText(sx, sy - 20, '+' + finalGain + (doubleScore ? ' 双倍!' : ''), perfect ? '#FFD700' : '#3DBE6F');
+      if(coinBonus > 0){
+        this.addFloatText(sx, sy - 65, '金币+50%', '#F4C25C');
+      }
       if(bonusText){
         this.addFloatText(sx, sy - 45, bonusText, '#FF8848');
       }
@@ -3194,19 +3199,22 @@ function init(){
     const list=document.getElementById('benefits-list');
     const items=[
       {key:'freeRevive',icon:'💖',name:'免费复活',desc:'剩余 '+Storage.getRevives()+' 次，优先使用免费复活'},
-      {key:'coinBonus',icon:'💰',name:'金币加成',desc:'获取金币时额外增加 0% (暂未实装)'},
-      {key:'doubleScore',icon:'⭐',name:'双倍得分',desc:'跳跃得分翻倍 (暂未实装)'}
+      {key:'coinBonus',icon:'💰',name:'金币加成 +50%',desc:'获取金币时额外增加 50%'},
+      {key:'doubleScore',icon:'⭐',name:'双倍得分',desc:'跳跃得分翻倍，冲分必备'}
     ];
     list.innerHTML=items.map(it=>{
-      const active=Storage.getBenefitEnabled(it.key,true);
+      const active=Storage.getBenefitEnabled(it.key,it.key==='freeRevive');
       return '<div class="benefit-item"><div class="benefit-info"><div class="benefit-icon">'+it.icon+'</div><div class="benefit-text"><div class="benefit-name">'+it.name+'</div><div class="benefit-desc">'+it.desc+'</div></div></div><div class="benefit-switch '+(active?'active':'')+'" data-key="'+it.key+'"></div></div>';
     }).join('');
     list.querySelectorAll('.benefit-switch').forEach(sw=>{
       sw.addEventListener('click',()=>{
         const key=sw.dataset.key;
-        const cur=Storage.getBenefitEnabled(key,true);
+        const cur=Storage.getBenefitEnabled(key,key==='freeRevive');
         Storage.setBenefitSwitch(key,!cur);
         sw.classList.toggle('active');
+        if(key==='freeRevive'){
+          renderBenefits();
+        }
       });
     });
   }
