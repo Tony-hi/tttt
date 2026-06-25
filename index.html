@@ -1576,7 +1576,20 @@ const Game = {
     for(const p of this.particles){
       drawList.push({ type:'particle', obj:p, depth: p.x + p.z });
     }
-    drawList.push({ type:'char', obj:this.char, depth: this.char.x + this.char.z + 0.1 });
+
+    let charDepth = this.char.x + this.char.z + 1;
+    if(this.char.landedOn && this.char.onGround){
+      const b = this.char.landedOn;
+      const relX = this.char.x - b.x;
+      const relZ = this.char.z - b.z;
+      const halfS = b.halfSize;
+      if(Math.abs(relX) > halfS * 0.7 || Math.abs(relZ) > halfS * 0.7){
+        charDepth = b.x + b.z + halfS * 2.5;
+      } else {
+        charDepth = b.x + b.z - 1;
+      }
+    }
+    drawList.push({ type:'char', obj:this.char, depth: charDepth });
 
     drawList.sort((a,b) => a.depth - b.depth);
 
