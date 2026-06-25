@@ -1055,10 +1055,12 @@ const Game = {
   canvas:null, ctx:null, W:0, H:0, dpr:1,
   running:false, rafId:0, lastT:0,
   blocks:[],
-  char:{x:0,y:0,vx:0,vy:0,rot:0,onGround:true,bounceT:0,landedOn:null,combo:0},
+  char:{x:0,y:0,vx:0,vy:0,rot:0,onGround:true,bounceT:0,landedOn:null,combo:0,squash:0,prevY:0},
   cameraX:0,
   power:0, charging:false, chargeStart:0,
   score:0, best:0, hintShown:false,
+  particles:[],
+  lastGapType:0,
 
   init(){
     this.canvas=document.getElementById('game-canvas');
@@ -1085,13 +1087,15 @@ const Game = {
     this.blocks=[];
     const blockH = this.BLOCK_SIZE * this.BLOCK_HEIGHT_RATIO;
     const topY = this.groundY - blockH;
-    this.char={x:0,y:topY,vx:0,vy:0,rot:0,onGround:true,bounceT:0,landedOn:null,combo:0,prevY:topY};
+    this.char={x:0,y:topY,vx:0,vy:0,rot:0,onGround:true,bounceT:0,landedOn:null,combo:0,squash:0,prevY:topY};
     this.cameraX=0;
     this.charging=false; this.power=0; this.hintShown=false;
     this.lastGapType=0;
+    this.particles = [];
     document.getElementById('hud-power-fill').style.width='0%';
     document.getElementById('hud-hint').style.display='block';
     const b1 = this.makeBlock(40, topY, 0);
+    b1.squash = 0;
     this.blocks.push(b1);
     this.spawnNextBlock();
     this.char.x = b1.x + b1.w / 2;
@@ -1103,7 +1107,23 @@ const Game = {
   },
   makeBlock(x, y, gapType){
     const s = this.BLOCK_SIZE;
-    return { x:x, y:y, w:s, h:s, type:gapType };
+    // gapType 0=basic(gray), 1=gift box, 2=book
+    const themes = [
+      { id:'basic',  score:1,  size: 1.0,  height: 0.42 },
+      { id:'gift',   score:3,  size: 0.95, height: 0.55 },
+      { id:'book',   score:5,  size: 0.90, height: 0.50 }
+    ];
+    const theme = themes[gapType] || themes[0];
+    return {
+      x: x,
+      y: y,
+      w: s * theme.size,
+      h: s * theme.height,
+      type: gapType,
+      theme: theme.id,
+      score: theme.score,
+      squash: 0 // 0 = normal, 1 = fully squashed
+    };
   },
   spawnNextBlock(){
     let last = null;
@@ -1112,9 +1132,9 @@ const Game = {
     }
     if(!last) return;
     const gaps = [
-      {min: 80,  max: 130, type:0, weight: 45},
-      {min: 140, max: 200, type:1, weight: 35},
-      {min: 210, max: 290, type:2, weight: 20}
+      {min: 70,  max: 120, type:0, weight: 50},
+      {min: 130, max: 180, type:1, weight: 30},
+      {min: 190, max: 250, type:2, weight: 20}
     ];
     let pool = gaps.slice();
     if(this.lastGapType >= 0){
@@ -1125,9 +1145,8 @@ const Game = {
     for(const g of pool){ r -= g.weight; if(r<=0){ chosen = g; break; } }
     const gap = chosen.min + Math.random() * (chosen.max - chosen.min);
     const newX = last.x + last.w + gap;
-    const blockH = this.BLOCK_SIZE * this.BLOCK_HEIGHT_RATIO;
-    const baseTopY = this.groundY - blockH;
-    const yVar = (Math.random() - 0.5) * 20;
+    const baseTopY = this.groundY - this.BLOCK_SIZE * 0.42;
+    const yVar = (Math.random() - 0.5) * 16;
     const nb = this.makeBlock(newX, baseTopY + yVar, chosen.type);
     this.blocks.push(nb);
     this.lastGapType = chosen.type;
@@ -1184,27 +1203,39 @@ const Game = {
   },
 
   update(dt){
-    // Charging bar
     if(this.charging){
       const elapsed=(performance.now()-this.chargeStart)/1000;
       const p=Math.min(elapsed/2.0,1);
       document.getElementById('hud-power-fill').style.width=(p*100)+'%';
+      this.char.squash = p * 0.35;
+      if(this.char.landedOn){
+        this.char.landedOn.squash = p * 0.25;
+      }
+      this.spawnChargeParticles(p);
+    } else {
+      if(this.char.squash > 0){
+        this.char.squash = Math.max(0, this.char.squash - dt * 4);
+      }
+      for(const b of this.blocks){
+        if(b.squash > 0){
+          b.squash = Math.max(0, b.squash - dt * 5);
+        }
+      }
     }
 
+    this.updateParticles(dt);
+
     if(!this.char.onGround){
-      // Physics
       this.char.prevY = this.char.y;
-      this.char.vy += 1600*dt; // gravity
+      this.char.vy += 1600*dt;
       this.char.x += this.char.vx*dt;
       this.char.y += this.char.vy*dt;
       this.char.rot += this.char.rotSpeed;
 
-      // Landing check — only from above (prevY was above block top)
       if(this.char.vy > 0){
         for(const b of this.blocks){
           if(b === this.char.landedOn) continue;
           if(this.char.x >= b.x && this.char.x <= b.x + b.w){
-            // Crossed the top surface this frame
             if(this.char.prevY <= b.y + 2 && this.char.y >= b.y){
               this.landOn(b);
               break;
@@ -1213,12 +1244,10 @@ const Game = {
         }
       }
 
-      // Fall off
       if(this.char.y > this.H + 100){
         this.end();
       }
     } else {
-      // Standing: check if still on a block
       let stillOnBlock = false;
       for(const b of this.blocks){
         if(this.char.x >= b.x && this.char.x <= b.x + b.w && Math.abs(this.char.y - b.y) < 5){
@@ -1227,13 +1256,11 @@ const Game = {
         }
       }
       if(!stillOnBlock){
-        // Walked off edge — start falling
         this.char.onGround = false;
         this.char.vy = 0;
         this.char.vx = 0;
         this.char.landedOn = null;
       } else {
-        // Standing: subtle bounce
         if(this.char.bounceT>0){
           this.char.bounceT-=dt;
           if(this.char.bounceT<0) this.char.bounceT=0;
@@ -1241,8 +1268,48 @@ const Game = {
       }
     }
 
-    // Camera
     this.updateCamera();
+  },
+  spawnChargeParticles(power){
+    if(!this.char.landedOn) return;
+    if(Math.random() > 0.6) return;
+    const b = this.char.landedOn;
+    const sx = this.screenX(this.char.x);
+    const baseY = b.y + b.h * (1 - b.squash * 0.5);
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 10 + Math.random() * 20;
+    const targetAngle = Math.PI * 0.5 + (Math.random() - 0.5) * 0.6;
+    this.particles.push({
+      x: this.char.x + Math.cos(angle) * radius,
+      y: baseY - 10 + Math.random() * 20,
+      vx: Math.cos(targetAngle) * (30 + power * 60),
+      vy: -Math.sin(targetAngle) * (40 + power * 80),
+      life: 0.6,
+      maxLife: 0.6,
+      size: 2 + Math.random() * 3,
+      color: `rgba(255,255,255,` + (0.6 + power * 0.3) + `)`
+    });
+  },
+  updateParticles(dt){
+    for(let i = this.particles.length - 1; i >= 0; i--){
+      const p = this.particles[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += 300 * dt;
+      p.life -= dt;
+      if(p.life <= 0){
+        this.particles.splice(i, 1);
+      }
+    }
+  },
+  drawParticles(ctx){
+    for(const p of this.particles){
+      const alpha = p.life / p.maxLife;
+      ctx.fillStyle = p.color.replace(/[\d.]+\)$/, alpha.toFixed(2) + ')');
+      ctx.beginPath();
+      ctx.arc(this.screenX(p.x), p.y, p.size * alpha, 0, Math.PI * 2);
+      ctx.fill();
+    }
   },
 
   landOn(b){
@@ -1256,7 +1323,7 @@ const Game = {
 
     // Landed on a different block = successful jump
     if(b !== wasOnBlock){
-      const base=[1,3,5][b.type] || 1;
+      const base = b.score || 1;
       const comboBonus=(this.combo>=1)?2:0;
       const gain=base+comboBonus;
       this.combo++;
@@ -1330,6 +1397,9 @@ const Game = {
       this.drawBlock(ctx,b);
     }
 
+    // Particles
+    this.drawParticles(ctx);
+
     // Character
     this.drawChar(ctx);
   },
@@ -1348,114 +1418,240 @@ const Game = {
   drawBlock(ctx,b){
     const sx=this.screenX(b.x);
     const s = b.w;
-    if(sx>this.W+100 || sx+s<-100) return;
+    if(sx>this.W+150 || sx+s<-150) return;
     const top = b.y;
+    const squash = b.squash || 0;
+    const sqH = 1 - squash;
+    const sqW = 1 + squash * 0.2;
+    const ws = s * sqW;
+    const isoDx = ws * 0.55;
+    const isoDy = ws * 0.28;
+    const blockH = b.h * sqH;
+    const bx = sx - (ws - s) / 2;
+    const by = top + (b.h - blockH);
 
-    // View from front-right-top (like classic "微信跳一跳")
-    // We see: top face + front face + right face
-    // Top face leans toward back-left (up-left on screen)
-    const isoDx = s * 0.55;
-    const isoDy = s * 0.28;
-    const blockH = s * 0.30;
-
-    // Shadow on ground
-    ctx.fillStyle='rgba(60,40,100,0.15)';
+    // Shadow
+    ctx.fillStyle='rgba(50,30,80,0.18)';
     ctx.beginPath();
-    ctx.ellipse(sx + s/2 - isoDx*0.3, top + blockH + 6, s*0.55, 5, 0, 0, Math.PI*2);
+    ctx.ellipse(bx + ws/2 - isoDx*0.3, by + blockH + 4, ws*0.5, 5, 0, 0, Math.PI*2);
     ctx.fill();
 
-    // Right face (darker)
+    if(b.theme === 'gift'){
+      this.drawGiftBlock(ctx, bx, by, ws, blockH, isoDx, isoDy);
+    } else if(b.theme === 'book'){
+      this.drawBookBlock(ctx, bx, by, ws, blockH, isoDx, isoDy);
+    } else {
+      this.drawBasicBlock(ctx, bx, by, ws, blockH, isoDx, isoDy);
+    }
+  },
+  drawBasicBlock(ctx, x, y, w, h, isoDx, isoDy){
+    // Right face
     ctx.fillStyle = '#8A90A3';
     ctx.beginPath();
-    ctx.moveTo(sx + s, top);                      // front-right top
-    ctx.lineTo(sx + s - isoDx, top - isoDy);      // back-right top
-    ctx.lineTo(sx + s - isoDx, top + blockH - isoDy); // back-right bottom
-    ctx.lineTo(sx + s, top + blockH);             // front-right bottom
+    ctx.moveTo(x + w, y);
+    ctx.lineTo(x + w - isoDx, y - isoDy);
+    ctx.lineTo(x + w - isoDx, y + h - isoDy);
+    ctx.lineTo(x + w, y + h);
     ctx.closePath();
     ctx.fill();
-    // Right face bottom dark
-    ctx.fillStyle = 'rgba(0,0,0,0.1)';
-    ctx.beginPath();
-    ctx.moveTo(sx + s, top + blockH - 4);
-    ctx.lineTo(sx + s - isoDx, top + blockH - isoDy - 4);
-    ctx.lineTo(sx + s - isoDx, top + blockH - isoDy);
-    ctx.lineTo(sx + s, top + blockH);
-    ctx.closePath();
-    ctx.fill();
-
-    // Front face (medium)
+    // Front face
     ctx.fillStyle = '#B4B9C8';
-    ctx.beginPath();
-    ctx.moveTo(sx, top);
-    ctx.lineTo(sx + s, top);
-    ctx.lineTo(sx + s, top + blockH);
-    ctx.lineTo(sx, top + blockH);
-    ctx.closePath();
-    ctx.fill();
-    // Front face gradient
-    const frontGrd = ctx.createLinearGradient(sx, top, sx, top + blockH);
-    frontGrd.addColorStop(0, 'rgba(255,255,255,0.1)');
-    frontGrd.addColorStop(1, 'rgba(0,0,0,0.08)');
-    ctx.fillStyle = frontGrd;
-    ctx.fillRect(sx, top, s, blockH);
-
-    // Top face (lightest, leans back-left)
-    // Front-left: (sx, top), Front-right: (sx+s, top)
-    // Back-right: (sx+s-isoDx, top-isoDy), Back-left: (sx-isoDx, top-isoDy)
+    ctx.fillRect(x, y, w, h);
+    const grd = ctx.createLinearGradient(x, y, x, y + h);
+    grd.addColorStop(0, 'rgba(255,255,255,0.1)');
+    grd.addColorStop(1, 'rgba(0,0,0,0.08)');
+    ctx.fillStyle = grd;
+    ctx.fillRect(x, y, w, h);
+    // Top face
     ctx.fillStyle = '#D5D8E0';
     ctx.beginPath();
-    ctx.moveTo(sx, top);                          // front-left
-    ctx.lineTo(sx + s, top);                      // front-right
-    ctx.lineTo(sx + s - isoDx, top - isoDy);      // back-right
-    ctx.lineTo(sx - isoDx, top - isoDy);          // back-left
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + w, y);
+    ctx.lineTo(x + w - isoDx, y - isoDy);
+    ctx.lineTo(x - isoDx, y - isoDy);
     ctx.closePath();
     ctx.fill();
-    // Top face highlight (front edge brightest)
+    // Top highlight
     ctx.fillStyle = '#E8EAF0';
     ctx.beginPath();
-    ctx.moveTo(sx + 3, top + 0.5);
-    ctx.lineTo(sx + s - 3, top + 0.5);
-    ctx.lineTo(sx + s - 6, top + 3);
-    ctx.lineTo(sx + 6, top + 3);
+    ctx.moveTo(x + 3, y + 0.5);
+    ctx.lineTo(x + w - 3, y + 0.5);
+    ctx.lineTo(x + w - 6, y + 3);
+    ctx.lineTo(x + 6, y + 3);
     ctx.closePath();
     ctx.fill();
-
-    // Edge outlines
-    ctx.strokeStyle = 'rgba(80,70,100,0.18)';
+    // Edges
+    ctx.strokeStyle = 'rgba(80,70,100,0.15)';
     ctx.lineWidth = 1;
     ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + w, y);
+    ctx.lineTo(x + w - isoDx, y - isoDy);
+    ctx.lineTo(x - isoDx, y - isoDy);
+    ctx.closePath();
+    ctx.moveTo(x + w, y);
+    ctx.lineTo(x + w, y + h);
+    ctx.moveTo(x + w - isoDx, y - isoDy);
+    ctx.lineTo(x + w - isoDx, y + h - isoDy);
+    ctx.stroke();
+  },
+  drawGiftBlock(ctx, x, y, w, h, isoDx, isoDy){
+    const lidH = h * 0.22;
+    const bodyY = y + lidH;
+    const bodyH = h - lidH;
+    const ribbonW = w * 0.18;
+    const ribbonX = x + w/2 - ribbonW/2;
+    // Right face body
+    ctx.fillStyle = '#C04545';
+    ctx.beginPath();
+    ctx.moveTo(x + w, bodyY);
+    ctx.lineTo(x + w - isoDx, bodyY - isoDy);
+    ctx.lineTo(x + w - isoDx, y + h - isoDy);
+    ctx.lineTo(x + w, y + h);
+    ctx.closePath();
+    ctx.fill();
+    // Right face lid
+    ctx.fillStyle = '#E05555';
+    ctx.beginPath();
+    ctx.moveTo(x + w, y);
+    ctx.lineTo(x + w - isoDx, y - isoDy);
+    ctx.lineTo(x + w - isoDx, bodyY - isoDy);
+    ctx.lineTo(x + w, bodyY);
+    ctx.closePath();
+    ctx.fill();
+    // Front face body
+    ctx.fillStyle = '#D94848';
+    ctx.fillRect(x, bodyY, w, bodyH);
+    // Front face lid
+    ctx.fillStyle = '#F06666';
+    ctx.fillRect(x, y, w, lidH);
+    // Front ribbon vertical
+    ctx.fillStyle = '#FFD93D';
+    ctx.fillRect(ribbonX, y, ribbonW, h);
     // Top face
-    ctx.moveTo(sx, top);
-    ctx.lineTo(sx + s, top);
-    ctx.lineTo(sx + s - isoDx, top - isoDy);
-    ctx.lineTo(sx - isoDx, top - isoDy);
-    ctx.closePath();
-    // Right edges
-    ctx.moveTo(sx + s, top);
-    ctx.lineTo(sx + s, top + blockH);
-    ctx.moveTo(sx + s - isoDx, top - isoDy);
-    ctx.lineTo(sx + s - isoDx, top + blockH - isoDy);
-    ctx.stroke();
-
-    // Type indicator dot on top face
-    const colors=['#3DBE6F','#F4C25C','#E85A4F'];
-    const accent = colors[b.type] || '#888';
-    ctx.fillStyle = accent;
+    ctx.fillStyle = '#F06666';
     ctx.beginPath();
-    const dotX = sx + s/2 - isoDx*0.35;
-    const dotY = top - isoDy*0.55;
-    ctx.arc(dotX, dotY, 4, 0, Math.PI*2);
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + w, y);
+    ctx.lineTo(x + w - isoDx, y - isoDy);
+    ctx.lineTo(x - isoDx, y - isoDy);
+    ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    // Top ribbon horizontal
+    ctx.fillStyle = '#FFD93D';
+    ctx.beginPath();
+    ctx.moveTo(x, y + lidH*0.55);
+    ctx.lineTo(x + w, y + lidH*0.55);
+    ctx.lineTo(x + w - isoDx, y - isoDy + lidH*0.55);
+    ctx.lineTo(x - isoDx, y - isoDy + lidH*0.55);
+    ctx.closePath();
+    ctx.fill();
+    // Top ribbon vertical
+    const rTopX = ribbonX;
+    const rTopW = ribbonW;
+    ctx.fillStyle = '#FFD93D';
+    ctx.beginPath();
+    ctx.moveTo(rTopX, y);
+    ctx.lineTo(rTopX + rTopW, y);
+    ctx.lineTo(rTopX + rTopW - isoDx, y - isoDy);
+    ctx.lineTo(rTopX - isoDx, y - isoDy);
+    ctx.closePath();
+    ctx.fill();
+    // Bow on top center
+    const bowCx = x + w/2 - isoDx*0.5;
+    const bowCy = y - isoDy*0.5;
+    const bowR = w * 0.12;
+    ctx.fillStyle = '#FFD93D';
+    ctx.beginPath();
+    ctx.ellipse(bowCx - bowR*0.7, bowCy, bowR, bowR*0.7, -0.3, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(bowCx + bowR*0.7, bowCy, bowR, bowR*0.7, 0.3, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#E8B820';
+    ctx.beginPath();
+    ctx.arc(bowCx, bowCy, bowR*0.45, 0, Math.PI*2);
+    ctx.fill();
+    // Edges
+    ctx.strokeStyle = 'rgba(120,20,20,0.2)';
     ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + w, y);
+    ctx.lineTo(x + w - isoDx, y - isoDy);
+    ctx.lineTo(x - isoDx, y - isoDy);
+    ctx.closePath();
+    ctx.moveTo(x + w, y);
+    ctx.lineTo(x + w, y + h);
+    ctx.moveTo(x + w - isoDx, y - isoDy);
+    ctx.lineTo(x + w - isoDx, y + h - isoDy);
     ctx.stroke();
-
-    // Score label
-    ctx.fillStyle = accent;
-    ctx.font = 'bold 13px "Noto Sans SC", sans-serif';
-    ctx.textAlign = 'center';
-    const labels=['+1','+3','+5'];
-    ctx.fillText(labels[b.type] || '', sx + s/2 - isoDx*0.35, top - isoDy - 10);
+  },
+  drawBookBlock(ctx, x, y, w, h, isoDx, isoDy){
+    const coverW = w * 0.06;
+    const pagesH = h - coverW;
+    // Right face - spine (dark blue)
+    ctx.fillStyle = '#1E4D6B';
+    ctx.beginPath();
+    ctx.moveTo(x + w, y);
+    ctx.lineTo(x + w - isoDx, y - isoDy);
+    ctx.lineTo(x + w - isoDx, y + h - isoDy);
+    ctx.lineTo(x + w, y + h);
+    ctx.closePath();
+    ctx.fill();
+    // Front face - cover dark blue
+    ctx.fillStyle = '#2C6E91';
+    ctx.fillRect(x, y, w, h);
+    // Pages (white side)
+    ctx.fillStyle = '#F0EAD6';
+    ctx.fillRect(x + coverW, y + coverW, w - coverW*2, pagesH);
+    // Page lines
+    ctx.strokeStyle = 'rgba(100,100,100,0.15)';
+    ctx.lineWidth = 0.8;
+    for(let i = 0; i < 4; i++){
+      const ly = y + coverW + (pagesH/5) * (i+1);
+      ctx.beginPath();
+      ctx.moveTo(x + coverW, ly);
+      ctx.lineTo(x + w - coverW, ly);
+      ctx.stroke();
+    }
+    // Top face - cover
+    ctx.fillStyle = '#3A85B0';
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + w, y);
+    ctx.lineTo(x + w - isoDx, y - isoDy);
+    ctx.lineTo(x - isoDx, y - isoDy);
+    ctx.closePath();
+    ctx.fill();
+    // Top page edge
+    ctx.fillStyle = '#F0EAD6';
+    ctx.beginPath();
+    ctx.moveTo(x + coverW, y + coverW*0.3);
+    ctx.lineTo(x + w - coverW, y + coverW*0.3);
+    ctx.lineTo(x + w - coverW - isoDx, y - isoDy + coverW*0.3);
+    ctx.lineTo(x + coverW - isoDx, y - isoDy + coverW*0.3);
+    ctx.closePath();
+    ctx.fill();
+    // Gold bookmark on top
+    ctx.fillStyle = '#FFD700';
+    const bmX = x + w * 0.75 - isoDx*0.5;
+    const bmY = y - isoDy*0.5;
+    ctx.fillRect(bmX - 3, bmY - 2, 6, h * 0.4 + isoDy*0.5);
+    // Edges
+    ctx.strokeStyle = 'rgba(20,50,70,0.25)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + w, y);
+    ctx.lineTo(x + w - isoDx, y - isoDy);
+    ctx.lineTo(x - isoDx, y - isoDy);
+    ctx.closePath();
+    ctx.moveTo(x + w, y);
+    ctx.lineTo(x + w, y + h);
+    ctx.moveTo(x + w - isoDx, y - isoDy);
+    ctx.lineTo(x + w - isoDx, y + h - isoDy);
+    ctx.stroke();
   },
   drawChar(ctx){
     const sx=this.screenX(this.char.x);
@@ -1463,14 +1659,20 @@ const Game = {
     const baseY=this.char.y;
     const bounce=this.char.bounceT>0 ? Math.sin((0.25-this.char.bounceT)/0.25*Math.PI)*6 : 0;
     const y=baseY-bounce;
+    const squash = this.char.squash || 0;
+    const sqH = 1 - squash;
+    const sqW = 1 + squash * 0.3;
+    const drawH = charH * sqH;
+    const charY = y + (charH - drawH);
     // Shadow
     ctx.fillStyle='rgba(0,0,0,0.18)';
     ctx.beginPath();
-    ctx.ellipse(sx, y + 2, 18, 4, 0, 0, Math.PI*2);
+    ctx.ellipse(sx, y + 2, 20 * sqW, 4.5, 0, 0, Math.PI*2);
     ctx.fill();
-    // Character — always upright, no rotation
+    // Character
     ctx.save();
-    ctx.translate(sx, y);
+    ctx.translate(sx, charY);
+    ctx.scale(sqW, sqH);
     drawCharacter(ctx, Storage.getCurrent(), charH, performance.now());
     ctx.restore();
   }
