@@ -1347,22 +1347,43 @@ const Game = {
   },
   drawBlock(ctx,b){
     const sx=this.screenX(b.x);
-    const s = b.w; // top face width
+    const s = b.w;
     if(sx>this.W+100 || sx+s<-100) return;
     const top = b.y;
 
-    // Isometric view from back-top — like WeChat Jump
-    const isoDx = s * 0.32;
-    const isoDy = s * 0.16;
-    const blockH = s * 0.42; // block height (short, flat cube)
+    // View from front-right-top (like classic "微信跳一跳")
+    // We see: top face + front face + right face
+    // Top face leans toward back-left (up-left on screen)
+    const isoDx = s * 0.28;  // back offset = -x direction
+    const isoDy = s * 0.14;  // up offset = -y direction
+    const blockH = s * 0.40;
 
     // Shadow on ground
     ctx.fillStyle='rgba(60,40,100,0.15)';
     ctx.beginPath();
-    ctx.ellipse(sx + s/2 + isoDx*0.4, top + blockH + 6, s*0.55, 5, 0, 0, Math.PI*2);
+    ctx.ellipse(sx + s/2 - isoDx*0.3, top + blockH + 6, s*0.55, 5, 0, 0, Math.PI*2);
     ctx.fill();
 
-    // Front face (facing camera / downward)
+    // Right face (darker)
+    ctx.fillStyle = '#8A90A3';
+    ctx.beginPath();
+    ctx.moveTo(sx + s, top);                      // front-right top
+    ctx.lineTo(sx + s - isoDx, top - isoDy);      // back-right top
+    ctx.lineTo(sx + s - isoDx, top + blockH - isoDy); // back-right bottom
+    ctx.lineTo(sx + s, top + blockH);             // front-right bottom
+    ctx.closePath();
+    ctx.fill();
+    // Right face bottom dark
+    ctx.fillStyle = 'rgba(0,0,0,0.1)';
+    ctx.beginPath();
+    ctx.moveTo(sx + s, top + blockH - 4);
+    ctx.lineTo(sx + s - isoDx, top + blockH - isoDy - 4);
+    ctx.lineTo(sx + s - isoDx, top + blockH - isoDy);
+    ctx.lineTo(sx + s, top + blockH);
+    ctx.closePath();
+    ctx.fill();
+
+    // Front face (medium)
     ctx.fillStyle = '#B4B9C8';
     ctx.beginPath();
     ctx.moveTo(sx, top);
@@ -1371,77 +1392,70 @@ const Game = {
     ctx.lineTo(sx, top + blockH);
     ctx.closePath();
     ctx.fill();
-    // Front face vertical gradient
+    // Front face gradient
     const frontGrd = ctx.createLinearGradient(sx, top, sx, top + blockH);
-    frontGrd.addColorStop(0, 'rgba(255,255,255,0.12)');
-    frontGrd.addColorStop(1, 'rgba(0,0,0,0.1)');
+    frontGrd.addColorStop(0, 'rgba(255,255,255,0.1)');
+    frontGrd.addColorStop(1, 'rgba(0,0,0,0.08)');
     ctx.fillStyle = frontGrd;
     ctx.fillRect(sx, top, s, blockH);
 
-    // Top face (isometric diamond-like)
+    // Top face (lightest, leans back-left)
+    // Front-left: (sx, top), Front-right: (sx+s, top)
+    // Back-right: (sx+s-isoDx, top-isoDy), Back-left: (sx-isoDx, top-isoDy)
     ctx.fillStyle = '#D5D8E0';
     ctx.beginPath();
-    ctx.moveTo(sx, top);
-    ctx.lineTo(sx + isoDx, top - isoDy);
-    ctx.lineTo(sx + s + isoDx, top - isoDy);
-    ctx.lineTo(sx + s, top);
+    ctx.moveTo(sx, top);                          // front-left
+    ctx.lineTo(sx + s, top);                      // front-right
+    ctx.lineTo(sx + s - isoDx, top - isoDy);      // back-right
+    ctx.lineTo(sx - isoDx, top - isoDy);          // back-left
     ctx.closePath();
     ctx.fill();
-    // Top face highlight (brightest area)
-    ctx.fillStyle = '#E2E4EC';
-    ctx.fillRect(sx + 3, top + 1, s - 6, 3);
-
-    // Right face
-    ctx.fillStyle = '#8A90A3';
+    // Top face highlight (front edge brightest)
+    ctx.fillStyle = '#E8EAF0';
     ctx.beginPath();
-    ctx.moveTo(sx + s, top);
-    ctx.lineTo(sx + s + isoDx, top - isoDy);
-    ctx.lineTo(sx + s + isoDx, top + blockH - isoDy);
-    ctx.lineTo(sx + s, top + blockH);
-    ctx.closePath();
-    ctx.fill();
-    // Right face bottom darkening
-    ctx.fillStyle = 'rgba(0,0,0,0.12)';
-    ctx.beginPath();
-    ctx.moveTo(sx + s, top + blockH - 4);
-    ctx.lineTo(sx + s + isoDx, top + blockH - isoDy - 4);
-    ctx.lineTo(sx + s + isoDx, top + blockH - isoDy);
-    ctx.lineTo(sx + s, top + blockH);
+    ctx.moveTo(sx + 3, top + 0.5);
+    ctx.lineTo(sx + s - 3, top + 0.5);
+    ctx.lineTo(sx + s - 6, top + 3);
+    ctx.lineTo(sx + 6, top + 3);
     ctx.closePath();
     ctx.fill();
 
-    // Subtle edge lines
-    ctx.strokeStyle = 'rgba(80,70,100,0.2)';
+    // Edge outlines
+    ctx.strokeStyle = 'rgba(80,70,100,0.18)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    // Top face outline
+    // Top face
     ctx.moveTo(sx, top);
-    ctx.lineTo(sx + isoDx, top - isoDy);
-    ctx.lineTo(sx + s + isoDx, top - isoDy);
     ctx.lineTo(sx + s, top);
-    // Right edge
-    ctx.moveTo(sx + s + isoDx, top - isoDy);
-    ctx.lineTo(sx + s + isoDx, top + blockH - isoDy);
+    ctx.lineTo(sx + s - isoDx, top - isoDy);
+    ctx.lineTo(sx - isoDx, top - isoDy);
+    ctx.closePath();
+    // Right edges
+    ctx.moveTo(sx + s, top);
     ctx.lineTo(sx + s, top + blockH);
+    ctx.moveTo(sx + s - isoDx, top - isoDy);
+    ctx.lineTo(sx + s - isoDx, top + blockH - isoDy);
     ctx.stroke();
 
-    // Type indicator — small dot on top face
+    // Type indicator dot on top face
     const colors=['#3DBE6F','#F4C25C','#E85A4F'];
     const accent = colors[b.type] || '#888';
     ctx.fillStyle = accent;
     ctx.beginPath();
-    ctx.arc(sx + s/2 + isoDx*0.4, top - isoDy*0.4, 4, 0, Math.PI*2);
+    const dotX = sx + s/2 - isoDx*0.35;
+    const dotY = top - isoDy*0.55;
+    ctx.arc(dotX, dotY, 4, 0, Math.PI*2);
     ctx.fill();
     ctx.strokeStyle = 'rgba(255,255,255,0.5)';
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Score label above block
+    // Score label
     ctx.fillStyle = accent;
     ctx.font = 'bold 13px "Noto Sans SC", sans-serif';
     ctx.textAlign = 'center';
     const labels=['+1','+3','+5'];
-    ctx.fillText(labels[b.type] || '', sx + s/2 + isoDx*0.4, top - isoDy - 8);
+    ctx.fillText(labels[b.type] || '', sx + s/2 - isoDx*0.35, top - isoDy - 10);
   },
   drawChar(ctx){
     const sx=this.screenX(this.char.x);
