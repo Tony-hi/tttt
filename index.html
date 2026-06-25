@@ -1109,9 +1109,9 @@ const Game = {
     }
     if(!last) return;
     const gaps = [
-      {min: 100, max: 150, type:0, weight: 45},
-      {min: 160, max: 210, type:1, weight: 35},
-      {min: 220, max: 290, type:2, weight: 20}
+      {min: 80,  max: 130, type:0, weight: 45},
+      {min: 140, max: 200, type:1, weight: 35},
+      {min: 210, max: 290, type:2, weight: 20}
     ];
     let pool = gaps.slice();
     if(this.lastGapType >= 0){
@@ -1145,25 +1145,20 @@ const Game = {
     if(!this.charging) return;
     this.charging=false;
     const elapsed=(performance.now()-this.chargeStart)/1000;
-    const power=Math.min(elapsed/1.2,1);
+    const power=Math.min(elapsed/2.0,1);
     this.power=power;
     this.jump(power);
     document.getElementById('hud-power-fill').style.width='0%';
   },
   jump(power){
     this.char.onGround=false;
-    // power 0~1 linearly maps to distance and height
-    // min jump: just barely to next block at closest gap
-    // max jump: well beyond farthest gap
-    const minDist = 110;   // short jump (power=0.3 or so)
-    const maxDist = 370;   // max jump distance
-    const minHeight = 60;
-    const maxHeight = 180;
-    // Ensure linear proportionality
+    const minDist = 40;
+    const maxDist = 400;
+    const minHeight = 40;
+    const maxHeight = 200;
     const dist = minDist + power * (maxDist - minDist);
     const height = minHeight + power * (maxHeight - minHeight);
-    const gravity = 1800;
-    // Perfect parabolic formula
+    const gravity = 1400;
     const upTime = Math.sqrt(2 * height / gravity);
     const totalTime = upTime * 2;
     this.char.vx = dist / totalTime;
@@ -1187,7 +1182,7 @@ const Game = {
     // Charging bar
     if(this.charging){
       const elapsed=(performance.now()-this.chargeStart)/1000;
-      const p=Math.min(elapsed/1.2,1);
+      const p=Math.min(elapsed/2.0,1);
       document.getElementById('hud-power-fill').style.width=(p*100)+'%';
     }
 
