@@ -1127,9 +1127,9 @@ const Game = {
   BLOCK_THEMES: [
     { id:'basic',  name:'基础',  score:1, size:1.00, height:1.0, topColor:'#E8E4F0', frontColor:'#B8B0CC', rightColor:'#8E86A6', accent:false },
     { id:'purple', name:'紫色',  score:2, size:0.90, height:0.9, topColor:'#D8C8F0', frontColor:'#A088CC', rightColor:'#7860A8', accent:false },
-    { id:'gift',   name:'礼盒',  score:3, size:0.85, height:1.1, topColor:'#FFB8B8', frontColor:'#E87878', rightColor:'#C04848', accent:true, accentColor:'#FFD93D' },
+    { id:'gift',   name:'礼盒',  score:3, size:0.85, height:1.1, topColor:'#FFB8B8', frontColor:'#F07070', rightColor:'#C04848', accent:true, accentColor:'#FFD93D', accentType:'gift' },
     { id:'blue',   name:'蓝色',  score:2, size:0.92, height:0.95,topColor:'#B8D8F0', frontColor:'#68A0CC', rightColor:'#3870A0', accent:false },
-    { id:'gold',   name:'金色',  score:5, size:0.78, height:0.85,topColor:'#FFE8A8', frontColor:'#E8C060', rightColor:'#B88830', accent:true, accentColor:'#FF8848' }
+    { id:'gold',   name:'金色',  score:5, size:0.78, height:0.85,topColor:'#FFE8A8', frontColor:'#E8C060', rightColor:'#B88830', accent:true, accentColor:'#FF8848', accentType:'stripe' }
   ],
 
   start(){
@@ -1702,54 +1702,118 @@ const Game = {
 
     if(b.theme.accent && b.theme.accentColor){
       const ac = b.theme.accentColor;
-      const aW = size * 0.12;
+      const aW = size * 0.14;
       const ax = bx;
       const az = bz;
 
-      const aftl = { x: this.screenX(ax - aW/2, az + aW/2, height), y: this.screenY(ax - aW/2, az + aW/2, height) };
-      const aftr = { x: this.screenX(ax + aW/2, az + aW/2, height), y: this.screenY(ax + aW/2, az + aW/2, height) };
-      const abtr = { x: this.screenX(ax + aW/2, az - aW/2, height), y: this.screenY(ax + aW/2, az - aW/2, height) };
-      const abtl = { x: this.screenX(ax - aW/2, az - aW/2, height), y: this.screenY(ax - aW/2, az - aW/2, height) };
+      if(b.theme.accentType === 'gift'){
+        const ribTopFTL = { x: this.screenX(ax - aW/2, az + halfS, height), y: this.screenY(ax - aW/2, az + halfS, height) };
+        const ribTopFTR = { x: this.screenX(ax + aW/2, az + halfS, height), y: this.screenY(ax + aW/2, az + halfS, height) };
+        const ribTopBTL = { x: this.screenX(ax - aW/2, az - halfS, height), y: this.screenY(ax - aW/2, az - halfS, height) };
+        const ribTopBTR = { x: this.screenX(ax + aW/2, az - halfS, height), y: this.screenY(ax + aW/2, az - halfS, height) };
 
-      const afbl = { x: this.screenX(ax - aW/2, az + aW/2, 0), y: this.screenY(ax - aW/2, az + aW/2, 0) };
-      const afbr = { x: this.screenX(ax + aW/2, az + aW/2, 0), y: this.screenY(ax + aW/2, az + aW/2, 0) };
-      const abbr = { x: this.screenX(ax + aW/2, az - aW/2, 0), y: this.screenY(ax + aW/2, az - aW/2, 0) };
+        const ribFrontTL = { x: this.screenX(ax - aW/2, az + halfS, 0), y: this.screenY(ax - aW/2, az + halfS, 0) };
+        const ribFrontTR = { x: this.screenX(ax + aW/2, az + halfS, 0), y: this.screenY(ax + aW/2, az + halfS, 0) };
 
-      ctx.fillStyle = ac;
-      ctx.beginPath();
-      ctx.moveTo(aftl.x, aftl.y);
-      ctx.lineTo(aftr.x, aftr.y);
-      ctx.lineTo(p.ftr.x, p.ftr.y);
-      ctx.lineTo(p.ftl.x, p.ftl.y);
-      ctx.closePath();
-      ctx.fill();
+        const ribRightTR = { x: this.screenX(ax + halfS, az + aW/2, 0), y: this.screenY(ax + halfS, az + aW/2, 0) };
+        const ribRightBR = { x: this.screenX(ax + halfS, az - aW/2, 0), y: this.screenY(ax + halfS, az - aW/2, 0) };
 
-      ctx.fillStyle = ac;
-      ctx.beginPath();
-      ctx.moveTo(afbl.x, afbl.y);
-      ctx.lineTo(aftl.x, aftl.y);
-      ctx.lineTo(p.ftl.x, p.ftl.y);
-      ctx.lineTo(p.fbl.x, p.fbl.y);
-      ctx.closePath();
-      ctx.fill();
+        const ribHLeftFL = { x: this.screenX(ax - halfS, az + aW/2, height), y: this.screenY(ax - halfS, az + aW/2, height) };
+        const ribHLeftFR = { x: this.screenX(ax + halfS, az + aW/2, height), y: this.screenY(ax + halfS, az + aW/2, height) };
+        const ribHLeftBR = { x: this.screenX(ax + halfS, az - aW/2, height), y: this.screenY(ax + halfS, az - aW/2, height) };
+        const ribHLeftBL = { x: this.screenX(ax - halfS, az - aW/2, height), y: this.screenY(ax - halfS, az - aW/2, height) };
 
-      ctx.fillStyle = this.darkenColor(ac, 0.25);
-      ctx.beginPath();
-      ctx.moveTo(aftr.x, aftr.y);
-      ctx.lineTo(abtr.x, abtr.y);
-      ctx.lineTo(p.btr.x, p.btr.y);
-      ctx.lineTo(p.ftr.x, p.ftr.y);
-      ctx.closePath();
-      ctx.fill();
+        ctx.fillStyle = ac;
+        ctx.beginPath();
+        ctx.moveTo(ribTopFTL.x, ribTopFTL.y);
+        ctx.lineTo(ribTopFTR.x, ribTopFTR.y);
+        ctx.lineTo(ribFrontTR.x, ribFrontTR.y);
+        ctx.lineTo(ribFrontTL.x, ribFrontTL.y);
+        ctx.closePath();
+        ctx.fill();
 
-      ctx.fillStyle = ac;
-      ctx.beginPath();
-      ctx.moveTo(aftl.x, aftl.y);
-      ctx.lineTo(aftr.x, aftr.y);
-      ctx.lineTo(abtr.x, abtr.y);
-      ctx.lineTo(abtl.x, abtl.y);
-      ctx.closePath();
-      ctx.fill();
+        const frontRibGrad = ctx.createLinearGradient(ribFrontTL.x, ribFrontTL.y, ribTopFTL.x, ribTopFTL.y);
+        frontRibGrad.addColorStop(0, 'rgba(0,0,0,0.15)');
+        frontRibGrad.addColorStop(1, 'rgba(255,255,255,0.1)');
+        ctx.fillStyle = frontRibGrad;
+        ctx.beginPath();
+        ctx.moveTo(ribTopFTL.x, ribTopFTL.y);
+        ctx.lineTo(ribTopFTR.x, ribTopFTR.y);
+        ctx.lineTo(ribFrontTR.x, ribFrontTR.y);
+        ctx.lineTo(ribFrontTL.x, ribFrontTL.y);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = this.darkenColor(ac, 0.2);
+        ctx.beginPath();
+        ctx.moveTo(ribTopFTR.x, ribTopFTR.y);
+        ctx.lineTo(ribTopBTR.x, ribTopBTR.y);
+        ctx.lineTo(ribRightBR.x, ribRightBR.y);
+        ctx.lineTo(ribRightTR.x, ribRightTR.y);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = ac;
+        ctx.beginPath();
+        ctx.moveTo(ribHLeftFL.x, ribHLeftFL.y);
+        ctx.lineTo(ribHLeftFR.x, ribHLeftFR.y);
+        ctx.lineTo(ribHLeftBR.x, ribHLeftBR.y);
+        ctx.lineTo(ribHLeftBL.x, ribHLeftBL.y);
+        ctx.closePath();
+        ctx.fill();
+
+        const cx = (p.ftl.x + p.btr.x) / 2;
+        const cy = (p.ftl.y + p.btr.y) / 2;
+        const bowR = size * 0.1;
+        ctx.fillStyle = ac;
+        ctx.beginPath();
+        ctx.ellipse(cx - bowR * 0.6, cy, bowR, bowR * 0.65, -0.4, 0, Math.PI*2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(cx + bowR * 0.6, cy, bowR, bowR * 0.65, 0.4, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = this.darkenColor(ac, 0.2);
+        ctx.beginPath();
+        ctx.arc(cx, cy, bowR * 0.4, 0, Math.PI*2);
+        ctx.fill();
+      } else if(b.theme.accentType === 'stripe'){
+        const stripeW = size * 0.18;
+        const off = size * 0.15;
+        const sFTL = { x: this.screenX(bx - halfS + off, bz + halfS, height), y: this.screenY(bx - halfS + off, bz + halfS, height) };
+        const sFTR = { x: this.screenX(bx - halfS + off + stripeW, bz + halfS, height), y: this.screenY(bx - halfS + off + stripeW, bz + halfS, height) };
+        const sBTL = { x: this.screenX(bx - halfS + off, bz - halfS, height), y: this.screenY(bx - halfS + off, bz - halfS, height) };
+        const sBTR = { x: this.screenX(bx - halfS + off + stripeW, bz - halfS, height), y: this.screenY(bx - halfS + off + stripeW, bz - halfS, height) };
+
+        const sFBL = { x: this.screenX(bx - halfS + off, bz + halfS, 0), y: this.screenY(bx - halfS + off, bz + halfS, 0) };
+        const sFBR = { x: this.screenX(bx - halfS + off + stripeW, bz + halfS, 0), y: this.screenY(bx - halfS + off + stripeW, bz + halfS, 0) };
+
+        ctx.fillStyle = ac;
+        ctx.beginPath();
+        ctx.moveTo(sFTL.x, sFTL.y);
+        ctx.lineTo(sFTR.x, sFTR.y);
+        ctx.lineTo(sFBR.x, sFBR.y);
+        ctx.lineTo(sFBL.x, sFBL.y);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = this.darkenColor(ac, 0.15);
+        ctx.beginPath();
+        ctx.moveTo(sFTR.x, sFTR.y);
+        ctx.lineTo(sBTR.x, sBTR.y);
+        ctx.lineTo(p.btr.x, p.btr.y);
+        ctx.lineTo(p.ftr.x, p.ftr.y);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = ac;
+        ctx.beginPath();
+        ctx.moveTo(sFTL.x, sFTL.y);
+        ctx.lineTo(sFTR.x, sFTR.y);
+        ctx.lineTo(sBTR.x, sBTR.y);
+        ctx.lineTo(sBTL.x, sBTL.y);
+        ctx.closePath();
+        ctx.fill();
+      }
     }
 
     ctx.strokeStyle = 'rgba(40, 30, 70, 0.2)';
