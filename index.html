@@ -1148,8 +1148,18 @@ const Game = {
     this.floatTexts=[];
     this.charging=false; this.power=0;
 
-    const startBlock = this.createBlock(0, 0, 0);
+    const initAngle = (Math.random() - 0.5) * 0.6;
+    const initDist = 60 + Math.random() * 120;
+    const initX = Math.cos(initAngle) * initDist;
+    const initZ = Math.sin(initAngle) * initDist;
+    const initType = [0, 0, 0, 1, 1, 2, 3][Math.floor(Math.random() * 7)];
+    const initSecondType = [0, 1, 1, 2, 3, 3, 4][Math.floor(Math.random() * 7)];
+
+    const startBlock = this.createBlock(0, 0, initType);
     this.blocks.push(startBlock);
+
+    const secondBlock = this.createBlock(initX, initZ, initSecondType);
+    this.blocks.push(secondBlock);
 
     this.char.x = 0;
     this.char.z = 0;
@@ -1163,7 +1173,7 @@ const Game = {
     this.char.prevY = this.char.y;
     this.char.rot = 0;
 
-    this.spawnNextBlock();
+    for(let i = 0; i < 3; i++) this.spawnNextBlock();
 
     this.camera.x = 0; this.camera.z = 0; this.camera.y = 0;
     this.targetCamera.x = 0; this.targetCamera.z = 0; this.targetCamera.y = 0;
@@ -1201,9 +1211,13 @@ const Game = {
     if(!last) return;
 
     const distOptions = [
-      { min: 70,  max: 120, typePool: [0, 0, 0, 1, 3], weight: 45 },
-      { min: 130, max: 180, typePool: [1, 2, 3, 0], weight: 35 },
-      { min: 190, max: 260, typePool: [2, 4, 4],    weight: 20 }
+      { min: 55,  max: 85,  typePool: [0, 0, 0, 0, 1, 1, 3, 3], weight: 20 },
+      { min: 80,  max: 120, typePool: [0, 1, 1, 1, 2, 3, 3], weight: 22 },
+      { min: 100, max: 145, typePool: [1, 1, 2, 2, 3, 4], weight: 18 },
+      { min: 130, max: 170, typePool: [1, 2, 2, 3, 4, 4], weight: 15 },
+      { min: 150, max: 195, typePool: [2, 2, 4, 4, 4], weight: 12 },
+      { min: 175, max: 220, typePool: [2, 4, 4, 4], weight: 8 },
+      { min: 200, max: 250, typePool: [4, 4, 4], weight: 5 }
     ];
 
     const totalW = distOptions.reduce((s,d)=>s+d.weight,0);
@@ -1215,7 +1229,7 @@ const Game = {
     const pool = chosen.typePool;
     const typeIdx = pool[Math.floor(Math.random() * pool.length)];
 
-    const angle = (Math.random() - 0.5) * 0.12;
+    const angle = (Math.random() - 0.5) * 0.2;
     const dx = Math.cos(angle) * dist;
     const dz = Math.sin(angle) * dist;
 
