@@ -1612,19 +1612,21 @@ const Game = {
     const size = b.size * (1 + squash * 0.25);
     const height = b.height * (1 - squash);
     const halfS = size / 2;
+    const bx = b.x + shake;
+    const bz = b.z;
 
-    const cx = this.screenX(b.x + shake, b.z);
-    const cyTop = this.screenY(b.x + shake, b.z, height);
-    const cyBot = this.screenY(b.x + shake, b.z, 0);
+    const p = {};
+    p.fbl = { x: this.screenX(bx - halfS, bz + halfS, 0),      y: this.screenY(bx - halfS, bz + halfS, 0) };
+    p.fbr = { x: this.screenX(bx + halfS, bz + halfS, 0),      y: this.screenY(bx + halfS, bz + halfS, 0) };
+    p.ftl = { x: this.screenX(bx - halfS, bz + halfS, height), y: this.screenY(bx - halfS, bz + halfS, height) };
+    p.ftr = { x: this.screenX(bx + halfS, bz + halfS, height), y: this.screenY(bx + halfS, bz + halfS, height) };
+    p.bbl = { x: this.screenX(bx - halfS, bz - halfS, 0),      y: this.screenY(bx - halfS, bz - halfS, 0) };
+    p.bbr = { x: this.screenX(bx + halfS, bz - halfS, 0),      y: this.screenY(bx + halfS, bz - halfS, 0) };
+    p.btl = { x: this.screenX(bx - halfS, bz - halfS, height), y: this.screenY(bx - halfS, bz - halfS, height) };
+    p.btr = { x: this.screenX(bx + halfS, bz - halfS, height), y: this.screenY(bx + halfS, bz - halfS, height) };
 
-    const isoDx = halfS * Math.cos(this.ISO_ANGLE) * 2;
-    const isoDy = halfS * Math.sin(this.ISO_ANGLE) * 2;
-
-    const leftX = cx - isoDx / 2;
-    const rightX = cx + isoDx / 2;
-    const backLeftX = leftX - isoDx / 2;
-    const backRightX = rightX - isoDx / 2;
-    const backY = cyTop - isoDy / 2;
+    const cx = this.screenX(bx, bz);
+    const cyBot = this.screenY(bx, bz, 0);
 
     ctx.save();
 
@@ -1635,91 +1637,135 @@ const Game = {
 
     ctx.fillStyle = b.theme.rightColor;
     ctx.beginPath();
-    ctx.moveTo(rightX, cyTop);
-    ctx.lineTo(backRightX, backY);
-    ctx.lineTo(backRightX, backY + height);
-    ctx.lineTo(rightX, cyBot);
+    ctx.moveTo(p.fbr.x, p.fbr.y);
+    ctx.lineTo(p.bbr.x, p.bbr.y);
+    ctx.lineTo(p.btr.x, p.btr.y);
+    ctx.lineTo(p.ftr.x, p.ftr.y);
+    ctx.closePath();
+    ctx.fill();
+
+    const rightGrad = ctx.createLinearGradient(p.fbr.x, p.fbr.y, p.bbr.x, p.bbr.y);
+    rightGrad.addColorStop(0, 'rgba(255,255,255,0.08)');
+    rightGrad.addColorStop(1, 'rgba(0,0,0,0.15)');
+    ctx.fillStyle = rightGrad;
+    ctx.beginPath();
+    ctx.moveTo(p.fbr.x, p.fbr.y);
+    ctx.lineTo(p.bbr.x, p.bbr.y);
+    ctx.lineTo(p.btr.x, p.btr.y);
+    ctx.lineTo(p.ftr.x, p.ftr.y);
     ctx.closePath();
     ctx.fill();
 
     ctx.fillStyle = b.theme.frontColor;
     ctx.beginPath();
-    ctx.moveTo(leftX, cyTop);
-    ctx.lineTo(rightX, cyTop);
-    ctx.lineTo(rightX, cyBot);
-    ctx.lineTo(leftX, cyBot);
+    ctx.moveTo(p.fbl.x, p.fbl.y);
+    ctx.lineTo(p.fbr.x, p.fbr.y);
+    ctx.lineTo(p.ftr.x, p.ftr.y);
+    ctx.lineTo(p.ftl.x, p.ftl.y);
     ctx.closePath();
     ctx.fill();
 
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    const frontGrad = ctx.createLinearGradient(p.fbl.x, p.fbl.y, p.ftl.x, p.ftl.y);
+    frontGrad.addColorStop(0, 'rgba(0,0,0,0.12)');
+    frontGrad.addColorStop(0.6, 'rgba(255,255,255,0.05)');
+    frontGrad.addColorStop(1, 'rgba(255,255,255,0.18)');
+    ctx.fillStyle = frontGrad;
     ctx.beginPath();
-    ctx.moveTo(leftX, cyTop);
-    ctx.lineTo(rightX, cyTop);
-    ctx.lineTo(rightX - 4, cyTop + 4);
-    ctx.lineTo(leftX + 4, cyTop + 4);
+    ctx.moveTo(p.fbl.x, p.fbl.y);
+    ctx.lineTo(p.fbr.x, p.fbr.y);
+    ctx.lineTo(p.ftr.x, p.ftr.y);
+    ctx.lineTo(p.ftl.x, p.ftl.y);
     ctx.closePath();
     ctx.fill();
 
     ctx.fillStyle = b.theme.topColor;
     ctx.beginPath();
-    ctx.moveTo(leftX, cyTop);
-    ctx.lineTo(rightX, cyTop);
-    ctx.lineTo(backRightX, backY);
-    ctx.lineTo(backLeftX, backY);
+    ctx.moveTo(p.ftl.x, p.ftl.y);
+    ctx.lineTo(p.ftr.x, p.ftr.y);
+    ctx.lineTo(p.btr.x, p.btr.y);
+    ctx.lineTo(p.btl.x, p.btl.y);
     ctx.closePath();
     ctx.fill();
 
-    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    const topGrad = ctx.createLinearGradient(p.ftl.x, p.ftl.y, p.btl.x, p.btl.y);
+    topGrad.addColorStop(0, 'rgba(255,255,255,0.3)');
+    topGrad.addColorStop(0.5, 'rgba(255,255,255,0.1)');
+    topGrad.addColorStop(1, 'rgba(0,0,0,0.08)');
+    ctx.fillStyle = topGrad;
     ctx.beginPath();
-    ctx.moveTo(leftX + 3, cyTop - 1);
-    ctx.lineTo(rightX - 3, cyTop - 1);
-    ctx.lineTo(rightX - 6, cyTop + 2);
-    ctx.lineTo(leftX + 6, cyTop + 2);
+    ctx.moveTo(p.ftl.x, p.ftl.y);
+    ctx.lineTo(p.ftr.x, p.ftr.y);
+    ctx.lineTo(p.btr.x, p.btr.y);
+    ctx.lineTo(p.btl.x, p.btl.y);
     ctx.closePath();
     ctx.fill();
 
     if(b.theme.accent && b.theme.accentColor){
       const ac = b.theme.accentColor;
-      const accentW = size * 0.12;
-      const leftAcc = cx - accentW / 2;
-      const rightAcc = cx + accentW / 2;
-      const backLA = leftAcc - isoDx / 2;
-      const backRA = rightAcc - isoDx / 2;
+      const aW = size * 0.12;
+      const ax = bx;
+      const az = bz;
+
+      const aftl = { x: this.screenX(ax - aW/2, az + aW/2, height), y: this.screenY(ax - aW/2, az + aW/2, height) };
+      const aftr = { x: this.screenX(ax + aW/2, az + aW/2, height), y: this.screenY(ax + aW/2, az + aW/2, height) };
+      const abtr = { x: this.screenX(ax + aW/2, az - aW/2, height), y: this.screenY(ax + aW/2, az - aW/2, height) };
+      const abtl = { x: this.screenX(ax - aW/2, az - aW/2, height), y: this.screenY(ax - aW/2, az - aW/2, height) };
+
+      const afbl = { x: this.screenX(ax - aW/2, az + aW/2, 0), y: this.screenY(ax - aW/2, az + aW/2, 0) };
+      const afbr = { x: this.screenX(ax + aW/2, az + aW/2, 0), y: this.screenY(ax + aW/2, az + aW/2, 0) };
+      const abbr = { x: this.screenX(ax + aW/2, az - aW/2, 0), y: this.screenY(ax + aW/2, az - aW/2, 0) };
 
       ctx.fillStyle = ac;
-      ctx.fillRect(leftAcc, cyTop + 2, accentW, height - 2);
-
-      ctx.fillStyle = this.darkenColor(ac, 0.3);
       ctx.beginPath();
-      ctx.moveTo(rightAcc, cyTop + 2);
-      ctx.lineTo(backRA, backY + 2 + isoDy/2);
-      ctx.lineTo(backRA, backY + height);
-      ctx.lineTo(rightAcc, cyBot);
+      ctx.moveTo(aftl.x, aftl.y);
+      ctx.lineTo(aftr.x, aftr.y);
+      ctx.lineTo(p.ftr.x, p.ftr.y);
+      ctx.lineTo(p.ftl.x, p.ftl.y);
       ctx.closePath();
       ctx.fill();
 
       ctx.fillStyle = ac;
       ctx.beginPath();
-      ctx.moveTo(leftAcc, cyTop);
-      ctx.lineTo(rightAcc, cyTop);
-      ctx.lineTo(backRA, backY);
-      ctx.lineTo(backLA, backY);
+      ctx.moveTo(afbl.x, afbl.y);
+      ctx.lineTo(aftl.x, aftl.y);
+      ctx.lineTo(p.ftl.x, p.ftl.y);
+      ctx.lineTo(p.fbl.x, p.fbl.y);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = this.darkenColor(ac, 0.25);
+      ctx.beginPath();
+      ctx.moveTo(aftr.x, aftr.y);
+      ctx.lineTo(abtr.x, abtr.y);
+      ctx.lineTo(p.btr.x, p.btr.y);
+      ctx.lineTo(p.ftr.x, p.ftr.y);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = ac;
+      ctx.beginPath();
+      ctx.moveTo(aftl.x, aftl.y);
+      ctx.lineTo(aftr.x, aftr.y);
+      ctx.lineTo(abtr.x, abtr.y);
+      ctx.lineTo(abtl.x, abtl.y);
       ctx.closePath();
       ctx.fill();
     }
 
-    ctx.strokeStyle = 'rgba(40, 30, 70, 0.15)';
+    ctx.strokeStyle = 'rgba(40, 30, 70, 0.2)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(leftX, cyTop);
-    ctx.lineTo(rightX, cyTop);
-    ctx.lineTo(backRightX, backY);
-    ctx.lineTo(backLeftX, backY);
+    ctx.moveTo(p.fbl.x, p.fbl.y);
+    ctx.lineTo(p.fbr.x, p.fbr.y);
+    ctx.lineTo(p.bbr.x, p.bbr.y);
+    ctx.lineTo(p.bbl.x, p.bbl.y);
     ctx.closePath();
-    ctx.moveTo(rightX, cyTop);
-    ctx.lineTo(rightX, cyBot);
-    ctx.moveTo(backRightX, backY);
-    ctx.lineTo(backRightX, backY + height);
+    ctx.moveTo(p.fbr.x, p.fbr.y);
+    ctx.lineTo(p.ftr.x, p.ftr.y);
+    ctx.moveTo(p.bbr.x, p.bbr.y);
+    ctx.lineTo(p.btr.x, p.btr.y);
+    ctx.moveTo(p.fbl.x, p.fbl.y);
+    ctx.lineTo(p.ftl.x, p.ftl.y);
     ctx.stroke();
 
     ctx.restore();
