@@ -1255,10 +1255,19 @@ const Game = {
     this.char.squash = 0;
     if(this.char.landedOn) this.char.landedOn.squash = 0;
 
-    const dist = this.MIN_JUMP_DIST + power * (this.MAX_JUMP_DIST - this.MIN_JUMP_DIST);
+    const next = this.blocks[this.blocks.indexOf(this.char.landedOn) + 1];
+
+    let maxDist = this.MAX_JUMP_DIST;
+    if(next){
+      const dx = next.x - this.char.x;
+      const dz = next.z - this.char.z;
+      const nextDist = Math.sqrt(dx*dx + dz*dz);
+      maxDist = Math.max(nextDist + 50, this.MAX_JUMP_DIST);
+    }
+
+    const dist = this.MIN_JUMP_DIST + power * (maxDist - this.MIN_JUMP_DIST);
     const height = this.MIN_JUMP_HEIGHT + power * (this.MAX_JUMP_HEIGHT - this.MIN_JUMP_HEIGHT);
 
-    const next = this.blocks[this.blocks.indexOf(this.char.landedOn) + 1];
     let dirX = 1, dirZ = 0;
     if(next){
       const dx = next.x - this.char.x;
