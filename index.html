@@ -1197,10 +1197,26 @@ const Game = {
         this.end();
       }
     } else {
-      // Standing: subtle bounce
-      if(this.char.bounceT>0){
-        this.char.bounceT-=dt;
-        if(this.char.bounceT<0) this.char.bounceT=0;
+      // Standing: check if still on a block
+      let stillOnBlock = false;
+      for(const b of this.blocks){
+        if(this.char.x >= b.x && this.char.x <= b.x + b.w && Math.abs(this.char.y - b.y) < 5){
+          stillOnBlock = true;
+          break;
+        }
+      }
+      if(!stillOnBlock){
+        // Walked off edge — start falling
+        this.char.onGround = false;
+        this.char.vy = 0;
+        this.char.vx = 0;
+        this.char.landedOn = null;
+      } else {
+        // Standing: subtle bounce
+        if(this.char.bounceT>0){
+          this.char.bounceT-=dt;
+          if(this.char.bounceT<0) this.char.bounceT=0;
+        }
       }
     }
 
