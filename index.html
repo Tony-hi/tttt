@@ -65,7 +65,7 @@ svg{display:block}
 .home-character{
   position:absolute;left:-22px;bottom:5vh;width:200px;height:240px;pointer-events:none;z-index:1;
 }
-.home-character svg{width:100%;height:100%}
+.home-character svg,.home-character canvas{width:100%;height:100%}
 .home-start-wrap{position:absolute;top:50%;left:50%;transform:translate(-50%,10%);z-index:3}
 .btn-start{
   display:flex;align-items:center;gap:14px;
@@ -657,30 +657,7 @@ svg{display:block}
         <p>螃蟹先生！</p>
       </div>
       <div class="home-character">
-        <svg viewBox="0 0 200 240">
-          <g>
-            <polygon points="20,150 130,150 130,210 20,210" fill="#A6AFC6"/>
-            <polygon points="20,150 130,150 158,128 48,128" fill="#D2D6E2"/>
-            <polygon points="130,150 158,128 158,188 130,210" fill="#7C8499"/>
-            <polyline points="20,150 48,128 158,128" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
-            <line x1="20" y1="150" x2="20" y2="210" stroke="#6B7280" stroke-width="1" opacity="0.5"/>
-          </g>
-          <g transform="translate(75,128)">
-            <rect x="-20" y="-55" width="40" height="55" rx="7" fill="#A8A8A8" stroke="#707070" stroke-width="2"/>
-            <rect x="-20" y="-55" width="40" height="15" rx="7" fill="#909090"/>
-            <circle cx="-8" cy="-32" r="3.5" fill="#505050"/>
-            <circle cx="8" cy="-32" r="3.5" fill="#505050"/>
-            <circle cx="-7" cy="-33" r="1.2" fill="#fff"/>
-            <circle cx="9" cy="-33" r="1.2" fill="#fff"/>
-            <path d="M-12 -40 L-4 -38" stroke="#505050" stroke-width="2.5" stroke-linecap="round"/>
-            <path d="M12 -40 L4 -38" stroke="#505050" stroke-width="2.5" stroke-linecap="round"/>
-            <circle cx="-12" cy="-25" r="3" fill="#C86464" opacity="0.5"/>
-            <circle cx="12" cy="-25" r="3" fill="#C86464" opacity="0.5"/>
-            <path d="M-5 -18 L5 -18" stroke="#505050" stroke-width="2" stroke-linecap="round"/>
-            <rect x="-15" y="0" width="5" height="4" fill="#888"/>
-            <rect x="10" y="0" width="5" height="4" fill="#888"/>
-          </g>
-        </svg>
+        <canvas id="home-canvas" width="200" height="240"></canvas>
       </div>
       <div class="home-start-wrap">
         <button class="btn-start" id="btn-start">
@@ -1587,6 +1564,7 @@ const Shop = {
     Storage.setCurrent(this.currentSkin.id);
     this.updateAction();
     this.drawPreview();
+    drawHomeCharacter();
     toast('已穿戴 '+this.currentSkin.name);
   },
   unlockSkin(){
@@ -1597,6 +1575,7 @@ const Shop = {
     Storage.setCurrent(s.id);
     this.updateAction();
     this.drawPreview();
+    drawHomeCharacter();
     document.getElementById('shop-coins').textContent=Storage.getCoins();
     toast('已解锁 '+s.name);
   },
@@ -1605,6 +1584,7 @@ const Shop = {
     this.applyWallpaper();
     this.updateAction();
     this.drawPreview();
+    drawHomeCharacter();
     toast('已使用 '+this.currentWall.name);
   },
   unlockWall(){
@@ -1616,6 +1596,7 @@ const Shop = {
     this.applyWallpaper();
     this.updateAction();
     this.drawPreview();
+    drawHomeCharacter();
     document.getElementById('shop-coins').textContent=Storage.getCoins();
     toast('已解锁 '+w.name);
   },
@@ -2836,8 +2817,74 @@ function tryRedeem(code){
 }
 
 /* ============ 10. Init ============ */
+function drawHomeCharacter(){
+  const canvas = document.getElementById('home-canvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.width, h = canvas.height;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+  // 画方块（等轴测视角）
+  const bx = 100, by = 155;
+  const bw = 80, bh = 55, bd = 25;
+  // 左面
+  ctx.fillStyle = '#A6AFC6';
+  ctx.beginPath();
+  ctx.moveTo(bx - bw/2, by);
+  ctx.lineTo(bx, by + bd);
+  ctx.lineTo(bx, by + bd + bh);
+  ctx.lineTo(bx - bw/2, by + bh);
+  ctx.closePath();
+  ctx.fill();
+  // 右面
+  ctx.fillStyle = '#7C8499';
+  ctx.beginPath();
+  ctx.moveTo(bx + bw/2, by);
+  ctx.lineTo(bx, by + bd);
+  ctx.lineTo(bx, by + bd + bh);
+  ctx.lineTo(bx + bw/2, by + bh);
+  ctx.closePath();
+  ctx.fill();
+  // 顶面
+  ctx.fillStyle = '#D2D6E2';
+  ctx.beginPath();
+  ctx.moveTo(bx - bw/2, by);
+  ctx.lineTo(bx, by - bd);
+  ctx.lineTo(bx + bw/2, by);
+  ctx.lineTo(bx, by + bd);
+  ctx.closePath();
+  ctx.fill();
+  // 顶面高光
+  ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(bx - bw/2, by);
+  ctx.lineTo(bx, by - bd);
+  ctx.lineTo(bx + bw/2, by);
+  ctx.stroke();
+  // 左边线
+  ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(bx - bw/2, by);
+  ctx.lineTo(bx - bw/2, by + bh);
+  ctx.stroke();
+  // 画角色
+  ctx.save();
+  ctx.translate(bx, by);
+  const skinId = Storage.getCurrent();
+  drawCharacter(ctx, skinId, 90, 0);
+  ctx.restore();
+}
+
 function init(){
   Shop.applyWallpaper();
+  drawHomeCharacter();
   // Home buttons
   document.getElementById('btn-start').addEventListener('click',()=>Router.show('play'));
   document.getElementById('btn-more').addEventListener('click',()=>Router.show('menu'));
