@@ -1173,7 +1173,7 @@ const Game = {
     this.char.prevY = this.char.y;
     this.char.rot = 0;
 
-    for(let i = 0; i < 3; i++) this.spawnNextBlock();
+    this.spawnNextBlock();
 
     this.camera.x = 0; this.camera.z = 0; this.camera.y = 0;
     this.targetCamera.x = 0; this.targetCamera.z = 0; this.targetCamera.y = 0;
@@ -1470,7 +1470,7 @@ const Game = {
 
   cullBlocks(){
     const camScreenX = this.W * 0.5;
-    while(this.blocks.length > 6){
+    while(this.blocks.length > 4){
       const first = this.blocks[0];
       const sx = this.screenX(first.x, first.z);
       if(sx < -200){
@@ -1478,6 +1478,9 @@ const Game = {
       } else {
         break;
       }
+    }
+    while(this.blocks.length < 3){
+      this.spawnNextBlock();
     }
   },
 
