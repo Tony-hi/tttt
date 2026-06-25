@@ -1103,7 +1103,7 @@ const Game = {
     const cosA = Math.cos(this.ISO_ANGLE);
     const sinA = Math.sin(this.ISO_ANGLE);
     const sx = (x - z) * cosA;
-    const sy = (x + z) * sinA - y;
+    const sy = -(x + z) * sinA - y;
     return { sx, sy };
   },
   screenX(x, z, y=0){
@@ -1112,7 +1112,7 @@ const Game = {
   },
   screenY(x, z, y=0){
     const sinA = Math.sin(this.ISO_ANGLE);
-    return (x + z) * sinA - y - this.camera.y + this.H * 0.62;
+    return -(x + z) * sinA - y - this.camera.y + this.H * 0.62;
   },
 
   init(){
@@ -1250,8 +1250,8 @@ const Game = {
       targetX = b.x;
       targetZ = b.z;
     }
-    this.targetCamera.x = targetX * Math.cos(this.ISO_ANGLE) - targetZ * Math.cos(this.ISO_ANGLE);
-    this.targetCamera.y = (targetX + targetZ) * Math.sin(this.ISO_ANGLE);
+    this.targetCamera.x = (targetX - targetZ) * Math.cos(this.ISO_ANGLE);
+    this.targetCamera.y = -(targetX + targetZ) * Math.sin(this.ISO_ANGLE);
   },
 
   onPressStart(){
@@ -1469,11 +1469,10 @@ const Game = {
   },
 
   cullBlocks(){
-    const camScreenX = this.W * 0.5;
     while(this.blocks.length > 4){
       const first = this.blocks[0];
-      const sx = this.screenX(first.x, first.z);
-      if(sx < -200){
+      const sy = this.screenY(first.x, first.z, 0);
+      if(sy < -200){
         this.blocks.shift();
       } else {
         break;
@@ -1610,16 +1609,16 @@ const Game = {
 
     const drawList = [];
     for(const b of this.blocks){
-      drawList.push({ type:'block', obj:b, depth: b.x + b.z });
+      drawList.push({ type:'block', obj:b, depth: -(b.x + b.z) });
     }
     for(const p of this.particles){
-      drawList.push({ type:'particle', obj:p, depth: p.x + p.z });
+      drawList.push({ type:'particle', obj:p, depth: -(p.x + p.z) });
     }
 
-    let charDepth = this.char.x + this.char.z + 1;
+    let charDepth = -(this.char.x + this.char.z) + 1;
     if(this.char.landedOn && this.char.onGround){
       const b = this.char.landedOn;
-      charDepth = b.x + b.z + 10;
+      charDepth = -(b.x + b.z) + 10;
     }
     drawList.push({ type:'char', obj:this.char, depth: charDepth });
 
@@ -1678,68 +1677,68 @@ const Game = {
     ctx.ellipse(cx, cyBot + 6, halfS * 0.9, halfS * 0.35, 0, 0, Math.PI*2);
     ctx.fill();
 
-    ctx.fillStyle = b.theme.rightColor;
-    ctx.beginPath();
-    ctx.moveTo(p.fbr.x, p.fbr.y);
-    ctx.lineTo(p.bbr.x, p.bbr.y);
-    ctx.lineTo(p.btr.x, p.btr.y);
-    ctx.lineTo(p.ftr.x, p.ftr.y);
-    ctx.closePath();
-    ctx.fill();
-
-    const rightGrad = ctx.createLinearGradient(p.fbr.x, p.fbr.y, p.bbr.x, p.bbr.y);
-    rightGrad.addColorStop(0, 'rgba(255,255,255,0.12)');
-    rightGrad.addColorStop(1, 'rgba(0,0,0,0.25)');
-    ctx.fillStyle = rightGrad;
-    ctx.beginPath();
-    ctx.moveTo(p.fbr.x, p.fbr.y);
-    ctx.lineTo(p.bbr.x, p.bbr.y);
-    ctx.lineTo(p.btr.x, p.btr.y);
-    ctx.lineTo(p.ftr.x, p.ftr.y);
-    ctx.closePath();
-    ctx.fill();
-
     ctx.fillStyle = b.theme.frontColor;
     ctx.beginPath();
-    ctx.moveTo(p.fbl.x, p.fbl.y);
-    ctx.lineTo(p.fbr.x, p.fbr.y);
-    ctx.lineTo(p.ftr.x, p.ftr.y);
-    ctx.lineTo(p.ftl.x, p.ftl.y);
+    ctx.moveTo(p.bbl.x, p.bbl.y);
+    ctx.lineTo(p.bbr.x, p.bbr.y);
+    ctx.lineTo(p.btr.x, p.btr.y);
+    ctx.lineTo(p.btl.x, p.btl.y);
     ctx.closePath();
     ctx.fill();
 
-    const frontGrad = ctx.createLinearGradient(p.fbl.x, p.fbl.y, p.ftl.x, p.ftl.y);
-    frontGrad.addColorStop(0, 'rgba(0,0,0,0.2)');
-    frontGrad.addColorStop(0.6, 'rgba(255,255,255,0.08)');
-    frontGrad.addColorStop(1, 'rgba(255,255,255,0.25)');
-    ctx.fillStyle = frontGrad;
+    const backGrad = ctx.createLinearGradient(p.bbl.x, p.bbl.y, p.btl.x, p.btl.y);
+    backGrad.addColorStop(0, 'rgba(0,0,0,0.25)');
+    backGrad.addColorStop(0.6, 'rgba(255,255,255,0.06)');
+    backGrad.addColorStop(1, 'rgba(255,255,255,0.2)');
+    ctx.fillStyle = backGrad;
     ctx.beginPath();
-    ctx.moveTo(p.fbl.x, p.fbl.y);
-    ctx.lineTo(p.fbr.x, p.fbr.y);
-    ctx.lineTo(p.ftr.x, p.ftr.y);
+    ctx.moveTo(p.bbl.x, p.bbl.y);
+    ctx.lineTo(p.bbr.x, p.bbr.y);
+    ctx.lineTo(p.btr.x, p.btr.y);
+    ctx.lineTo(p.btl.x, p.btl.y);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = b.theme.rightColor;
+    ctx.beginPath();
+    ctx.moveTo(p.bbl.x, p.bbl.y);
+    ctx.lineTo(p.fbl.x, p.fbl.y);
     ctx.lineTo(p.ftl.x, p.ftl.y);
+    ctx.lineTo(p.btl.x, p.btl.y);
+    ctx.closePath();
+    ctx.fill();
+
+    const leftGrad = ctx.createLinearGradient(p.bbl.x, p.bbl.y, p.fbl.x, p.fbl.y);
+    leftGrad.addColorStop(0, 'rgba(255,255,255,0.1)');
+    leftGrad.addColorStop(1, 'rgba(0,0,0,0.2)');
+    ctx.fillStyle = leftGrad;
+    ctx.beginPath();
+    ctx.moveTo(p.bbl.x, p.bbl.y);
+    ctx.lineTo(p.fbl.x, p.fbl.y);
+    ctx.lineTo(p.ftl.x, p.ftl.y);
+    ctx.lineTo(p.btl.x, p.btl.y);
     ctx.closePath();
     ctx.fill();
 
     ctx.fillStyle = b.theme.topColor;
     ctx.beginPath();
-    ctx.moveTo(p.ftl.x, p.ftl.y);
-    ctx.lineTo(p.ftr.x, p.ftr.y);
+    ctx.moveTo(p.btl.x, p.btl.y);
     ctx.lineTo(p.btr.x, p.btr.y);
-    ctx.lineTo(p.btl.x, p.btl.y);
+    ctx.lineTo(p.ftr.x, p.ftr.y);
+    ctx.lineTo(p.ftl.x, p.ftl.y);
     ctx.closePath();
     ctx.fill();
 
-    const topGrad = ctx.createLinearGradient(p.ftl.x, p.ftl.y, p.btl.x, p.btl.y);
-    topGrad.addColorStop(0, 'rgba(255,255,255,0.4)');
-    topGrad.addColorStop(0.5, 'rgba(255,255,255,0.15)');
-    topGrad.addColorStop(1, 'rgba(0,0,0,0.12)');
+    const topGrad = ctx.createLinearGradient(p.btl.x, p.btl.y, p.ftr.x, p.ftr.y);
+    topGrad.addColorStop(0, 'rgba(255,255,255,0.35)');
+    topGrad.addColorStop(0.5, 'rgba(255,255,255,0.12)');
+    topGrad.addColorStop(1, 'rgba(0,0,0,0.1)');
     ctx.fillStyle = topGrad;
     ctx.beginPath();
-    ctx.moveTo(p.ftl.x, p.ftl.y);
-    ctx.lineTo(p.ftr.x, p.ftr.y);
+    ctx.moveTo(p.btl.x, p.btl.y);
     ctx.lineTo(p.btr.x, p.btr.y);
-    ctx.lineTo(p.btl.x, p.btl.y);
+    ctx.lineTo(p.ftr.x, p.ftr.y);
+    ctx.lineTo(p.ftl.x, p.ftl.y);
     ctx.closePath();
     ctx.fill();
 
@@ -1750,63 +1749,63 @@ const Game = {
       const az = bz;
 
       if(b.theme.accentType === 'gift'){
-        const ribTopFTL = { x: this.screenX(ax - aW/2, az + halfS, height), y: this.screenY(ax - aW/2, az + halfS, height) };
-        const ribTopFTR = { x: this.screenX(ax + aW/2, az + halfS, height), y: this.screenY(ax + aW/2, az + halfS, height) };
         const ribTopBTL = { x: this.screenX(ax - aW/2, az - halfS, height), y: this.screenY(ax - aW/2, az - halfS, height) };
         const ribTopBTR = { x: this.screenX(ax + aW/2, az - halfS, height), y: this.screenY(ax + aW/2, az - halfS, height) };
+        const ribTopFTL = { x: this.screenX(ax - aW/2, az + halfS, height), y: this.screenY(ax - aW/2, az + halfS, height) };
+        const ribTopFTR = { x: this.screenX(ax + aW/2, az + halfS, height), y: this.screenY(ax + aW/2, az + halfS, height) };
 
-        const ribFrontTL = { x: this.screenX(ax - aW/2, az + halfS, 0), y: this.screenY(ax - aW/2, az + halfS, 0) };
-        const ribFrontTR = { x: this.screenX(ax + aW/2, az + halfS, 0), y: this.screenY(ax + aW/2, az + halfS, 0) };
+        const ribBackTL = { x: this.screenX(ax - aW/2, az - halfS, 0), y: this.screenY(ax - aW/2, az - halfS, 0) };
+        const ribBackTR = { x: this.screenX(ax + aW/2, az - halfS, 0), y: this.screenY(ax + aW/2, az - halfS, 0) };
 
-        const ribRightTR = { x: this.screenX(ax + halfS, az + aW/2, 0), y: this.screenY(ax + halfS, az + aW/2, 0) };
-        const ribRightBR = { x: this.screenX(ax + halfS, az - aW/2, 0), y: this.screenY(ax + halfS, az - aW/2, 0) };
+        const ribLeftBL = { x: this.screenX(ax - halfS, az - aW/2, 0), y: this.screenY(ax - halfS, az - aW/2, 0) };
+        const ribLeftFL = { x: this.screenX(ax - halfS, az + aW/2, 0), y: this.screenY(ax - halfS, az + aW/2, 0) };
 
-        const ribHLeftFL = { x: this.screenX(ax - halfS, az + aW/2, height), y: this.screenY(ax - halfS, az + aW/2, height) };
-        const ribHLeftFR = { x: this.screenX(ax + halfS, az + aW/2, height), y: this.screenY(ax + halfS, az + aW/2, height) };
-        const ribHLeftBR = { x: this.screenX(ax + halfS, az - aW/2, height), y: this.screenY(ax + halfS, az - aW/2, height) };
-        const ribHLeftBL = { x: this.screenX(ax - halfS, az - aW/2, height), y: this.screenY(ax - halfS, az - aW/2, height) };
+        const ribHBackBL = { x: this.screenX(ax - halfS, az - aW/2, height), y: this.screenY(ax - halfS, az - aW/2, height) };
+        const ribHBackBR = { x: this.screenX(ax + halfS, az - aW/2, height), y: this.screenY(ax + halfS, az - aW/2, height) };
+        const ribHFrontBR = { x: this.screenX(ax + halfS, az + aW/2, height), y: this.screenY(ax + halfS, az + aW/2, height) };
+        const ribHFrontBL = { x: this.screenX(ax - halfS, az + aW/2, height), y: this.screenY(ax - halfS, az + aW/2, height) };
 
         ctx.fillStyle = ac;
         ctx.beginPath();
-        ctx.moveTo(ribTopFTL.x, ribTopFTL.y);
-        ctx.lineTo(ribTopFTR.x, ribTopFTR.y);
-        ctx.lineTo(ribFrontTR.x, ribFrontTR.y);
-        ctx.lineTo(ribFrontTL.x, ribFrontTL.y);
-        ctx.closePath();
-        ctx.fill();
-
-        const frontRibGrad = ctx.createLinearGradient(ribFrontTL.x, ribFrontTL.y, ribTopFTL.x, ribTopFTL.y);
-        frontRibGrad.addColorStop(0, 'rgba(0,0,0,0.25)');
-        frontRibGrad.addColorStop(1, 'rgba(255,255,255,0.15)');
-        ctx.fillStyle = frontRibGrad;
-        ctx.beginPath();
-        ctx.moveTo(ribTopFTL.x, ribTopFTL.y);
-        ctx.lineTo(ribTopFTR.x, ribTopFTR.y);
-        ctx.lineTo(ribFrontTR.x, ribFrontTR.y);
-        ctx.lineTo(ribFrontTL.x, ribFrontTL.y);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = this.darkenColor(ac, 0.2);
-        ctx.beginPath();
-        ctx.moveTo(ribTopFTR.x, ribTopFTR.y);
+        ctx.moveTo(ribTopBTL.x, ribTopBTL.y);
         ctx.lineTo(ribTopBTR.x, ribTopBTR.y);
-        ctx.lineTo(ribRightBR.x, ribRightBR.y);
-        ctx.lineTo(ribRightTR.x, ribRightTR.y);
+        ctx.lineTo(ribBackTR.x, ribBackTR.y);
+        ctx.lineTo(ribBackTL.x, ribBackTL.y);
+        ctx.closePath();
+        ctx.fill();
+
+        const backRibGrad = ctx.createLinearGradient(ribBackTL.x, ribBackTL.y, ribTopBTL.x, ribTopBTL.y);
+        backRibGrad.addColorStop(0, 'rgba(0,0,0,0.2)');
+        backRibGrad.addColorStop(1, 'rgba(255,255,255,0.12)');
+        ctx.fillStyle = backRibGrad;
+        ctx.beginPath();
+        ctx.moveTo(ribTopBTL.x, ribTopBTL.y);
+        ctx.lineTo(ribTopBTR.x, ribTopBTR.y);
+        ctx.lineTo(ribBackTR.x, ribBackTR.y);
+        ctx.lineTo(ribBackTL.x, ribBackTL.y);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = this.darkenColor(ac, 0.15);
+        ctx.beginPath();
+        ctx.moveTo(ribTopBTL.x, ribTopBTL.y);
+        ctx.lineTo(ribTopFTL.x, ribTopFTL.y);
+        ctx.lineTo(ribLeftFL.x, ribLeftFL.y);
+        ctx.lineTo(ribLeftBL.x, ribLeftBL.y);
         ctx.closePath();
         ctx.fill();
 
         ctx.fillStyle = ac;
         ctx.beginPath();
-        ctx.moveTo(ribHLeftFL.x, ribHLeftFL.y);
-        ctx.lineTo(ribHLeftFR.x, ribHLeftFR.y);
-        ctx.lineTo(ribHLeftBR.x, ribHLeftBR.y);
-        ctx.lineTo(ribHLeftBL.x, ribHLeftBL.y);
+        ctx.moveTo(ribHBackBL.x, ribHBackBL.y);
+        ctx.lineTo(ribHBackBR.x, ribHBackBR.y);
+        ctx.lineTo(ribHFrontBR.x, ribHFrontBR.y);
+        ctx.lineTo(ribHFrontBL.x, ribHFrontBL.y);
         ctx.closePath();
         ctx.fill();
 
-        const cx = (p.ftl.x + p.btr.x) / 2;
-        const cy = (p.ftl.y + p.btr.y) / 2;
+        const cx = (p.btl.x + p.ftr.x) / 2;
+        const cy = (p.btl.y + p.ftr.y) / 2;
         const bowR = size * 0.1;
         ctx.fillStyle = ac;
         ctx.beginPath();
@@ -1822,38 +1821,38 @@ const Game = {
       } else if(b.theme.accentType === 'stripe'){
         const stripeW = size * 0.18;
         const off = size * 0.15;
-        const sFTL = { x: this.screenX(bx - halfS + off, bz + halfS, height), y: this.screenY(bx - halfS + off, bz + halfS, height) };
-        const sFTR = { x: this.screenX(bx - halfS + off + stripeW, bz + halfS, height), y: this.screenY(bx - halfS + off + stripeW, bz + halfS, height) };
         const sBTL = { x: this.screenX(bx - halfS + off, bz - halfS, height), y: this.screenY(bx - halfS + off, bz - halfS, height) };
         const sBTR = { x: this.screenX(bx - halfS + off + stripeW, bz - halfS, height), y: this.screenY(bx - halfS + off + stripeW, bz - halfS, height) };
+        const sFTL = { x: this.screenX(bx - halfS + off, bz + halfS, height), y: this.screenY(bx - halfS + off, bz + halfS, height) };
+        const sFTR = { x: this.screenX(bx - halfS + off + stripeW, bz + halfS, height), y: this.screenY(bx - halfS + off + stripeW, bz + halfS, height) };
 
-        const sFBL = { x: this.screenX(bx - halfS + off, bz + halfS, 0), y: this.screenY(bx - halfS + off, bz + halfS, 0) };
-        const sFBR = { x: this.screenX(bx - halfS + off + stripeW, bz + halfS, 0), y: this.screenY(bx - halfS + off + stripeW, bz + halfS, 0) };
-
-        ctx.fillStyle = ac;
-        ctx.beginPath();
-        ctx.moveTo(sFTL.x, sFTL.y);
-        ctx.lineTo(sFTR.x, sFTR.y);
-        ctx.lineTo(sFBR.x, sFBR.y);
-        ctx.lineTo(sFBL.x, sFBL.y);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = this.darkenColor(ac, 0.15);
-        ctx.beginPath();
-        ctx.moveTo(sFTR.x, sFTR.y);
-        ctx.lineTo(sBTR.x, sBTR.y);
-        ctx.lineTo(p.btr.x, p.btr.y);
-        ctx.lineTo(p.ftr.x, p.ftr.y);
-        ctx.closePath();
-        ctx.fill();
+        const sBBL = { x: this.screenX(bx - halfS + off, bz - halfS, 0), y: this.screenY(bx - halfS + off, bz - halfS, 0) };
+        const sBBR = { x: this.screenX(bx - halfS + off + stripeW, bz - halfS, 0), y: this.screenY(bx - halfS + off + stripeW, bz - halfS, 0) };
 
         ctx.fillStyle = ac;
         ctx.beginPath();
-        ctx.moveTo(sFTL.x, sFTL.y);
-        ctx.lineTo(sFTR.x, sFTR.y);
+        ctx.moveTo(sBTL.x, sBTL.y);
         ctx.lineTo(sBTR.x, sBTR.y);
-        ctx.lineTo(sBTL.x, sBTL.y);
+        ctx.lineTo(sBBR.x, sBBR.y);
+        ctx.lineTo(sBBL.x, sBBL.y);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = this.darkenColor(ac, 0.12);
+        ctx.beginPath();
+        ctx.moveTo(sBTL.x, sBTL.y);
+        ctx.lineTo(sFTL.x, sFTL.y);
+        ctx.lineTo(p.ftl.x, p.ftl.y);
+        ctx.lineTo(p.btl.x, p.btl.y);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = ac;
+        ctx.beginPath();
+        ctx.moveTo(sBTL.x, sBTL.y);
+        ctx.lineTo(sBTR.x, sBTR.y);
+        ctx.lineTo(sFTR.x, sFTR.y);
+        ctx.lineTo(sFTL.x, sFTL.y);
         ctx.closePath();
         ctx.fill();
       }
