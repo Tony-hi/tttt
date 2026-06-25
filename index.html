@@ -1077,18 +1077,21 @@ const Game = {
     this.groundY=this.H*0.7;
   },
   BLOCK_SIZE: 80,
+  BLOCK_HEIGHT_RATIO: 0.42,
   start(){
     if(this.running){ this.resize(); }
     this.running=true;
     this.score=0; this.combo=0;
     this.blocks=[];
-    this.char={x:0,y:this.groundY,vx:0,vy:0,rot:0,onGround:true,bounceT:0,landedOn:null,combo:0,prevY:this.groundY};
+    const blockH = this.BLOCK_SIZE * this.BLOCK_HEIGHT_RATIO;
+    const topY = this.groundY - blockH;
+    this.char={x:0,y:topY,vx:0,vy:0,rot:0,onGround:true,bounceT:0,landedOn:null,combo:0,prevY:topY};
     this.cameraX=0;
     this.charging=false; this.power=0; this.hintShown=false;
     this.lastGapType=0;
     document.getElementById('hud-power-fill').style.width='0%';
     document.getElementById('hud-hint').style.display='block';
-    const b1 = this.makeBlock(40, this.groundY, 0);
+    const b1 = this.makeBlock(40, topY, 0);
     this.blocks.push(b1);
     this.spawnNextBlock();
     this.char.x = b1.x + b1.w / 2;
@@ -1122,8 +1125,10 @@ const Game = {
     for(const g of pool){ r -= g.weight; if(r<=0){ chosen = g; break; } }
     const gap = chosen.min + Math.random() * (chosen.max - chosen.min);
     const newX = last.x + last.w + gap;
-    const yVar = (Math.random() - 0.5) * 24;
-    const nb = this.makeBlock(newX, this.groundY + yVar, chosen.type);
+    const blockH = this.BLOCK_SIZE * this.BLOCK_HEIGHT_RATIO;
+    const baseTopY = this.groundY - blockH;
+    const yVar = (Math.random() - 0.5) * 20;
+    const nb = this.makeBlock(newX, baseTopY + yVar, chosen.type);
     this.blocks.push(nb);
     this.lastGapType = chosen.type;
     this.blocks = this.blocks.slice(-2);
@@ -1342,34 +1347,39 @@ const Game = {
   },
   drawBlock(ctx,b){
     const sx=this.screenX(b.x);
-    const s = b.w; // block size (width = depth = height = s)
+    const s = b.w; // top face width
     if(sx>this.W+100 || sx+s<-100) return;
     const top = b.y;
 
-    // Isometric/3-4 view from back-right side
-    const isoDx = s * 0.28;  // x offset for top face
-    const isoDy = s * 0.18;  // y offset for top face (upward)
-    const h = s;             // block height = s (cube)
+    // Isometric view from back-top — like WeChat Jump
+    const isoDx = s * 0.32;
+    const isoDy = s * 0.16;
+    const blockH = s * 0.42; // block height (short, flat cube)
 
     // Shadow on ground
-    ctx.fillStyle='rgba(60,40,100,0.14)';
+    ctx.fillStyle='rgba(60,40,100,0.15)';
     ctx.beginPath();
-    ctx.ellipse(sx + s/2 + isoDx*0.5, top + h + 4, s*0.55, 5, 0, 0, Math.PI*2);
+    ctx.ellipse(sx + s/2 + isoDx*0.4, top + blockH + 6, s*0.55, 5, 0, 0, Math.PI*2);
     ctx.fill();
 
-    // Front face (the main face we see head-on)
-    ctx.fillStyle = '#B0B8CC';
-    ctx.fillRect(sx, top, s, h);
-    // Front face gradient overlay
-    const frontGrd = ctx.createLinearGradient(sx, top, sx, top + h);
-    frontGrd.addColorStop(0, 'rgba(255,255,255,0.15)');
-    frontGrd.addColorStop(0.5, 'rgba(255,255,255,0)');
-    frontGrd.addColorStop(1, 'rgba(0,0,0,0.12)');
+    // Front face (facing camera / downward)
+    ctx.fillStyle = '#B4B9C8';
+    ctx.beginPath();
+    ctx.moveTo(sx, top);
+    ctx.lineTo(sx + s, top);
+    ctx.lineTo(sx + s, top + blockH);
+    ctx.lineTo(sx, top + blockH);
+    ctx.closePath();
+    ctx.fill();
+    // Front face vertical gradient
+    const frontGrd = ctx.createLinearGradient(sx, top, sx, top + blockH);
+    frontGrd.addColorStop(0, 'rgba(255,255,255,0.12)');
+    frontGrd.addColorStop(1, 'rgba(0,0,0,0.1)');
     ctx.fillStyle = frontGrd;
-    ctx.fillRect(sx, top, s, h);
+    ctx.fillRect(sx, top, s, blockH);
 
-    // Top face (isometric — diamond shape)
-    ctx.fillStyle = '#D8DCE8';
+    // Top face (isometric diamond-like)
+    ctx.fillStyle = '#D5D8E0';
     ctx.beginPath();
     ctx.moveTo(sx, top);
     ctx.lineTo(sx + isoDx, top - isoDy);
@@ -1377,31 +1387,31 @@ const Game = {
     ctx.lineTo(sx + s, top);
     ctx.closePath();
     ctx.fill();
-    // Top face inner highlight
-    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-    ctx.fillRect(sx + 2, top + 1, s - 4, 2);
+    // Top face highlight (brightest area)
+    ctx.fillStyle = '#E2E4EC';
+    ctx.fillRect(sx + 3, top + 1, s - 6, 3);
 
-    // Right face (side face, darker)
-    ctx.fillStyle = '#8890A8';
+    // Right face
+    ctx.fillStyle = '#8A90A3';
     ctx.beginPath();
     ctx.moveTo(sx + s, top);
     ctx.lineTo(sx + s + isoDx, top - isoDy);
-    ctx.lineTo(sx + s + isoDx, top + h - isoDy);
-    ctx.lineTo(sx + s, top + h);
+    ctx.lineTo(sx + s + isoDx, top + blockH - isoDy);
+    ctx.lineTo(sx + s, top + blockH);
     ctx.closePath();
     ctx.fill();
-    // Right face darker bottom
+    // Right face bottom darkening
     ctx.fillStyle = 'rgba(0,0,0,0.12)';
     ctx.beginPath();
-    ctx.moveTo(sx + s, top + h - 4);
-    ctx.lineTo(sx + s + isoDx, top + h - isoDy - 4);
-    ctx.lineTo(sx + s + isoDx, top + h - isoDy);
-    ctx.lineTo(sx + s, top + h);
+    ctx.moveTo(sx + s, top + blockH - 4);
+    ctx.lineTo(sx + s + isoDx, top + blockH - isoDy - 4);
+    ctx.lineTo(sx + s + isoDx, top + blockH - isoDy);
+    ctx.lineTo(sx + s, top + blockH);
     ctx.closePath();
     ctx.fill();
 
-    // Outline edges
-    ctx.strokeStyle = 'rgba(60,50,80,0.25)';
+    // Subtle edge lines
+    ctx.strokeStyle = 'rgba(80,70,100,0.2)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     // Top face outline
@@ -1411,28 +1421,27 @@ const Game = {
     ctx.lineTo(sx + s, top);
     // Right edge
     ctx.moveTo(sx + s + isoDx, top - isoDy);
-    ctx.lineTo(sx + s + isoDx, top + h - isoDy);
-    // Bottom-right corner
-    ctx.lineTo(sx + s, top + h);
+    ctx.lineTo(sx + s + isoDx, top + blockH - isoDy);
+    ctx.lineTo(sx + s, top + blockH);
     ctx.stroke();
 
-    // Type indicator — colored dot on top face
+    // Type indicator — small dot on top face
     const colors=['#3DBE6F','#F4C25C','#E85A4F'];
     const accent = colors[b.type] || '#888';
     ctx.fillStyle = accent;
     ctx.beginPath();
-    ctx.arc(sx + s/2 + isoDx/2, top - isoDy/2, 4, 0, Math.PI*2);
+    ctx.arc(sx + s/2 + isoDx*0.4, top - isoDy*0.4, 4, 0, Math.PI*2);
     ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Gap label above block
+    // Score label above block
     ctx.fillStyle = accent;
     ctx.font = 'bold 13px "Noto Sans SC", sans-serif';
     ctx.textAlign = 'center';
     const labels=['+1','+3','+5'];
-    ctx.fillText(labels[b.type] || '', sx + s/2 + isoDx/2, top - isoDy - 8);
+    ctx.fillText(labels[b.type] || '', sx + s/2 + isoDx*0.4, top - isoDy - 8);
   },
   drawChar(ctx){
     const sx=this.screenX(this.char.x);
