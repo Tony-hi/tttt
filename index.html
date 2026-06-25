@@ -250,9 +250,17 @@ svg{display:block}
 }
 .hud-power-fill{
   width:0%;height:100%;
-  background:linear-gradient(90deg,var(--green) 0%,var(--gold) 60%,#E85A4F 100%);
+  background:var(--green);
   border-radius:18px;
-  transition:width .04s linear;
+  transition:width .04s linear, background-color .2s;
+}
+.hud-power-fill.over{
+  background:#E85A4F;
+  animation:power-pulse 0.3s ease-in-out infinite alternate;
+}
+@keyframes power-pulse{
+  from{filter:brightness(1)}
+  to{filter:brightness(1.2)}
 }
 .hud-hint{
   position:absolute;bottom:13vh;left:50%;transform:translateX(-50%);
@@ -1305,12 +1313,18 @@ const Game = {
       const elapsed=(performance.now()-this.chargeStart)/1000;
       const p=Math.min(elapsed/this.CHARGE_DURATION, 1);
       document.getElementById('hud-power-fill').style.width=(p*100)+'%';
+      if(elapsed/this.CHARGE_DURATION > 1){
+        document.getElementById('hud-power-fill').classList.add('over');
+      } else {
+        document.getElementById('hud-power-fill').classList.remove('over');
+      }
       this.char.squash = Math.min(elapsed/this.CHARGE_DURATION, 1.5) * 0.5;
       if(this.char.landedOn){
         this.char.landedOn.squash = Math.min(elapsed/this.CHARGE_DURATION, 1.5) * 0.35;
       }
       if(Math.random() < 0.5) this.spawnChargeParticle(Math.min(p, 1));
     } else {
+      document.getElementById('hud-power-fill').classList.remove('over');
       if(this.char.squash > 0){
         this.char.squash = Math.max(0, this.char.squash - dt * 5);
       }
