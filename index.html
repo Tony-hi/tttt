@@ -648,7 +648,7 @@ function drawCompassCharacter(ctx,size,t){
   ctx.arc(-4.5*s,-54*s,1.5*s,0,Math.PI*2);
   ctx.arc(4.5*s,-54*s,1.5*s,0,Math.PI*2);
   ctx.fill();
-  ctx.fillStyle='rgba(232,100,100,0.65)';
+  ctx.fillStyle='rgba(232,100,100,0.8)';
   ctx.beginPath();
   ctx.arc(-8*s,-50*s,2.5*s,0,Math.PI*2);
   ctx.arc(8*s,-50*s,2.5*s,0,Math.PI*2);
@@ -663,7 +663,7 @@ function drawCompassCharacter(ctx,size,t){
 function drawPawnCharacter(ctx,size,t){
   const s=size/110;
   ctx.save();
-  ctx.fillStyle='rgba(0,0,0,0.18)';
+  ctx.fillStyle='rgba(0,0,0,0.35)';
   ctx.beginPath();
   ctx.ellipse(0,2,22*s,4*s,0,0,Math.PI*2);
   ctx.fill();
@@ -703,7 +703,7 @@ function drawPawnCharacter(ctx,size,t){
   ctx.arc(-2.5*s,-58*s,0.9*s,0,Math.PI*2);
   ctx.arc(2.5*s,-58*s,0.9*s,0,Math.PI*2);
   ctx.fill();
-  ctx.fillStyle='rgba(232,100,100,0.65)';
+  ctx.fillStyle='rgba(232,100,100,0.8)';
   ctx.beginPath();
   ctx.arc(-4.5*s,-54*s,1.6*s,0,Math.PI*2);
   ctx.arc(4.5*s,-54*s,1.6*s,0,Math.PI*2);
@@ -999,7 +999,7 @@ function drawLotteryCharacter(ctx,cx,cy,w,h,t){
   ctx.arc(5,-82,1.4,0,Math.PI*2);
   ctx.fill();
   // Cheeks
-  ctx.fillStyle='rgba(232,100,100,0.6)';
+  ctx.fillStyle='rgba(232,100,100,0.8)';
   ctx.beginPath();
   ctx.arc(-9,-76,2.5,0,Math.PI*2);
   ctx.arc(9,-76,2.5,0,Math.PI*2);
@@ -1628,7 +1628,7 @@ const Game = {
 
     ctx.save();
 
-    ctx.fillStyle = 'rgba(60, 40, 100, 0.15)';
+    ctx.fillStyle = 'rgba(60, 40, 100, 0.3)';
     ctx.beginPath();
     ctx.ellipse(cx, cyBot + 6, halfS * 0.9, halfS * 0.35, 0, 0, Math.PI*2);
     ctx.fill();
@@ -1643,8 +1643,8 @@ const Game = {
     ctx.fill();
 
     const rightGrad = ctx.createLinearGradient(p.fbr.x, p.fbr.y, p.bbr.x, p.bbr.y);
-    rightGrad.addColorStop(0, 'rgba(255,255,255,0.08)');
-    rightGrad.addColorStop(1, 'rgba(0,0,0,0.15)');
+    rightGrad.addColorStop(0, 'rgba(255,255,255,0.12)');
+    rightGrad.addColorStop(1, 'rgba(0,0,0,0.25)');
     ctx.fillStyle = rightGrad;
     ctx.beginPath();
     ctx.moveTo(p.fbr.x, p.fbr.y);
@@ -1664,9 +1664,9 @@ const Game = {
     ctx.fill();
 
     const frontGrad = ctx.createLinearGradient(p.fbl.x, p.fbl.y, p.ftl.x, p.ftl.y);
-    frontGrad.addColorStop(0, 'rgba(0,0,0,0.12)');
-    frontGrad.addColorStop(0.6, 'rgba(255,255,255,0.05)');
-    frontGrad.addColorStop(1, 'rgba(255,255,255,0.18)');
+    frontGrad.addColorStop(0, 'rgba(0,0,0,0.2)');
+    frontGrad.addColorStop(0.6, 'rgba(255,255,255,0.08)');
+    frontGrad.addColorStop(1, 'rgba(255,255,255,0.25)');
     ctx.fillStyle = frontGrad;
     ctx.beginPath();
     ctx.moveTo(p.fbl.x, p.fbl.y);
@@ -1686,9 +1686,9 @@ const Game = {
     ctx.fill();
 
     const topGrad = ctx.createLinearGradient(p.ftl.x, p.ftl.y, p.btl.x, p.btl.y);
-    topGrad.addColorStop(0, 'rgba(255,255,255,0.3)');
-    topGrad.addColorStop(0.5, 'rgba(255,255,255,0.1)');
-    topGrad.addColorStop(1, 'rgba(0,0,0,0.08)');
+    topGrad.addColorStop(0, 'rgba(255,255,255,0.4)');
+    topGrad.addColorStop(0.5, 'rgba(255,255,255,0.15)');
+    topGrad.addColorStop(1, 'rgba(0,0,0,0.12)');
     ctx.fillStyle = topGrad;
     ctx.beginPath();
     ctx.moveTo(p.ftl.x, p.ftl.y);
@@ -1731,8 +1731,8 @@ const Game = {
         ctx.fill();
 
         const frontRibGrad = ctx.createLinearGradient(ribFrontTL.x, ribFrontTL.y, ribTopFTL.x, ribTopFTL.y);
-        frontRibGrad.addColorStop(0, 'rgba(0,0,0,0.15)');
-        frontRibGrad.addColorStop(1, 'rgba(255,255,255,0.1)');
+        frontRibGrad.addColorStop(0, 'rgba(0,0,0,0.25)');
+        frontRibGrad.addColorStop(1, 'rgba(255,255,255,0.15)');
         ctx.fillStyle = frontRibGrad;
         ctx.beginPath();
         ctx.moveTo(ribTopFTL.x, ribTopFTL.y);
@@ -1814,7 +1814,7 @@ const Game = {
       }
     }
 
-    ctx.strokeStyle = 'rgba(40, 30, 70, 0.2)';
+    ctx.strokeStyle = 'rgba(40, 30, 70, 0.4)';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(p.fbl.x, p.fbl.y);
@@ -1870,7 +1870,7 @@ const Game = {
     const bounce = this.char.bounceT > 0 ? Math.sin((0.2 - this.char.bounceT)/0.2 * Math.PI) * 8 : 0;
     const cy = baseY - bounce;
 
-    ctx.fillStyle = 'rgba(50, 30, 90, 0.2)';
+    ctx.fillStyle = 'rgba(50, 30, 90, 0.4)';
     ctx.beginPath();
     ctx.ellipse(sx, baseY + 2, drawW * 0.35, drawW * 0.12, 0, 0, Math.PI*2);
     ctx.fill();
