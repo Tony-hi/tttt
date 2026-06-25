@@ -1582,14 +1582,7 @@ const Game = {
     let charDepth = this.char.x + this.char.z + 1;
     if(this.char.landedOn && this.char.onGround){
       const b = this.char.landedOn;
-      const relX = this.char.x - b.x;
-      const relZ = this.char.z - b.z;
-      const halfS = b.halfSize;
-      if(Math.abs(relX) > halfS * 0.7 || Math.abs(relZ) > halfS * 0.7){
-        charDepth = b.x + b.z + halfS * 2.5;
-      } else {
-        charDepth = b.x + b.z - 1;
-      }
+      charDepth = b.x + b.z + 10;
     }
     drawList.push({ type:'char', obj:this.char, depth: charDepth });
 
