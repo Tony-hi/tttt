@@ -2457,10 +2457,12 @@ const Game = {
     const freeRevives=Storage.getRevives();
     if(freeRevives>0){
       reviveBtn.disabled=false;
-      reviveCost.textContent='免费×'+freeRevives;
+      reviveCost.textContent='还剩'+freeRevives+'次免费';
+      reviveCost.style.color='#E74C3C';
     }else{
       reviveBtn.disabled=Storage.getCoins()<100;
       reviveCost.textContent='100金币';
+      reviveCost.style.color='var(--text-mute)';
     }
     if(revive) return;
     setTimeout(()=>{
