@@ -1083,7 +1083,7 @@ const Game = {
     this.running=true;
     this.score=0; this.combo=0;
     this.blocks=[];
-    this.char={x:0,y:this.groundY,vx:0,vy:0,rot:0,onGround:true,bounceT:0,landedOn:null,combo:0};
+    this.char={x:0,y:this.groundY,vx:0,vy:0,rot:0,onGround:true,bounceT:0,landedOn:null,combo:0,prevY:this.groundY};
     this.cameraX=0;
     this.charging=false; this.power=0; this.hintShown=false;
     document.getElementById('hud-power-fill').style.width='0%';
@@ -1092,7 +1092,7 @@ const Game = {
     this.blocks.push({x:0,y:this.groundY,w:120,h:50,type:0});
     this.nextBlockX=120;
     this.lastType=-1;
-    this.spawnBlocks(10);
+    this.spawnBlocks(3);
     this.char.x=60;
     this.updateCamera();
     this.updateScore();
@@ -1102,9 +1102,9 @@ const Game = {
   },
   spawnBlocks(n){
     const T=[
-      {wMin:75,wMax:100,gapMin:80, gapMax:140,type:0,weight:50},
-      {wMin:50,wMax:70, gapMin:100,gapMax:170,type:1,weight:30},
-      {wMin:85,wMax:120,gapMin:170,gapMax:220,type:2,weight:20}
+      {wMin:85,wMax:110,gapMin:90,  gapMax:150,type:0,weight:55},
+      {wMin:55,wMax:75, gapMin:100, gapMax:170,type:1,weight:30},
+      {wMin:90,wMax:120,gapMin:180, gapMax:260,type:2,weight:15}
     ];
     for(let i=0;i<n;i++){
       let pool=T.slice();
@@ -1141,18 +1141,24 @@ const Game = {
     if(!this.charging) return;
     this.charging=false;
     const elapsed=(performance.now()-this.chargeStart)/1000;
-    const power=Math.min(elapsed/1.4,1);
+    const power=Math.min(elapsed/1.2,1);
     this.power=power;
     this.jump(power);
     document.getElementById('hud-power-fill').style.width='0%';
   },
   jump(power){
     this.char.onGround=false;
-    // Tune: vx 220-360 px/s, vy -380 to -640 px/s
-    this.char.vx=220+power*260;
-    this.char.vy=-380-power*320;
+    // Jump physics — power directly maps to distance
+    // power 0.3 → short jump, power 1.0 → far jump
+    const dist = 90 + power * 300;   // horizontal distance
+    const height = 120 + power * 90; // peak height
+    // Derive velocities from distance and height (approx parabolic)
+    // vx = dist / totalTime, vy = -sqrt(2gh)
+    const totalTime = Math.sqrt(2 * height / 1600) * 2.5;
+    this.char.vx = dist / totalTime * 1.15;
+    this.char.vy = -Math.sqrt(2 * 1600 * height) * 1.05;
     this.char.rot=0;
-    this.char.rotSpeed=0.10+power*0.18;
+    this.char.rotSpeed=(0.06+power*0.14);
   },
 
   loop(){
@@ -1170,30 +1176,34 @@ const Game = {
     // Charging bar
     if(this.charging){
       const elapsed=(performance.now()-this.chargeStart)/1000;
-      const p=Math.min(elapsed/1.4,1);
+      const p=Math.min(elapsed/1.2,1);
       document.getElementById('hud-power-fill').style.width=(p*100)+'%';
     }
 
     if(!this.char.onGround){
       // Physics
-      this.char.vy += 1500*dt; // gravity
+      this.char.prevY = this.char.y;
+      this.char.vy += 1600*dt; // gravity
       this.char.x += this.char.vx*dt;
       this.char.y += this.char.vy*dt;
       this.char.rot += this.char.rotSpeed;
 
-      // Landing check
-      for(const b of this.blocks){
-        if(b===this.char.landedOn) continue;
-        if(this.char.x>=b.x && this.char.x<=b.x+b.w){
-          if(this.char.vy>0 && this.char.y>=b.y){
-            this.landOn(b);
-            break;
+      // Landing check — only from above (prevY was above block top)
+      if(this.char.vy > 0){
+        for(const b of this.blocks){
+          if(b === this.char.landedOn) continue;
+          if(this.char.x >= b.x && this.char.x <= b.x + b.w){
+            // Crossed the top surface this frame
+            if(this.char.prevY <= b.y + 2 && this.char.y >= b.y){
+              this.landOn(b);
+              break;
+            }
           }
         }
       }
 
       // Fall off
-      if(this.char.y>this.H+200){
+      if(this.char.y > this.H + 100){
         this.end();
       }
     } else {
@@ -1223,9 +1233,9 @@ const Game = {
     // Camera
     this.updateCamera();
 
-    // Spawn ahead
-    while(this.nextBlockX-this.cameraX<this.W*2){
-      this.spawnBlocks(4);
+    // Spawn ahead progressively
+    while(this.nextBlockX - this.cameraX < this.W * 1.2){
+      this.spawnBlocks(1);
     }
     // Cleanup behind
     this.blocks=this.blocks.filter(b=>b.x+b.w>this.cameraX-200);
