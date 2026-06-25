@@ -614,7 +614,6 @@ const SKINS = [
 function drawCompassCharacter(ctx,size,t){
   const s=size/110;
   ctx.save();
-  ctx.rotate(Math.sin(t*0.005)*0.04);
   ctx.lineCap='round';
   ctx.lineWidth=5.5*s;
   ctx.strokeStyle='#3A4570';
@@ -664,7 +663,6 @@ function drawCompassCharacter(ctx,size,t){
 function drawPawnCharacter(ctx,size,t){
   const s=size/110;
   ctx.save();
-  ctx.rotate(Math.sin(t*0.005)*0.04);
   ctx.fillStyle='rgba(0,0,0,0.18)';
   ctx.beginPath();
   ctx.ellipse(0,2,22*s,4*s,0,0,Math.PI*2);
@@ -1171,8 +1169,7 @@ const Game = {
     this.char.vx = dist / totalTime;
     this.char.vy = -Math.sqrt(2 * gravity * height);
     this.char.rot=0;
-    // Rotation speed also proportional to power
-    this.char.rotSpeed = 0.04 + power * 0.18;
+    this.char.rotSpeed=0;
   },
 
   loop(){
@@ -1448,28 +1445,14 @@ const Game = {
     const baseY=this.char.y;
     const bounce=this.char.bounceT>0 ? Math.sin((0.25-this.char.bounceT)/0.25*Math.PI)*6 : 0;
     const y=baseY-bounce;
-    // Character's body center is at about 40% up from feet
-    const pivotY = y - charH * 0.4;
-    ctx.save();
-    // Move to pivot point
-    ctx.translate(sx, pivotY);
-    ctx.rotate(this.char.rot);
-    // Move back to feet position for drawing
-    ctx.translate(0, charH * 0.4);
-    // Shadow (rotated with character — but better to draw unrotated)
-    ctx.restore();
-
-    // Draw shadow unrotated
+    // Shadow
     ctx.fillStyle='rgba(0,0,0,0.18)';
     ctx.beginPath();
     ctx.ellipse(sx, y + 2, 18, 4, 0, 0, Math.PI*2);
     ctx.fill();
-
-    // Draw character rotated
+    // Character — always upright, no rotation
     ctx.save();
-    ctx.translate(sx, pivotY);
-    ctx.rotate(this.char.rot);
-    ctx.translate(0, charH * 0.4);
+    ctx.translate(sx, y);
     drawCharacter(ctx, Storage.getCurrent(), charH, performance.now());
     ctx.restore();
   }
