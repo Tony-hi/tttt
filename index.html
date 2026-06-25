@@ -808,7 +808,7 @@ svg{display:block}
           <button class="modal-btn" id="btn-revive">
             <span class="ico"><svg><use href="#i-heart"/></svg></span>
             <span>复活一次</span>
-            <small>100金币</small>
+            <small id="revive-cost">100金币</small>
           </button>
         </div>
       </div>
@@ -952,7 +952,7 @@ svg{display:block}
 /* ============ 1. Storage Layer ============ */
 const Storage = {
   K_COINS:'jbc.coins', K_BEST:'jbc.bestScore', K_SKINS:'jbc.unlockedSkins', K_CURRENT:'jbc.currentSkin',
-  K_WALLPAPERS:'jbc.unlockedWalls', K_CURRENT_WALL:'jbc.currentWallpaper',
+  K_WALLPAPERS:'jbc.unlockedWalls', K_CURRENT_WALL:'jbc.currentWallpaper', K_REVIVE:'jbc.reviveCount',
   getCoins(){const v=parseInt(localStorage.getItem(this.K_COINS)||'0',10);return isNaN(v)?0:v;},
   setCoins(n){localStorage.setItem(this.K_COINS,String(Math.max(0,n|0)));},
   addCoins(n){this.setCoins(this.getCoins()+n);},
@@ -973,7 +973,11 @@ const Storage = {
   getWallpaper(){
     const id = this.getCurrentWall();
     return WALLPAPERS.find(w=>w.id===id) || WALLPAPERS[0];
-  }
+  },
+  getRevives(){const v=parseInt(localStorage.getItem(this.K_REVIVE)||'0',10);return isNaN(v)?0:v;},
+  setRevives(n){localStorage.setItem(this.K_REVIVE,String(Math.max(0,n|0)));},
+  addRevives(n){this.setRevives(this.getRevives()+n);},
+  useRevive(){const r=this.getRevives();if(r>0){this.setRevives(r-1);return true;}return false;}
 };
 
 /* ============ 2. Skins & Wallpapers ============ */
@@ -983,7 +987,8 @@ const SKINS = [
   { id:'pawn',    name:'象棋-兵',   price:200 },
   { id:'pencil',  name:'铅笔头',   price:300 },
   { id:'eraser',  name:'橡皮君',   price:250 },
-  { id:'ruler',   name:'直尺先生', price:350 }
+  { id:'ruler',   name:'直尺先生', price:350 },
+  { id:'cutter',  name:'美工刀侠客', price:400 }
 ];
 
 const WALLPAPERS = [
@@ -1373,6 +1378,96 @@ function drawRulerCharacter(ctx,size,t){
   ctx.restore();
 }
 
+function drawCutterCharacter(ctx,size,t){
+  const s=size/110;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0,2,16*s,4*s,0,0,Math.PI*2);
+  ctx.fill();
+  // 刀身
+  ctx.fillStyle='#F5F5F5';
+  ctx.strokeStyle='#707070';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.roundRect(-14*s,-65*s,28*s,65*s,5*s);
+  ctx.fill();
+  ctx.stroke();
+  // 刀刃区域
+  ctx.fillStyle='#E8E8E8';
+  ctx.beginPath();
+  ctx.moveTo(-5*s,-65*s);
+  ctx.lineTo(5*s,-65*s);
+  ctx.lineTo(5*s,-10*s);
+  ctx.lineTo(-5*s,-10*s);
+  ctx.closePath();
+  ctx.fill();
+  // 刀刃线条
+  ctx.strokeStyle='#B0B0B0';
+  ctx.lineWidth=1*s;
+  for(let i=0;i<8;i++){
+    const y = -15*s - i*6*s;
+    ctx.beginPath();
+    ctx.moveTo(-4*s, y);
+    ctx.lineTo(4*s, y);
+    ctx.stroke();
+  }
+  // 推钮
+  ctx.fillStyle='#E74C3C';
+  ctx.strokeStyle='#C0392B';
+  ctx.lineWidth=1.5*s;
+  ctx.beginPath();
+  ctx.roundRect(-8*s,-50*s,16*s,8*s,3*s);
+  ctx.fill();
+  ctx.stroke();
+  // 眼睛
+  ctx.fillStyle='#2A2640';
+  ctx.beginPath();
+  ctx.arc(-5*s,-42*s,2.5*s,0,Math.PI*2);
+  ctx.arc(5*s,-42*s,2.5*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();
+  ctx.arc(-4*s,-43*s,0.9*s,0,Math.PI*2);
+  ctx.arc(6*s,-43*s,0.9*s,0,Math.PI*2);
+  ctx.fill();
+  // 眉毛（侠客风）
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=2*s;
+  ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(-10*s,-50*s);
+  ctx.lineTo(-3*s,-47*s);
+  ctx.moveTo(10*s,-50*s);
+  ctx.lineTo(3*s,-47*s);
+  ctx.stroke();
+  // 腮红
+  ctx.fillStyle='rgba(232,100,100,0.6)';
+  ctx.beginPath();
+  ctx.arc(-8*s,-36*s,2.5*s,0,Math.PI*2);
+  ctx.arc(8*s,-36*s,2.5*s,0,Math.PI*2);
+  ctx.fill();
+  // 嘴巴
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=1.5*s;
+  ctx.beginPath();
+  ctx.moveTo(-3*s,-32*s);
+  ctx.lineTo(3*s,-32*s);
+  ctx.stroke();
+  // 刀尖
+  ctx.fillStyle='#C0C0C0';
+  ctx.beginPath();
+  ctx.moveTo(-5*s,-10*s);
+  ctx.lineTo(0,0);
+  ctx.lineTo(5*s,-10*s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle='#909090';
+  ctx.lineWidth=1*s;
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawCharacter(ctx,skinId,size,t){
   if(skinId==='block') drawBlockGuyCharacter(ctx,size,t);
   else if(skinId==='compass') drawCompassCharacter(ctx,size,t);
@@ -1380,6 +1475,7 @@ function drawCharacter(ctx,skinId,size,t){
   else if(skinId==='pencil') drawPencilCharacter(ctx,size,t);
   else if(skinId==='eraser') drawEraserCharacter(ctx,size,t);
   else if(skinId==='ruler') drawRulerCharacter(ctx,size,t);
+  else if(skinId==='cutter') drawCutterCharacter(ctx,size,t);
   else drawBlockGuyCharacter(ctx,size,t);
 }
 
@@ -2357,7 +2453,15 @@ const Game = {
     document.getElementById('stat-current').textContent = fmt(this.score);
     document.getElementById('stat-coins').textContent=Storage.getCoins();
     const reviveBtn=document.getElementById('btn-revive');
-    reviveBtn.disabled=Storage.getCoins()<100;
+    const reviveCost=document.getElementById('revive-cost');
+    const freeRevives=Storage.getRevives();
+    if(freeRevives>0){
+      reviveBtn.disabled=false;
+      reviveCost.textContent='免费×'+freeRevives;
+    }else{
+      reviveBtn.disabled=Storage.getCoins()<100;
+      reviveCost.textContent='100金币';
+    }
     if(revive) return;
     setTimeout(()=>{
       document.getElementById('modal-gameover').classList.add('show');
@@ -2789,10 +2893,34 @@ function toast(msg){
 
 /* ============ 9. Redeem codes ============ */
 const REDEEM_CODES={
-  'WELCOME100':{type:'coins',value:200,used:false},
-  'CRAB888':   {type:'coins',value:888,used:false},
-  'FANYANG':   {type:'coins',value:500,used:false},
-  'GIVEMECHESS':{type:'skin',value:'pawn',used:false}
+  'WELCOME100':  {type:'coins',value:200},
+  'CRAB888':     {type:'coins',value:888},
+  'FANYANG':     {type:'coins',value:500},
+  'GIVEMECHESS': {type:'skin',value:'pawn'},
+  // 金币类
+  'TYBX100':     {type:'coins',value:100},
+  'TYBX300':     {type:'coins',value:300},
+  'TYBX500':     {type:'coins',value:500},
+  'TYBX1000':    {type:'coins',value:1000},
+  'TYBX2026':    {type:'coins',value:2026},
+  'KAIJU666':    {type:'coins',value:666},
+  // 复活次数类
+  'FUHUO01':     {type:'revive',value:1},
+  'FUHUO03':     {type:'revive',value:3},
+  'FUHUO05':     {type:'revive',value:5},
+  'MANFEN10':    {type:'revive',value:10},
+  // 皮肤类
+  'PIFU001':     {type:'skin',value:'pawn'},
+  'PIFU002':     {type:'skin',value:'ruler'},
+  'PIFU003':     {type:'skin',value:'eraser'},
+  'PIFU004':     {type:'skin',value:'cutter'},
+  // 组合包类
+  'XIANGQI99':   {type:'bundle',coins:300,skins:['pawn']},
+  'XINSHOU88':   {type:'bundle',coins:500,revives:2},
+  'LIANJI77':    {type:'bundle',coins:800,revives:3},
+  'WANJU55':     {type:'bundle',coins:1500,revives:5},
+  'CHONGFEN99':  {type:'bundle',coins:2000,revives:8},
+  'CRAZY666':    {type:'bundle',coins:3000,revives:10,allSkins:true}
 };
 const K_REDEEM='jbc.redeemUsed';
 function getRedeemUsed(){try{return JSON.parse(localStorage.getItem(K_REDEEM)||'[]');}catch(e){return[];}}
@@ -2812,6 +2940,18 @@ function tryRedeem(code){
     used.push(code); setRedeemUsed(used);
     const s=SKINS.find(x=>x.id===c.value);
     return {ok:true,msg:'解锁皮肤：'+(s?s.name:c.value)};
+  } else if(c.type==='revive'){
+    Storage.addRevives(c.value);
+    used.push(code); setRedeemUsed(used);
+    return {ok:true,msg:'获得复活次数×'+c.value};
+  } else if(c.type==='bundle'){
+    let msg=[];
+    if(c.coins){Storage.addCoins(c.coins);msg.push(c.coins+'金币');}
+    if(c.revives){Storage.addRevives(c.revives);msg.push('复活次数×'+c.revives);}
+    if(c.skins){c.skins.forEach(id=>Storage.unlock(id));msg.push('皮肤礼包');}
+    if(c.allSkins){SKINS.forEach(s=>Storage.unlock(s.id));msg.push('全皮肤解锁');}
+    used.push(code); setRedeemUsed(used);
+    return {ok:true,msg:msg.join(' + ')};
   }
   return {ok:false,msg:'未知奖励'};
 }
@@ -2962,8 +3102,13 @@ function init(){
     Game.start();
   });
   document.getElementById('btn-revive').addEventListener('click',()=>{
-    if(Storage.getCoins()<100){toast('金币不足');return;}
-    Storage.setCoins(Storage.getCoins()-100);
+    if(Storage.useRevive()){
+      // 使用免费复活次数
+    }else if(Storage.getCoins()>=100){
+      Storage.setCoins(Storage.getCoins()-100);
+    }else{
+      toast('金币不足');return;
+    }
     document.getElementById('stat-coins').textContent=Storage.getCoins();
     hideModal('modal-gameover');
     Game.revive();
