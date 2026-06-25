@@ -1095,9 +1095,9 @@ const Game = {
 
   GRAVITY: 2000,
   MIN_JUMP_DIST: 5,
-  MAX_JUMP_DIST: 340,
+  MAX_JUMP_DIST: 420,
   MIN_JUMP_HEIGHT: 55,
-  MAX_JUMP_HEIGHT: 260,
+  MAX_JUMP_HEIGHT: 300,
 
   isoToScreen(x, z, y){
     const cosA = Math.cos(this.ISO_ANGLE);
@@ -1149,7 +1149,7 @@ const Game = {
     this.charging=false; this.power=0;
 
     const initAngle = (Math.random() - 0.5) * 0.6;
-    const initDist = 60 + Math.random() * 120;
+    const initDist = 80 + Math.random() * 100;
     const initX = Math.cos(initAngle) * initDist;
     const initZ = Math.sin(initAngle) * initDist;
     const initType = [0, 0, 0, 1, 1, 2, 3][Math.floor(Math.random() * 7)];
@@ -1159,6 +1159,7 @@ const Game = {
     this.blocks.push(startBlock);
 
     const secondBlock = this.createBlock(initX, initZ, initSecondType);
+    secondBlock._lastDist = initDist;
     this.blocks.push(secondBlock);
 
     this.char.x = 0;
@@ -1172,8 +1173,6 @@ const Game = {
     this.char.bounceT = 0;
     this.char.prevY = this.char.y;
     this.char.rot = 0;
-
-    this.spawnNextBlock();
 
     this.camera.x = 0; this.camera.z = 0; this.camera.y = 0;
     this.targetCamera.x = 0; this.targetCamera.z = 0; this.targetCamera.y = 0;
@@ -1211,13 +1210,13 @@ const Game = {
     if(!last) return;
 
     const distOptions = [
-      { min: 55,  max: 85,  typePool: [0, 0, 0, 0, 1, 1, 3, 3], weight: 20 },
-      { min: 80,  max: 120, typePool: [0, 1, 1, 1, 2, 3, 3], weight: 22 },
-      { min: 100, max: 145, typePool: [1, 1, 2, 2, 3, 4], weight: 18 },
-      { min: 130, max: 170, typePool: [1, 2, 2, 3, 4, 4], weight: 15 },
-      { min: 150, max: 195, typePool: [2, 2, 4, 4, 4], weight: 12 },
-      { min: 175, max: 220, typePool: [2, 4, 4, 4], weight: 8 },
-      { min: 200, max: 250, typePool: [4, 4, 4], weight: 5 }
+      { min: 70,  max: 110, typePool: [0, 0, 0, 1, 1, 3, 3], weight: 18 },
+      { min: 100, max: 150, typePool: [0, 1, 1, 1, 2, 3, 3], weight: 22 },
+      { min: 130, max: 185, typePool: [1, 1, 2, 2, 3, 4], weight: 20 },
+      { min: 160, max: 220, typePool: [1, 2, 2, 3, 4, 4], weight: 16 },
+      { min: 190, max: 260, typePool: [2, 2, 4, 4, 4], weight: 12 },
+      { min: 230, max: 300, typePool: [2, 4, 4, 4], weight: 8 },
+      { min: 270, max: 350, typePool: [4, 4, 4], weight: 4 }
     ];
 
     const totalW = distOptions.reduce((s,d)=>s+d.weight,0);
@@ -1225,15 +1224,27 @@ const Game = {
     let chosen = distOptions[0];
     for(const d of distOptions){ r -= d.weight; if(r <= 0){ chosen = d; break; } }
 
+    const lastDist = last._lastDist || 150;
+    const lastMid = (chosen.min + chosen.max) / 2;
+    if(Math.abs(lastMid - lastDist) < 30 && Math.random() < 0.6){
+      const altOptions = distOptions.filter(d => Math.abs((d.min + d.max)/2 - lastDist) >= 50);
+      if(altOptions.length > 0){
+        const altTotal = altOptions.reduce((s,d)=>s+d.weight,0);
+        let ar = Math.random() * altTotal;
+        for(const d of altOptions){ ar -= d.weight; if(ar <= 0){ chosen = d; break; } }
+      }
+    }
+
     const dist = chosen.min + Math.random() * (chosen.max - chosen.min);
     const pool = chosen.typePool;
     const typeIdx = pool[Math.floor(Math.random() * pool.length)];
 
-    const angle = (Math.random() - 0.5) * 0.2;
+    const angle = (Math.random() - 0.5) * 0.3;
     const dx = Math.cos(angle) * dist;
     const dz = Math.sin(angle) * dist;
 
     const nb = this.createBlock(last.x + dx, last.z + dz, typeIdx);
+    nb._lastDist = dist;
     this.blocks.push(nb);
   },
 
@@ -1469,10 +1480,10 @@ const Game = {
   },
 
   cullBlocks(){
-    while(this.blocks.length > 4){
+    while(this.blocks.length > 3){
       const first = this.blocks[0];
       const sy = this.screenY(first.x, first.z, 0);
-      if(sy < -200){
+      if(sy < -150){
         this.blocks.shift();
       } else {
         break;
