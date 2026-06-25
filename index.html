@@ -236,41 +236,91 @@ svg{display:block}
 
 /* ============ Lottery View ============ */
 .view-lottery{display:flex;flex-direction:column}
+.lottery-free-info{
+  display:flex;align-items:center;gap:10px;
+  margin:0 24px 12px;padding:14px 20px;
+  background:linear-gradient(135deg,#E8F5E9,#C8E6C9);
+  border-radius:16px;
+  box-shadow:0 4px 12px rgba(76,175,80,.2);
+}
+.lottery-free-info .free-icon{font-size:24px}
+.lottery-free-info .free-text{flex:1;font-size:15px;font-weight:700;color:#2E7D32}
+.lottery-free-info .free-status{font-size:14px;font-weight:800;color:#66BB6A}
+.lottery-free-info.used{background:linear-gradient(135deg,#F5F5F5,#E0E0E0)}
+.lottery-free-info.used .free-text{color:#757575}
+.lottery-free-info.used .free-status{color:#9E9E9E}
 .lottery-stage{
   flex:1;position:relative;
   display:flex;align-items:center;justify-content:center;
-  padding:16px;overflow:hidden;
+  padding:20px;overflow:hidden;
 }
-.lottery-character{position:relative;width:60vw;max-width:280px;height:340px;display:flex;align-items:center;justify-content:center}
-.lottery-character canvas{width:100%;height:100%}
-.lottery-text{
-  position:absolute;right:14%;top:50%;transform:translateY(-50%);
-  writing-mode:vertical-rl;font-size:30px;color:var(--gold-2);font-weight:900;
-  letter-spacing:6px;
-  text-shadow:0 2px 6px rgba(216,160,58,.35);
-  font-family:"Noto Serif SC","Songti SC","STSong",serif;
+.lottery-box{position:relative;width:200px;height:180px;animation:boxFloat 3s ease-in-out infinite}
+.lottery-box-top{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:120px;height:30px;
+  background:linear-gradient(180deg,#FF8A80,#FF5252);
+  border-radius:12px 12px 0 0;
+  box-shadow:0 -4px 10px rgba(255,82,82,.3);
 }
-.coin-floater{
-  position:absolute;color:var(--gold-2);font-size:24px;
-  animation:float 3s ease-in-out infinite;
-  pointer-events:none;
-  filter:drop-shadow(0 2px 4px rgba(216,160,58,.4));
+.lottery-box-body{
+  position:absolute;top:26px;left:50%;transform:translateX(-50%);
+  width:160px;height:130px;
+  background:linear-gradient(180deg,#FFD54F,#FFCA28);
+  border-radius:0 0 16px 16px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 24px rgba(255,193,7,.4);
 }
-@keyframes float{
-  0%,100%{transform:translateY(0) rotate(0deg)}
-  50%{transform:translateY(-14px) rotate(8deg)}
+.lottery-box-ribbon{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:30px;height:100%;
+  background:linear-gradient(180deg,#FF5252,#E53935);
 }
-.btn-gold{
+.lottery-gift-icon{font-size:64px;z-index:2;position:relative}
+.lottery-glow{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:280px;height:280px;
+  background:radial-gradient(circle,rgba(255,235,59,.4) 0%,rgba(255,235,59,0) 70%);
+  border-radius:50%;
+  animation:glowPulse 2s ease-in-out infinite;
+}
+@keyframes boxFloat{
+  0%,100%{transform:translateY(0) rotate(-2deg)}
+  50%{transform:translateY(-12px) rotate(2deg)}
+}
+@keyframes glowPulse{
+  0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.6}
+  50%{transform:translate(-50%,-50%) scale(1.15);opacity:.9}
+}
+.lottery-sparkles{position:absolute;inset:0;pointer-events:none}
+.sparkle{
+  position:absolute;font-size:24px;
+  animation:sparkleFloat 2.5s ease-in-out infinite;
+  opacity:.8;
+}
+.sparkle:nth-child(2){animation-delay:.5s}
+.sparkle:nth-child(3){animation-delay:1s}
+.sparkle:nth-child(4){animation-delay:1.5s}
+@keyframes sparkleFloat{
+  0%,100%{transform:translateY(0) scale(1);opacity:.6}
+  50%{transform:translateY(-10px) scale(1.2);opacity:1}
+}
+.lottery-tips{
+  text-align:center;margin:0 24px 16px;
+}
+.lottery-tips p{margin:4px 0;font-size:13px;color:var(--text-muted);font-weight:500}
+.btn-lottery{
   margin:0 24px 36px;width:calc(100% - 48px);
   padding:18px;border-radius:var(--r-lg);
-  background:linear-gradient(180deg,var(--gold) 0%,var(--gold-2) 100%);
+  background:linear-gradient(135deg,#FF8A65,#FF7043);
   color:#fff;font-size:20px;font-weight:800;
-  box-shadow:0 6px 16px rgba(216,160,58,.4);
+  box-shadow:0 6px 16px rgba(255,112,67,.4);
   display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .2s;
 }
-.btn-gold:active{transform:scale(.99)}
-.btn-gold:disabled{opacity:.5;filter:grayscale(.3)}
-.btn-gold svg{width:22px;height:22px}
+.btn-lottery:active{transform:scale(.98)}
+.btn-lottery:disabled{opacity:.5;filter:grayscale(.3)}
+.btn-lottery svg{width:22px;height:22px}
+.btn-lottery.free{background:linear-gradient(135deg,#81C784,#66BB6A);box-shadow:0 6px 16px rgba(102,187,106,.4)}
 
 .lottery-anim{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:10}
 .lottery-anim .bubble{background:rgba(255,255,255,.95);color:var(--text);padding:16px 28px;border-radius:24px;font-size:22px;font-weight:800;box-shadow:var(--shadow-lg);animation:lottery-anim 1.2s ease forwards}
@@ -279,6 +329,14 @@ svg{display:block}
   20%{transform:scale(1.1) rotate(5deg);opacity:1}
   60%{transform:scale(1) rotate(0);opacity:1}
   100%{transform:scale(1.6);opacity:0}
+}
+.lottery-box.shaking{animation:boxShake .5s ease-in-out}
+@keyframes boxShake{
+  0%,100%{transform:translateX(0) rotate(0)}
+  20%{transform:translateX(-8px) rotate(-5deg)}
+  40%{transform:translateX(8px) rotate(5deg)}
+  60%{transform:translateX(-6px) rotate(-3deg)}
+  80%{transform:translateX(6px) rotate(3deg)}
 }
 
 /* ============ Play View ============ */
@@ -778,27 +836,40 @@ svg{display:block}
         <button class="btn-back" id="btn-back-menu-lottery" aria-label="返回">
           <svg><use href="#i-arrow-left"/></svg>
         </button>
-        <h2 class="page-title">抽签</h2>
+        <h2 class="page-title">幸运抽签</h2>
         <div class="coin-display">
           <svg><use href="#i-coin"/></svg>
           <span id="lottery-coins">0</span>
         </div>
       </div>
-      <div class="lottery-stage" id="lottery-stage">
-        <div class="coin-floater" style="top:8%;left:12%;animation-delay:0s">¥</div>
-        <div class="coin-floater" style="top:18%;right:18%;animation-delay:.4s">$</div>
-        <div class="coin-floater" style="bottom:14%;left:8%;animation-delay:.8s">¥</div>
-        <div class="coin-floater" style="bottom:24%;right:10%;animation-delay:1.2s">$</div>
-        <div class="coin-floater" style="top:38%;left:6%;animation-delay:1.6s">¥</div>
-        <div class="coin-floater" style="top:60%;right:6%;animation-delay:2s">$</div>
-        <div class="lottery-character">
-          <canvas id="lottery-canvas"></canvas>
-        </div>
-        <div class="lottery-text">燔<br>阳<br>灵<br>签</div>
+      <div class="lottery-free-info">
+        <span class="free-icon">🎁</span>
+        <span class="free-text">每日首次免费</span>
+        <span class="free-status" id="lottery-free-status">今日已用</span>
       </div>
-      <button class="btn-gold" id="btn-lottery">
+      <div class="lottery-stage" id="lottery-stage">
+        <div class="lottery-box">
+          <div class="lottery-box-top"></div>
+          <div class="lottery-box-body">
+            <div class="lottery-box-ribbon"></div>
+            <div class="lottery-gift-icon">🎁</div>
+          </div>
+          <div class="lottery-glow"></div>
+        </div>
+        <div class="lottery-sparkles">
+          <span class="sparkle" style="top:15%;left:20%">✨</span>
+          <span class="sparkle" style="top:25%;right:25%">⭐</span>
+          <span class="sparkle" style="bottom:30%;left:15%">✨</span>
+          <span class="sparkle" style="bottom:20%;right:20%">⭐</span>
+        </div>
+      </div>
+      <div class="lottery-tips">
+        <p>每抽消耗 100 金币</p>
+        <p>有机会获得金币、复活次数、皮肤等奖励</p>
+      </div>
+      <button class="btn-lottery" id="btn-lottery">
         <svg><use href="#i-coin"/></svg>
-        抽签:100金币
+        <span id="btn-lottery-text">立即抽签</span>
       </button>
     </section>
 
@@ -1017,7 +1088,7 @@ svg{display:block}
 const Storage = {
   K_COINS:'jbc.coins', K_BEST:'jbc.bestScore', K_SKINS:'jbc.unlockedSkins', K_CURRENT:'jbc.currentSkin',
   K_WALLPAPERS:'jbc.unlockedWalls', K_CURRENT_WALL:'jbc.currentWallpaper', K_REVIVE:'jbc.reviveCount',
-  K_BENEFITS:'jbc.benefitSwitches', K_HISTORY:'jbc.redeemHistory',
+  K_BENEFITS:'jbc.benefitSwitches', K_HISTORY:'jbc.redeemHistory', K_FREE_LOTTERY:'jbc.freeLotteryDate',
   getCoins(){const v=parseInt(localStorage.getItem(this.K_COINS)||'0',10);return isNaN(v)?0:v;},
   setCoins(n){localStorage.setItem(this.K_COINS,String(Math.max(0,n|0)));},
   addCoins(n){const bonus=this.getBenefitEnabled('coinBonus',false)?Math.floor(n*0.5):0;this.setCoins(this.getCoins()+n+bonus);return bonus;},
@@ -1047,7 +1118,10 @@ const Storage = {
   setBenefitSwitch(key,val){const s=this.getBenefitSwitches();s[key]=val;localStorage.setItem(this.K_BENEFITS,JSON.stringify(s));},
   getBenefitEnabled(key,def=true){const s=this.getBenefitSwitches();return s[key]===undefined?def:s[key];},
   getRedeemHistory(){try{return JSON.parse(localStorage.getItem(this.K_HISTORY)||'[]');}catch(e){return[];}},
-  addRedeemHistory(code,reward){const h=this.getRedeemHistory();h.unshift({code,reward,time:Date.now()});if(h.length>50) h.length=50;localStorage.setItem(this.K_HISTORY,JSON.stringify(h));}
+  addRedeemHistory(code,reward){const h=this.getRedeemHistory();h.unshift({code,reward,time:Date.now()});if(h.length>50) h.length=50;localStorage.setItem(this.K_HISTORY,JSON.stringify(h));},
+  getTodayStr(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();},
+  hasFreeLottery(){return localStorage.getItem(this.K_FREE_LOTTERY)!==this.getTodayStr();},
+  useFreeLottery(){localStorage.setItem(this.K_FREE_LOTTERY,this.getTodayStr());}
 };
 
 /* ============ 2. Skins & Wallpapers ============ */
@@ -1776,70 +1850,99 @@ const Shop = {
 /* ============ 6. Lottery ============ */
 const LOTTERY_COST=100;
 const LOTTERY_POOL=[
-  {type:'coins',value:50,  weight:40},
-  {type:'coins',value:100, weight:30},
-  {type:'coins',value:200, weight:15},
-  {type:'coins',value:500, weight:5 },
-  {type:'skin', value:'pawn',weight:10}
+  {type:'coins',value:50,   weight:25, name:'50金币', icon:'💰', rarity:'common'},
+  {type:'coins',value:100,  weight:20, name:'100金币', icon:'💰', rarity:'common'},
+  {type:'revive',value:1,   weight:20, name:'复活次数×1', icon:'💖', rarity:'common'},
+  {type:'coins',value:200,  weight:12, name:'200金币', icon:'💰', rarity:'rare'},
+  {type:'revive',value:3,   weight:10, name:'复活次数×3', icon:'💖', rarity:'rare'},
+  {type:'coins',value:300,  weight:6,  name:'300金币', icon:'💰', rarity:'rare'},
+  {type:'coins',value:500,  weight:3,  name:'500金币', icon:'💰', rarity:'epic'},
+  {type:'revive',value:5,   weight:2,  name:'复活次数×5', icon:'💖', rarity:'epic'},
+  {type:'skin', value:'pencil', weight:1, name:'铅笔头皮肤', icon:'🎨', rarity:'legendary'},
+  {type:'skin', value:'eraser', weight:1, name:'橡皮君皮肤', icon:'🎨', rarity:'legendary'}
 ];
 const Lottery = {
   rolling:false,
+  animFrame:null,
   render(){
     document.getElementById('lottery-coins').textContent=Storage.getCoins();
-    this.draw();
+    this.updateFreeStatus();
+    this.updateButton();
   },
-  draw(){
-    const cv=document.getElementById('lottery-canvas');
-    const rect=cv.getBoundingClientRect();
-    if(rect.width<10) return;
-    const dpr=Math.min(window.devicePixelRatio||1,2);
-    cv.width=rect.width*dpr; cv.height=rect.height*dpr;
-    const ctx=cv.getContext('2d');
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    ctx.clearRect(0,0,rect.width,rect.height);
-    const cx=rect.width/2, cy=rect.height*0.5;
-    const grd=ctx.createRadialGradient(cx,cy,10,cx,cy,rect.width*0.7);
-    grd.addColorStop(0,'rgba(244,194,92,0.5)');
-    grd.addColorStop(1,'rgba(244,194,92,0)');
-    ctx.fillStyle=grd;
-    ctx.beginPath(); ctx.arc(cx,cy,rect.width*0.7,0,Math.PI*2); ctx.fill();
-    drawLotteryCharacter(ctx,cx,cy,rect.width,rect.height,performance.now());
+  updateFreeStatus(){
+    const info=document.querySelector('.lottery-free-info');
+    const status=document.getElementById('lottery-free-status');
+    const hasFree=Storage.hasFreeLottery();
+    if(hasFree){
+      info.classList.remove('used');
+      status.textContent='今日可用';
+    } else {
+      info.classList.add('used');
+      status.textContent='今日已用';
+    }
+  },
+  updateButton(){
+    const btn=document.getElementById('btn-lottery');
+    const btnText=document.getElementById('btn-lottery-text');
+    const hasFree=Storage.hasFreeLottery();
+    if(hasFree){
+      btn.classList.add('free');
+      btnText.textContent='免费抽签';
+    } else {
+      btn.classList.remove('free');
+      btnText.textContent='抽签 · 100金币';
+    }
   },
   roll(){
     if(this.rolling) return;
-    if(Storage.getCoins()<LOTTERY_COST){toast('金币不足');return;}
+    const isFree=Storage.hasFreeLottery();
+    if(!isFree && Storage.getCoins()<LOTTERY_COST){toast('金币不足');return;}
     this.rolling=true;
-    Storage.setCoins(Storage.getCoins()-LOTTERY_COST);
-    document.getElementById('lottery-coins').textContent=Storage.getCoins();
+    if(!isFree){
+      Storage.setCoins(Storage.getCoins()-LOTTERY_COST);
+      document.getElementById('lottery-coins').textContent=Storage.getCoins();
+    } else {
+      Storage.useFreeLottery();
+      this.updateFreeStatus();
+      this.updateButton();
+    }
+    const box=document.querySelector('.lottery-box');
+    box.classList.add('shaking');
     const stage=document.getElementById('lottery-stage');
     const anim=document.createElement('div');
     anim.className='lottery-anim';
     anim.innerHTML='<div class="bubble">抽签中…</div>';
     stage.appendChild(anim);
-    setTimeout(()=>anim.remove(),1200);
+    setTimeout(()=>anim.remove(),1500);
     setTimeout(()=>{
+      box.classList.remove('shaking');
       const total=LOTTERY_POOL.reduce((s,p)=>s+p.weight,0);
       let r=Math.random()*total, pick=LOTTERY_POOL[0];
       for(const p of LOTTERY_POOL){r-=p.weight;if(r<=0){pick=p;break;}}
       this.grant(pick);
       this.rolling=false;
-    },1100);
+    },1400);
   },
   grant(pick){
     let title,sub,icon;
     if(pick.type==='coins'){
       Storage.addCoins(pick.value);
-      title='恭喜获得金币';
-      sub='+'+pick.value+' 金币';
+      title='恭喜获得';
+      sub=pick.name;
       icon='💰';
-    } else {
+    } else if(pick.type==='revive'){
+      Storage.addRevives(pick.value);
+      title='恭喜获得';
+      sub=pick.name;
+      icon='💖';
+    } else if(pick.type==='skin'){
       const skin=SKINS.find(s=>s.id===pick.value);
-      if(!skin){title='再接再厉';sub='+50 金币';icon='🎁';Storage.addCoins(50);}
+      if(!skin){title='恭喜获得';sub='100金币';icon='💰';Storage.addCoins(100);}
       else if(Storage.hasSkin(skin.id)){
         title='已拥有该皮肤';
-        sub='返还 200 金币';
+        sub='返还 300 金币';
         icon='🎁';
-        Storage.addCoins(200);
+        Storage.addCoins(300);
       } else {
         Storage.unlock(skin.id);
         title='恭喜获得新皮肤';
