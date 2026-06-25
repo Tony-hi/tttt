@@ -391,6 +391,32 @@ svg{display:block}
 .redeem-buttons{display:flex;gap:10px}
 .redeem-buttons .modal-btn{flex:1}
 .redeem-msg{min-height:22px;font-size:14px;color:var(--green-2);margin-bottom:8px;font-weight:700}
+.redeem-links{display:flex;justify-content:center;gap:20px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.08)}
+.redeem-link-btn{background:none;border:none;color:var(--primary);font-size:14px;font-weight:700;cursor:pointer;padding:4px 8px}
+.redeem-link-btn:hover{opacity:0.8}
+.redeem-card{max-height:80vh;overflow-y:auto}
+.redeem-header{display:flex;align-items:center;gap:10px;margin-bottom:16px;position:relative}
+.redeem-header h3{flex:1;text-align:center;margin:0}
+.redeem-header .btn-back.small{position:relative;width:36px;height:36px;font-size:18px}
+.redeem-header .btn-back.small svg{width:20px;height:20px}
+.benefits-list{display:flex;flex-direction:column;gap:10px}
+.benefit-item{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#F5F2FA;border-radius:14px}
+.benefit-info{display:flex;align-items:center;gap:12px}
+.benefit-icon{width:40px;height:40px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:22px}
+.benefit-text{display:flex;flex-direction:column;gap:2px}
+.benefit-name{font-size:15px;font-weight:800;color:var(--text)}
+.benefit-desc{font-size:13px;color:var(--text-mute);font-weight:600}
+.benefit-switch{width:48px;height:28px;border-radius:14px;background:#ddd;position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.benefit-switch.active{background:var(--green)}
+.benefit-switch::after{content:'';position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 2px 6px rgba(0,0,0,0.15)}
+.benefit-switch.active::after{transform:translateX(20px)}
+.history-list{display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow-y:auto}
+.history-item{padding:12px 14px;background:#F5F2FA;border-radius:12px;display:flex;justify-content:space-between;align-items:center}
+.history-info{display:flex;flex-direction:column;gap:2px}
+.history-code{font-size:14px;font-weight:800;color:var(--text)}
+.history-reward{font-size:13px;color:var(--text-mute);font-weight:600}
+.history-time{font-size:12px;color:var(--text-mute);font-weight:600;flex-shrink:0;margin-left:10px}
+.history-empty{text-align:center;padding:30px 0;color:var(--text-mute);font-size:14px;font-weight:600}
 
 .result-content{padding:10px 0 20px}
 .result-content .result-icon{font-size:72px;margin-bottom:8px;line-height:1}
@@ -919,14 +945,38 @@ svg{display:block}
 
     <div class="modal" id="modal-redeem">
       <div class="modal-mask"></div>
-      <div class="modal-card light">
-        <h3>兑换码</h3>
-        <p>请输入正确的兑换码以领取奖励，每个兑换码仅可使用一次。</p>
-        <input type="text" class="redeem-input" id="redeem-input" placeholder="请输入兑换码" autocomplete="off" maxlength="20">
-        <div class="redeem-msg" id="redeem-msg"></div>
-        <div class="redeem-buttons">
-          <button class="modal-btn" id="btn-redeem-submit">确认</button>
-          <button class="modal-btn secondary" id="btn-redeem-cancel">取消</button>
+      <div class="modal-card light redeem-card">
+        <div class="redeem-stage" id="redeem-stage-main">
+          <h3>兑换码</h3>
+          <p>请输入正确的兑换码以领取奖励，每个兑换码仅可使用一次。</p>
+          <input type="text" class="redeem-input" id="redeem-input" placeholder="请输入兑换码" autocomplete="off" maxlength="20">
+          <div class="redeem-msg" id="redeem-msg"></div>
+          <div class="redeem-buttons">
+            <button class="modal-btn" id="btn-redeem-submit">确认</button>
+            <button class="modal-btn secondary" id="btn-redeem-cancel">取消</button>
+          </div>
+          <div class="redeem-links">
+            <button class="redeem-link-btn" id="btn-my-benefits">我的权益</button>
+            <button class="redeem-link-btn" id="btn-redeem-history">兑换记录</button>
+          </div>
+        </div>
+        <div class="redeem-stage" id="redeem-stage-benefits" style="display:none">
+          <div class="redeem-header">
+            <button class="btn-back small" id="btn-benefits-back" aria-label="返回">
+              <svg><use href="#i-chevron-left"/></svg>
+            </button>
+            <h3>我的权益</h3>
+          </div>
+          <div class="benefits-list" id="benefits-list"></div>
+        </div>
+        <div class="redeem-stage" id="redeem-stage-history" style="display:none">
+          <div class="redeem-header">
+            <button class="btn-back small" id="btn-history-back" aria-label="返回">
+              <svg><use href="#i-chevron-left"/></svg>
+            </button>
+            <h3>兑换记录</h3>
+          </div>
+          <div class="history-list" id="history-list"></div>
         </div>
       </div>
     </div>
@@ -953,6 +1003,7 @@ svg{display:block}
 const Storage = {
   K_COINS:'jbc.coins', K_BEST:'jbc.bestScore', K_SKINS:'jbc.unlockedSkins', K_CURRENT:'jbc.currentSkin',
   K_WALLPAPERS:'jbc.unlockedWalls', K_CURRENT_WALL:'jbc.currentWallpaper', K_REVIVE:'jbc.reviveCount',
+  K_BENEFITS:'jbc.benefitSwitches', K_HISTORY:'jbc.redeemHistory',
   getCoins(){const v=parseInt(localStorage.getItem(this.K_COINS)||'0',10);return isNaN(v)?0:v;},
   setCoins(n){localStorage.setItem(this.K_COINS,String(Math.max(0,n|0)));},
   addCoins(n){this.setCoins(this.getCoins()+n);},
@@ -977,7 +1028,12 @@ const Storage = {
   getRevives(){const v=parseInt(localStorage.getItem(this.K_REVIVE)||'0',10);return isNaN(v)?0:v;},
   setRevives(n){localStorage.setItem(this.K_REVIVE,String(Math.max(0,n|0)));},
   addRevives(n){this.setRevives(this.getRevives()+n);},
-  useRevive(){const r=this.getRevives();if(r>0){this.setRevives(r-1);return true;}return false;}
+  useRevive(){const r=this.getRevives();if(r>0&&this.getBenefitEnabled('freeRevive',true)){this.setRevives(r-1);return true;}return false;},
+  getBenefitSwitches(){try{return JSON.parse(localStorage.getItem(this.K_BENEFITS)||'{}');}catch(e){return {};}},
+  setBenefitSwitch(key,val){const s=this.getBenefitSwitches();s[key]=val;localStorage.setItem(this.K_BENEFITS,JSON.stringify(s));},
+  getBenefitEnabled(key,def=true){const s=this.getBenefitSwitches();return s[key]===undefined?def:s[key];},
+  getRedeemHistory(){try{return JSON.parse(localStorage.getItem(this.K_HISTORY)||'[]');}catch(e){return[];}},
+  addRedeemHistory(code,reward){const h=this.getRedeemHistory();h.unshift({code,reward,time:Date.now()});if(h.length>50) h.length=50;localStorage.setItem(this.K_HISTORY,JSON.stringify(h));}
 };
 
 /* ============ 2. Skins & Wallpapers ============ */
@@ -2455,7 +2511,8 @@ const Game = {
     const reviveBtn=document.getElementById('btn-revive');
     const reviveCost=document.getElementById('revive-cost');
     const freeRevives=Storage.getRevives();
-    if(freeRevives>0){
+    const freeReviveEnabled=Storage.getBenefitEnabled('freeRevive',true);
+    if(freeRevives>0&&freeReviveEnabled){
       reviveBtn.disabled=false;
       reviveCost.textContent='还剩'+freeRevives+'次免费';
       reviveCost.style.color='#E74C3C';
@@ -2933,27 +2990,29 @@ function tryRedeem(code){
   if(!c) return {ok:false,msg:'兑换码无效'};
   const used=getRedeemUsed();
   if(used.includes(code)) return {ok:false,msg:'该兑换码已使用'};
+  let rewardMsg='';
   if(c.type==='coins'){
     Storage.addCoins(c.value);
-    used.push(code); setRedeemUsed(used);
-    return {ok:true,msg:'获得 '+c.value+' 金币'};
+    rewardMsg='获得 '+c.value+' 金币';
   } else if(c.type==='skin'){
     Storage.unlock(c.value);
-    used.push(code); setRedeemUsed(used);
     const s=SKINS.find(x=>x.id===c.value);
-    return {ok:true,msg:'解锁皮肤：'+(s?s.name:c.value)};
+    rewardMsg='解锁皮肤：'+(s?s.name:c.value);
   } else if(c.type==='revive'){
     Storage.addRevives(c.value);
-    used.push(code); setRedeemUsed(used);
-    return {ok:true,msg:'获得复活次数×'+c.value};
+    rewardMsg='获得复活次数×'+c.value;
   } else if(c.type==='bundle'){
     let msg=[];
     if(c.coins){Storage.addCoins(c.coins);msg.push(c.coins+'金币');}
     if(c.revives){Storage.addRevives(c.revives);msg.push('复活次数×'+c.revives);}
     if(c.skins){c.skins.forEach(id=>Storage.unlock(id));msg.push('皮肤礼包');}
     if(c.allSkins){SKINS.forEach(s=>Storage.unlock(s.id));msg.push('全皮肤解锁');}
+    rewardMsg=msg.join(' + ');
+  }
+  if(rewardMsg){
     used.push(code); setRedeemUsed(used);
-    return {ok:true,msg:msg.join(' + ')};
+    Storage.addRedeemHistory(code, rewardMsg);
+    return {ok:true,msg:rewardMsg};
   }
   return {ok:false,msg:'未知奖励'};
 }
@@ -3043,7 +3102,7 @@ function init(){
       if(t==='shop')    Router.show('shop');
       else if(t==='lottery') Router.show('lottery');
       else if(t==='tutorial') showModal('modal-tutorial');
-      else if(t==='redeem')   showModal('modal-redeem');
+      else if(t==='redeem'){ showRedeemStage('main'); showModal('modal-redeem'); }
     });
   });
 
@@ -3097,6 +3156,56 @@ function init(){
     }
   });
   document.getElementById('btn-redeem-cancel').addEventListener('click',()=>hideModal('modal-redeem'));
+
+  // Redeem benefits & history pages
+  function showRedeemStage(stage){
+    document.getElementById('redeem-stage-main').style.display = stage==='main'?'block':'none';
+    document.getElementById('redeem-stage-benefits').style.display = stage==='benefits'?'block':'none';
+    document.getElementById('redeem-stage-history').style.display = stage==='history'?'block':'none';
+  }
+  document.getElementById('btn-my-benefits').addEventListener('click',()=>{renderBenefits();showRedeemStage('benefits');});
+  document.getElementById('btn-benefits-back').addEventListener('click',()=>showRedeemStage('main'));
+  document.getElementById('btn-redeem-history').addEventListener('click',()=>{renderHistory();showRedeemStage('history');});
+  document.getElementById('btn-history-back').addEventListener('click',()=>showRedeemStage('main'));
+
+  function renderBenefits(){
+    const list=document.getElementById('benefits-list');
+    const items=[
+      {key:'freeRevive',icon:'💖',name:'免费复活',desc:'剩余 '+Storage.getRevives()+' 次，优先使用免费复活'},
+      {key:'coinBonus',icon:'💰',name:'金币加成',desc:'获取金币时额外增加 0% (暂未实装)'},
+      {key:'doubleScore',icon:'⭐',name:'双倍得分',desc:'跳跃得分翻倍 (暂未实装)'}
+    ];
+    list.innerHTML=items.map(it=>{
+      const active=Storage.getBenefitEnabled(it.key,true);
+      return '<div class="benefit-item"><div class="benefit-info"><div class="benefit-icon">'+it.icon+'</div><div class="benefit-text"><div class="benefit-name">'+it.name+'</div><div class="benefit-desc">'+it.desc+'</div></div></div><div class="benefit-switch '+(active?'active':'')+'" data-key="'+it.key+'"></div></div>';
+    }).join('');
+    list.querySelectorAll('.benefit-switch').forEach(sw=>{
+      sw.addEventListener('click',()=>{
+        const key=sw.dataset.key;
+        const cur=Storage.getBenefitEnabled(key,true);
+        Storage.setBenefitSwitch(key,!cur);
+        sw.classList.toggle('active');
+      });
+    });
+  }
+
+  function renderHistory(){
+    const list=document.getElementById('history-list');
+    const h=Storage.getRedeemHistory();
+    if(h.length===0){
+      list.innerHTML='<div class="history-empty">暂无兑换记录</div>';
+      return;
+    }
+    list.innerHTML=h.map(item=>{
+      const d=new Date(item.time);
+      const mon=String(d.getMonth()+1).padStart(2,'0');
+      const day=String(d.getDate()).padStart(2,'0');
+      const hh=String(d.getHours()).padStart(2,'0');
+      const mm=String(d.getMinutes()).padStart(2,'0');
+      const timeStr=mon+'-'+day+' '+hh+':'+mm;
+      return '<div class="history-item"><div class="history-info"><div class="history-code">'+item.code+'</div><div class="history-reward">'+item.reward+'</div></div><div class="history-time">'+timeStr+'</div></div>';
+    }).join('');
+  }
 
   // Gameover
   document.getElementById('btn-restart').addEventListener('click',()=>{
