@@ -128,10 +128,33 @@ svg{display:block}
   font-size:18px;color:var(--text);font-weight:800;
 }
 .coin-display svg{width:22px;height:22px;color:var(--gold-2)}
+
+.shop-tabs{
+  display:flex;gap:8px;
+  padding:0 24px 8px;
+  justify-content:center;
+}
+.shop-tab{
+  padding:10px 24px;
+  border-radius:20px;
+  font-size:15px;font-weight:700;
+  color:var(--text-mute);
+  background:rgba(255,255,255,0.5);
+  transition:all .2s ease;
+}
+.shop-tab.active{
+  background:#fff;
+  color:var(--text);
+  box-shadow:var(--shadow);
+}
+
 .shop-stage{
   position:relative;
   display:flex;align-items:center;justify-content:center;
   height:42vh;min-height:280px;padding:0 16px;
+}
+.shop-stage-wallpaper{
+  height:38vh;min-height:260px;
 }
 .shop-character{
   width:60vw;max-width:300px;height:100%;
@@ -144,6 +167,27 @@ svg{display:block}
   background:rgba(255,255,255,.85);color:var(--text);
   font-size:14px;padding:4px 14px;border-radius:14px;
   white-space:nowrap;
+}
+.shop-wallpaper-preview{
+  width:55vw;max-width:260px;height:100%;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+.wallpaper-preview-box{
+  width:100%;height:85%;
+  border-radius:24px;
+  overflow:hidden;
+  position:relative;
+  box-shadow:var(--shadow-lg);
+}
+.wallpaper-preview-bg{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg,var(--bg-1) 0%,var(--bg-2) 100%);
+}
+.wallpaper-preview-dots{
+  position:absolute;inset:0;
+  background-image:radial-gradient(rgba(255,255,255,0.4) 1.5px, transparent 1.5px);
+  background-size:24px 24px;
 }
 .btn-arrow{
   width:46px;height:46px;border-radius:50%;
@@ -169,6 +213,14 @@ svg{display:block}
 }
 .preview-item.selected{border-color:var(--green)}
 .preview-item.locked .lock{position:absolute;bottom:4px;right:4px;background:rgba(42,38,64,.85);color:#fff;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px}
+.preview-item.wallpaper-preview-item{
+  overflow:hidden;
+  padding:0;
+}
+.preview-item .wallpaper-thumb{
+  width:100%;height:100%;
+  border-radius:14px;
+}
 .btn-action-wrap{padding:0 24px 32px}
 .btn-action{
   width:100%;padding:18px;border-radius:var(--r-lg);
@@ -348,6 +400,221 @@ svg{display:block}
 @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
 .shake{animation:shake .4s ease}
 
+/* ============ Tutorial Modal ============ */
+.tutorial-card{
+  background:linear-gradient(180deg,#C8BEE0 0%,#B8AAD5 100%);
+  max-width:380px;
+  padding:20px 20px 24px;
+  position:relative;
+  overflow:hidden;
+}
+.tutorial-back{
+  position:absolute;top:16px;left:16px;
+  width:44px;height:44px;border-radius:50%;
+  background:var(--primary);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  z-index:5;
+  box-shadow:0 3px 10px rgba(44,62,143,.35);
+}
+.tutorial-back:active{transform:scale(.94)}
+.tutorial-back svg{width:20px;height:20px}
+.tutorial-title{
+  font-size:28px;color:var(--text);font-weight:900;
+  text-align:center;margin:8px 0 4px;letter-spacing:2px;
+}
+.tutorial-stage{
+  position:relative;
+  width:100%;
+  height:340px;
+  margin:12px 0 8px;
+}
+.tutorial-page{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;
+  opacity:0;pointer-events:none;
+  transition:opacity .3s ease;
+}
+.tutorial-page.active{opacity:1;pointer-events:auto}
+.tutorial-circle{
+  width:220px;height:220px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.35);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:relative;
+  margin-bottom:16px;
+}
+.tutorial-text{
+  font-size:17px;color:var(--text);font-weight:700;
+  text-align:center;line-height:1.6;
+  max-width:280px;
+}
+.tutorial-arrow{
+  position:absolute;
+  top:50%;transform:translateY(-50%);
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,0.8);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text);
+  z-index:4;
+  box-shadow:0 2px 8px rgba(80,60,140,.15);
+}
+.tutorial-arrow:active{transform:translateY(-50%) scale(.92)}
+.tutorial-arrow svg{width:14px;height:14px}
+.tutorial-arrow-left{left:12px}
+.tutorial-arrow-right{right:12px}
+.tutorial-dots{
+  display:flex;gap:8px;justify-content:center;
+  margin:4px 0 14px;
+}
+.tutorial-dots .dot{
+  width:10px;height:10px;border-radius:50%;
+  background:rgba(255,255,255,0.5);
+  transition:all .2s ease;
+}
+.tutorial-dots .dot.active{
+  width:22px;border-radius:10px;
+  background:#fff;
+}
+.tutorial-btn{
+  background:#fff;color:var(--text);
+  font-size:19px;font-weight:800;
+  border-radius:var(--r-lg);
+}
+
+.tut-skin-label{
+  position:absolute;top:28px;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+}
+.tut-skin-name{
+  font-size:14px;color:var(--text);font-weight:700;
+  background:rgba(255,255,255,0.6);
+  padding:2px 10px;border-radius:12px;
+}
+.tut-skin-price{
+  display:flex;align-items:center;gap:3px;
+  font-size:12px;color:#D8A03A;font-weight:800;
+  background:rgba(255,255,255,0.6);
+  padding:2px 8px;border-radius:10px;
+}
+.tut-coin-ico{width:14px;height:14px}
+.tut-char-display{
+  width:100px;height:130px;
+  display:flex;align-items:flex-end;justify-content:center;
+  margin-top:10px;
+}
+.tut-char-display canvas{width:100%;height:100%}
+.tut-skin-status{
+  position:absolute;bottom:32px;
+  background:rgba(255,255,255,0.9);
+  color:var(--text);font-size:13px;font-weight:700;
+  padding:5px 16px;border-radius:14px;
+}
+
+.tut-score{
+  position:absolute;top:28px;left:50%;transform:translateX(-50%);
+  font-size:28px;font-weight:900;color:var(--text);
+  font-family:"Impact","DIN Alternate",sans-serif;
+  letter-spacing:2px;
+}
+.tut-warning{
+  position:absolute;top:70px;left:50%;transform:translateX(-50%);
+  width:50px;height:50px;
+}
+.warning-tri{
+  width:0;height:0;
+  border-left:25px solid transparent;
+  border-right:25px solid transparent;
+  border-bottom:42px solid #E85A4F;
+  position:relative;
+}
+.warning-tri::after{
+  content:'!';
+  position:absolute;top:14px;left:-7px;
+  color:#fff;font-weight:900;font-size:22px;
+  font-family:Arial,sans-serif;
+}
+.tut-blocks{
+  position:absolute;bottom:70px;left:50%;transform:translateX(-50%);
+  display:flex;gap:40px;align-items:flex-end;
+}
+.tut-block{
+  width:42px;height:32px;
+  background:#B8B0CC;
+  position:relative;
+}
+.tut-block::before{
+  content:'';
+  position:absolute;top:-8px;left:0;right:0;height:8px;
+  background:#D2D6E2;
+  transform:skewX(-30deg);
+  transform-origin:bottom left;
+}
+.tut-block::after{
+  content:'';
+  position:absolute;top:-8px;right:-8px;width:8px;bottom:0;
+  background:#8E86A6;
+  transform:skewY(-30deg);
+  transform-origin:top left;
+}
+.tut-block.tut-block-off{
+  opacity:0.7;
+  width:36px;height:28px;
+}
+.tut-arc{
+  position:absolute;bottom:30px;left:50%;
+  width:80px;height:80px;
+  border:4px solid transparent;
+  border-left-color:#E85A4F;
+  border-bottom-color:#E85A4F;
+  border-radius:0 0 0 100%;
+  transform:translateX(-50%);
+}
+.tut-arc.tut-arc-green{
+  border-left-color:#3DBE6F;
+  border-bottom-color:#3DBE6F;
+  width:50px;height:50px;
+}
+.tut-mini-char{
+  position:absolute;bottom:60px;left:38%;
+  width:20px;height:30px;
+  background:#3A4570;
+  border-radius:50% 50% 40% 40%;
+}
+
+.tut-gameover{
+  width:160px;
+  background:var(--modal);
+  border-radius:16px;
+  padding:16px 14px;
+  color:#fff;
+  text-align:center;
+}
+.tut-go-title{
+  font-size:18px;font-weight:900;margin-bottom:10px;
+}
+.tut-go-stats{
+  display:flex;gap:8px;margin-bottom:10px;
+}
+.tut-go-stat{flex:1;background:rgba(255,255,255,0.08);border-radius:10px;padding:8px 4px}
+.tut-go-label{font-size:10px;color:rgba(255,255,255,0.7);margin-bottom:3px;font-weight:700}
+.tut-go-val{font-size:18px;font-weight:900;font-variant-numeric:tabular-nums}
+.tut-go-coins{
+  display:flex;align-items:center;justify-content:center;gap:4px;
+  font-size:14px;font-weight:800;margin-bottom:10px;
+  color:var(--gold);
+}
+.tut-go-coins .tut-coin-ico{width:18px;height:18px}
+.tut-go-btns{
+  display:flex;flex-direction:column;gap:6px;
+}
+.tut-go-btn{
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  background:#fff;color:var(--text);
+  font-size:12px;font-weight:700;
+  padding:6px;border-radius:10px;
+}
+.tut-go-btn svg{width:14px;height:14px;color:var(--green)}
+
 .toast{
   position:fixed;left:50%;bottom:18%;transform:translateX(-50%);
   background:rgba(42,38,64,.92);color:#fff;padding:12px 24px;border-radius:24px;
@@ -465,7 +732,11 @@ svg{display:block}
           <span id="shop-coins">0</span>
         </div>
       </div>
-      <div class="shop-stage">
+      <div class="shop-tabs">
+        <button class="shop-tab active" data-tab="skin">物品样式</button>
+        <button class="shop-tab" data-tab="wallpaper">主题壁纸</button>
+      </div>
+      <div class="shop-stage" id="shop-stage-skin">
         <button class="btn-arrow" id="btn-skin-prev" aria-label="上一个">
           <svg><use href="#i-tri-left"/></svg>
         </button>
@@ -474,6 +745,21 @@ svg{display:block}
           <div class="shop-name-overlay" id="shop-skin-overlay">圆规叔叔</div>
         </div>
         <button class="btn-arrow" id="btn-skin-next" aria-label="下一个">
+          <svg><use href="#i-tri-right"/></svg>
+        </button>
+      </div>
+      <div class="shop-stage shop-stage-wallpaper" id="shop-stage-wallpaper" style="display:none">
+        <button class="btn-arrow" id="btn-wall-prev" aria-label="上一个">
+          <svg><use href="#i-tri-left"/></svg>
+        </button>
+        <div class="shop-wallpaper-preview">
+          <div class="wallpaper-preview-box" id="wallpaper-preview-box">
+            <div class="wallpaper-preview-bg"></div>
+            <div class="wallpaper-preview-dots"></div>
+          </div>
+          <div class="shop-name-overlay" id="shop-wall-overlay">淡紫初心</div>
+        </div>
+        <button class="btn-arrow" id="btn-wall-next" aria-label="下一个">
           <svg><use href="#i-tri-right"/></svg>
         </button>
       </div>
@@ -556,11 +842,104 @@ svg{display:block}
 
     <div class="modal" id="modal-tutorial">
       <div class="modal-mask"></div>
-      <div class="modal-card light">
-        <h3>教程</h3>
-        <p>① 长按屏幕任意位置开始蓄力<br>② 蓄力条显示当前跳跃力度<br>③ 松开手指角色向前跳跃<br>④ 落在方块上即可得分+金币<br>⑤ 落空则本局结束<br>⑥ 连续跳跃触发连击加成</p>
-        <div style="height:16px"></div>
-        <button class="modal-btn" id="btn-close-tutorial">我知道了</button>
+      <div class="modal-card light tutorial-card">
+        <button class="tutorial-back" id="btn-tutorial-back" aria-label="返回">
+          <svg><use href="#i-arrow-left"/></svg>
+        </button>
+        <h3 class="tutorial-title">教程</h3>
+        <div class="tutorial-stage">
+          <div class="tutorial-page" data-page="0">
+            <div class="tutorial-circle">
+              <div class="tut-skin-label">
+                <span class="tut-skin-name">圆规叔叔</span>
+                <span class="tut-skin-price">
+                  <svg class="tut-coin-ico"><use href="#i-coin"/></svg>
+                  200
+                </span>
+              </div>
+              <div class="tut-char-display">
+                <canvas id="tutorial-canvas"></canvas>
+              </div>
+              <div class="tut-skin-status">使用中</div>
+            </div>
+            <p class="tutorial-text">金币可用于购买角色、道具</p>
+          </div>
+          <div class="tutorial-page" data-page="1">
+            <div class="tutorial-circle">
+              <div class="tut-score">00</div>
+              <div class="tut-warning">
+                <div class="warning-tri">!</div>
+              </div>
+              <div class="tut-blocks">
+                <div class="tut-block tut-block-on"></div>
+                <div class="tut-block tut-block-off"></div>
+              </div>
+              <div class="tut-arc"></div>
+              <div class="tut-mini-char"></div>
+            </div>
+            <p class="tutorial-text">进度条变为红色代表距离超过最大范围</p>
+          </div>
+          <div class="tutorial-page" data-page="2">
+            <div class="tutorial-circle">
+              <div class="tut-score">00</div>
+              <div class="tut-warning">
+                <div class="warning-tri">!</div>
+              </div>
+              <div class="tut-blocks">
+                <div class="tut-block tut-block-on"></div>
+                <div class="tut-block tut-block-off"></div>
+              </div>
+              <div class="tut-arc tut-arc-green"></div>
+              <div class="tut-mini-char"></div>
+            </div>
+            <p class="tutorial-text">绿色进度代表安全距离内，可以放心跳</p>
+          </div>
+          <div class="tutorial-page" data-page="3">
+            <div class="tutorial-circle">
+              <div class="tut-gameover">
+                <div class="tut-go-title">游戏结束</div>
+                <div class="tut-go-stats">
+                  <div class="tut-go-stat">
+                    <div class="tut-go-label">历史最高</div>
+                    <div class="tut-go-val">20</div>
+                  </div>
+                  <div class="tut-go-stat">
+                    <div class="tut-go-label">本次得分</div>
+                    <div class="tut-go-val">0</div>
+                  </div>
+                </div>
+                <div class="tut-go-coins">
+                  <svg class="tut-coin-ico"><use href="#i-coin"/></svg>
+                  200
+                </div>
+                <div class="tut-go-btns">
+                  <div class="tut-go-btn">
+                    <svg><use href="#i-refresh"/></svg>
+                    重新开始
+                  </div>
+                  <div class="tut-go-btn">
+                    <svg><use href="#i-arrow-left"/></svg>
+                    返回主页
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p class="tutorial-text">游戏结束后，跳跃成功次数将1:1兑换为金币</p>
+          </div>
+        </div>
+        <button class="tutorial-arrow tutorial-arrow-left" id="btn-tutorial-prev" aria-label="上一条">
+          <svg><use href="#i-tri-left"/></svg>
+        </button>
+        <button class="tutorial-arrow tutorial-arrow-right" id="btn-tutorial-next" aria-label="下一条">
+          <svg><use href="#i-tri-right"/></svg>
+        </button>
+        <div class="tutorial-dots" id="tutorial-dots">
+          <span class="dot active"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+        <button class="modal-btn tutorial-btn" id="btn-close-tutorial">下一条</button>
       </div>
     </div>
 
@@ -599,6 +978,7 @@ svg{display:block}
 /* ============ 1. Storage Layer ============ */
 const Storage = {
   K_COINS:'jbc.coins', K_BEST:'jbc.bestScore', K_SKINS:'jbc.unlockedSkins', K_CURRENT:'jbc.currentSkin',
+  K_WALLPAPERS:'jbc.unlockedWalls', K_CURRENT_WALL:'jbc.currentWallpaper',
   getCoins(){const v=parseInt(localStorage.getItem(this.K_COINS)||'0',10);return isNaN(v)?0:v;},
   setCoins(n){localStorage.setItem(this.K_COINS,String(Math.max(0,n|0)));},
   addCoins(n){this.setCoins(this.getCoins()+n);},
@@ -609,13 +989,35 @@ const Storage = {
   unlock(id){const arr=this.getUnlocked();if(!arr.includes(id)){arr.push(id);this.setUnlocked(arr);}},
   hasSkin(id){return this.getUnlocked().includes(id);},
   getCurrent(){return localStorage.getItem(this.K_CURRENT)||'compass';},
-  setCurrent(id){localStorage.setItem(this.K_CURRENT,id);}
+  setCurrent(id){localStorage.setItem(this.K_CURRENT,id);},
+  getUnlockedWalls(){try{return JSON.parse(localStorage.getItem(this.K_WALLPAPERS)||'["purple"]');}catch(e){return ['purple'];}},
+  setUnlockedWalls(arr){localStorage.setItem(this.K_WALLPAPERS,JSON.stringify(arr));},
+  unlockWall(id){const arr=this.getUnlockedWalls();if(!arr.includes(id)){arr.push(id);this.setUnlockedWalls(arr);}},
+  hasWall(id){return this.getUnlockedWalls().includes(id);},
+  getCurrentWall(){return localStorage.getItem(this.K_CURRENT_WALL)||'purple';},
+  setCurrentWall(id){localStorage.setItem(this.K_CURRENT_WALL,id);},
+  getWallpaper(){
+    const id = this.getCurrentWall();
+    return WALLPAPERS.find(w=>w.id===id) || WALLPAPERS[0];
+  }
 };
 
-/* ============ 2. Skins ============ */
+/* ============ 2. Skins & Wallpapers ============ */
 const SKINS = [
   { id:'compass', name:'圆规叔叔', price:0 },
-  { id:'pawn',    name:'象棋-兵',   price:200 }
+  { id:'pawn',    name:'象棋-兵',   price:200 },
+  { id:'pencil',  name:'铅笔头',   price:300 },
+  { id:'eraser',  name:'橡皮君',   price:250 },
+  { id:'ruler',   name:'直尺先生', price:350 }
+];
+
+const WALLPAPERS = [
+  { id:'purple', name:'淡紫初心', price:0,   bg1:'#EFEAF7', bg2:'#DCD3EE', dot:'rgba(255,255,255,0.3)' },
+  { id:'pink',   name:'粉樱梦境', price:150, bg1:'#FDE8EF', bg2:'#F5CBD9', dot:'rgba(255,255,255,0.35)' },
+  { id:'blue',   name:'海盐晴空', price:150, bg1:'#E3F0FA', bg2:'#C2DDF0', dot:'rgba(255,255,255,0.35)' },
+  { id:'green',  name:'薄荷森林', price:200, bg1:'#E3F5EC', bg2:'#BFE5D0', dot:'rgba(255,255,255,0.3)' },
+  { id:'orange', name:'暖阳橙橙', price:200, bg1:'#FFF0E0', bg2:'#FFD8B0', dot:'rgba(255,255,255,0.35)' },
+  { id:'dark',   name:'深夜星空', price:300, bg1:'#3A3358', bg2:'#2A2440', dot:'rgba(255,255,255,0.2)' }
 ];
 
 /* ============ 3. Character drawing (origin = feet center) ============ */
@@ -727,8 +1129,226 @@ function drawPawnCharacter(ctx,size,t){
   ctx.restore();
 }
 
+function drawPencilCharacter(ctx,size,t){
+  const s=size/110;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0,2,18*s,4*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#FFD93D';
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.moveTo(-12*s,0);
+  ctx.lineTo(-12*s,-60*s);
+  ctx.lineTo(0,-85*s);
+  ctx.lineTo(12*s,-60*s);
+  ctx.lineTo(12*s,0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle='#F5A623';
+  ctx.beginPath();
+  ctx.moveTo(-12*s,-60*s);
+  ctx.lineTo(0,-85*s);
+  ctx.lineTo(12*s,-60*s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle='#2A2640';
+  ctx.beginPath();
+  ctx.moveTo(-4*s,-72*s);
+  ctx.lineTo(0,-85*s);
+  ctx.lineTo(4*s,-72*s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle='#E8913A';
+  ctx.beginPath();
+  ctx.moveTo(-12*s,0);
+  ctx.lineTo(-12*s,-10*s);
+  ctx.lineTo(12*s,-10*s);
+  ctx.lineTo(12*s,0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle='#2A2640';
+  ctx.beginPath();
+  ctx.moveTo(-12*s,-10*s);
+  ctx.lineTo(12*s,-10*s);
+  ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.25)';
+  ctx.beginPath();
+  ctx.moveTo(-8*s,-15*s);
+  ctx.lineTo(-8*s,-55*s);
+  ctx.lineTo(-4*s,-58*s);
+  ctx.lineTo(-4*s,-15*s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle='#2A2640';
+  ctx.beginPath();
+  ctx.arc(-4*s,-40*s,2*s,0,Math.PI*2);
+  ctx.arc(4*s,-40*s,2*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();
+  ctx.arc(-3.2*s,-40.8*s,0.7*s,0,Math.PI*2);
+  ctx.arc(4.8*s,-40.8*s,0.7*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=2*s;
+  ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(-7*s,-48*s);
+  ctx.lineTo(-2*s,-46*s);
+  ctx.moveTo(7*s,-48*s);
+  ctx.lineTo(2*s,-46*s);
+  ctx.stroke();
+  ctx.fillStyle='rgba(232,100,100,0.7)';
+  ctx.beginPath();
+  ctx.arc(-7*s,-35*s,2.5*s,0,Math.PI*2);
+  ctx.arc(7*s,-35*s,2.5*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=1.5*s;
+  ctx.beginPath();
+  ctx.arc(0,-30*s,4*s,0,Math.PI,false);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawEraserCharacter(ctx,size,t){
+  const s=size/110;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0,2,24*s,4*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#FF8FA3';
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.roundRect(-22*s,-50*s,44*s,50*s,8*s);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle='#FFB8C5';
+  ctx.beginPath();
+  ctx.roundRect(-22*s,-50*s,44*s,12*s,8*s);
+  ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.25)';
+  ctx.beginPath();
+  ctx.roundRect(-18*s,-45*s,6*s,38*s,3*s);
+  ctx.fill();
+  ctx.fillStyle='#2A2640';
+  ctx.beginPath();
+  ctx.arc(-7*s,-25*s,2.5*s,0,Math.PI*2);
+  ctx.arc(7*s,-25*s,2.5*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();
+  ctx.arc(-6*s,-26*s,0.9*s,0,Math.PI*2);
+  ctx.arc(8*s,-26*s,0.9*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=2.2*s;
+  ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(-11*s,-33*s);
+  ctx.lineTo(-4*s,-31*s);
+  ctx.moveTo(11*s,-33*s);
+  ctx.lineTo(4*s,-31*s);
+  ctx.stroke();
+  ctx.fillStyle='rgba(232,100,100,0.6)';
+  ctx.beginPath();
+  ctx.arc(-11*s,-20*s,3*s,0,Math.PI*2);
+  ctx.arc(11*s,-20*s,3*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=1.8*s;
+  ctx.beginPath();
+  ctx.arc(0,-14*s,5*s,0,Math.PI,false);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawRulerCharacter(ctx,size,t){
+  const s=size/110;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0,2,16*s,4*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#5DADE2';
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.roundRect(-12*s,-70*s,24*s,70*s,4*s);
+  ctx.fill();
+  ctx.stroke();
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=1*s;
+  for(let i=0;i<6;i++){
+    const y = -8*s - i*11*s;
+    ctx.beginPath();
+    ctx.moveTo(-12*s, y);
+    ctx.lineTo(-6*s, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(6*s, y);
+    ctx.lineTo(12*s, y);
+    ctx.stroke();
+  }
+  for(let i=0;i<5;i++){
+    const y = -13.5*s - i*11*s;
+    ctx.beginPath();
+    ctx.moveTo(-12*s, y);
+    ctx.lineTo(-9*s, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(9*s, y);
+    ctx.lineTo(12*s, y);
+    ctx.stroke();
+  }
+  ctx.fillStyle='rgba(255,255,255,0.2)';
+  ctx.beginPath();
+  ctx.roundRect(-9*s,-68*s,4*s,66*s,2*s);
+  ctx.fill();
+  ctx.fillStyle='#2A2640';
+  ctx.beginPath();
+  ctx.arc(-3.5*s,-42*s,2.2*s,0,Math.PI*2);
+  ctx.arc(3.5*s,-42*s,2.2*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();
+  ctx.arc(-2.8*s,-42.8*s,0.8*s,0,Math.PI*2);
+  ctx.arc(4.2*s,-42.8*s,0.8*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=2*s;
+  ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(-7*s,-50*s);
+  ctx.lineTo(-2*s,-48*s);
+  ctx.moveTo(7*s,-50*s);
+  ctx.lineTo(2*s,-48*s);
+  ctx.stroke();
+  ctx.fillStyle='rgba(232,100,100,0.7)';
+  ctx.beginPath();
+  ctx.arc(-7*s,-36*s,2.2*s,0,Math.PI*2);
+  ctx.arc(7*s,-36*s,2.2*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=1.5*s;
+  ctx.beginPath();
+  ctx.arc(0,-30*s,4*s,0,Math.PI,false);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawCharacter(ctx,skinId,size,t){
   if(skinId==='pawn') drawPawnCharacter(ctx,size,t);
+  else if(skinId==='pencil') drawPencilCharacter(ctx,size,t);
+  else if(skinId==='eraser') drawEraserCharacter(ctx,size,t);
+  else if(skinId==='ruler') drawRulerCharacter(ctx,size,t);
   else drawCompassCharacter(ctx,size,t);
 }
 
@@ -750,20 +1370,46 @@ const Router = {
 
 /* ============ 5. Shop ============ */
 const Shop = {
-  index:0,
-  get current(){ return SKINS[this.index]; },
+  tab:'skin',
+  skinIndex:0,
+  wallIndex:0,
+  get currentSkin(){ return SKINS[this.skinIndex]; },
+  get currentWall(){ return WALLPAPERS[this.wallIndex]; },
   render(){
-    this.index = Math.max(0, SKINS.findIndex(s=>s.id===Storage.getCurrent()));
-    if(this.index<0) this.index=0;
+    this.skinIndex = Math.max(0, SKINS.findIndex(s=>s.id===Storage.getCurrent()));
+    if(this.skinIndex<0) this.skinIndex=0;
+    this.wallIndex = Math.max(0, WALLPAPERS.findIndex(w=>w.id===Storage.getCurrentWall()));
+    if(this.wallIndex<0) this.wallIndex=0;
     document.getElementById('shop-coins').textContent = Storage.getCoins();
-    this.drawMain();
-    this.drawPreview();
-    this.updateAction();
-    this._ro=this._ro||new ResizeObserver(()=>{this.drawMain();this.drawPreview();});
+    this.switchTab(this.tab);
+    this._ro=this._ro||new ResizeObserver(()=>{this.drawCurrent();});
     const stage=document.querySelector('.shop-stage');
     if(stage && !stage.dataset.bound) { this._ro.observe(stage); stage.dataset.bound='1'; }
   },
-  drawMain(){
+  switchTab(tab){
+    this.tab = tab;
+    document.querySelectorAll('.shop-tab').forEach(t=>{
+      t.classList.toggle('active', t.dataset.tab===tab);
+    });
+    document.getElementById('shop-stage-skin').style.display = tab==='skin' ? 'flex' : 'none';
+    document.getElementById('shop-stage-wallpaper').style.display = tab==='wallpaper' ? 'flex' : 'none';
+    this.drawCurrent();
+    this.drawPreview();
+    this.updateAction();
+    this.updateTitle();
+  },
+  updateTitle(){
+    const title = this.tab==='skin' ? this.currentSkin.name : this.currentWall.name;
+    document.getElementById('shop-skin-name').textContent = title;
+  },
+  drawCurrent(){
+    if(this.tab==='skin'){
+      this.drawMainSkin();
+    } else {
+      this.drawMainWallpaper();
+    }
+  },
+  drawMainSkin(){
     const cv=document.getElementById('shop-canvas');
     const rect=cv.getBoundingClientRect();
     if(rect.width<10) return;
@@ -778,66 +1424,119 @@ const Shop = {
     ctx.fill();
     ctx.save();
     ctx.translate(rect.width/2,rect.height*0.78);
-    drawCharacter(ctx,this.current.id,Math.min(rect.width*0.6,rect.height*0.7),performance.now());
+    drawCharacter(ctx,this.currentSkin.id,Math.min(rect.width*0.6,rect.height*0.7),performance.now());
     ctx.restore();
-    document.getElementById('shop-skin-name').textContent=this.current.name;
-    document.getElementById('shop-skin-overlay').textContent=this.current.name;
+    document.getElementById('shop-skin-overlay').textContent=this.currentSkin.name;
+  },
+  drawMainWallpaper(){
+    const wall = this.currentWall;
+    const bg = document.querySelector('.wallpaper-preview-bg');
+    const dots = document.querySelector('.wallpaper-preview-dots');
+    if(bg) bg.style.background = `linear-gradient(180deg, ${wall.bg1} 0%, ${wall.bg2} 100%)`;
+    if(dots) dots.style.backgroundImage = `radial-gradient(${wall.dot} 1.5px, transparent 1.5px)`;
+    document.getElementById('shop-wall-overlay').textContent = wall.name;
   },
   drawPreview(){
     const wrap=document.getElementById('shop-preview');
     wrap.innerHTML='';
-    SKINS.forEach((s,i)=>{
-      const item=document.createElement('div');
-      item.className='preview-item';
-      if(s.id===this.current.id) item.classList.add('selected');
-      if(!Storage.hasSkin(s.id)) item.classList.add('locked');
-      const cv=document.createElement('canvas');
-      cv.width=100; cv.height=100;
-      const ctx=cv.getContext('2d');
-      ctx.save();
-      ctx.translate(50,86);
-      drawCharacter(ctx,s.id,78,performance.now());
-      ctx.restore();
-      item.appendChild(cv);
-      if(!Storage.hasSkin(s.id)){
-        const lock=document.createElement('div');
-        lock.className='lock'; lock.textContent='🔒';
-        item.appendChild(lock);
-      }
-      item.addEventListener('click',()=>{
-        this.index=i;
-        this.drawMain();
-        this.drawPreview();
-        this.updateAction();
+    if(this.tab==='skin'){
+      SKINS.forEach((s,i)=>{
+        const item=document.createElement('div');
+        item.className='preview-item';
+        if(s.id===this.currentSkin.id) item.classList.add('selected');
+        if(!Storage.hasSkin(s.id)) item.classList.add('locked');
+        const cv=document.createElement('canvas');
+        cv.width=100; cv.height=100;
+        const ctx=cv.getContext('2d');
+        ctx.save();
+        ctx.translate(50,86);
+        drawCharacter(ctx,s.id,78,performance.now());
+        ctx.restore();
+        item.appendChild(cv);
+        if(!Storage.hasSkin(s.id)){
+          const lock=document.createElement('div');
+          lock.className='lock'; lock.textContent='🔒';
+          item.appendChild(lock);
+        }
+        item.addEventListener('click',()=>{
+          this.skinIndex=i;
+          this.drawCurrent();
+          this.drawPreview();
+          this.updateAction();
+          this.updateTitle();
+        });
+        wrap.appendChild(item);
       });
-      wrap.appendChild(item);
-    });
+    } else {
+      WALLPAPERS.forEach((w,i)=>{
+        const item=document.createElement('div');
+        item.className='preview-item wallpaper-preview-item';
+        if(w.id===this.currentWall.id) item.classList.add('selected');
+        if(!Storage.hasWall(w.id)) item.classList.add('locked');
+        const thumb=document.createElement('div');
+        thumb.className='wallpaper-thumb';
+        thumb.style.background = `linear-gradient(180deg, ${w.bg1} 0%, ${w.bg2} 100%)`;
+        thumb.style.position='relative';
+        thumb.innerHTML = `<div style="position:absolute;inset:0;background-image:radial-gradient(${w.dot} 1px, transparent 1px);background-size:12px 12px;border-radius:14px;"></div>`;
+        item.appendChild(thumb);
+        if(!Storage.hasWall(w.id)){
+          const lock=document.createElement('div');
+          lock.className='lock'; lock.textContent='🔒';
+          item.appendChild(lock);
+        }
+        item.addEventListener('click',()=>{
+          this.wallIndex=i;
+          this.drawCurrent();
+          this.drawPreview();
+          this.updateAction();
+          this.updateTitle();
+        });
+        wrap.appendChild(item);
+      });
+    }
   },
   updateAction(){
     const btn=document.getElementById('btn-skin-action');
-    const s=this.current;
-    if(s.id===Storage.getCurrent()){
-      btn.innerHTML='使用中';
-      btn.disabled=true;
-      btn.onclick=null;
-    } else if(Storage.hasSkin(s.id)){
-      btn.innerHTML='使 用';
-      btn.disabled=false;
-      btn.onclick=()=>this.equip();
+    if(this.tab==='skin'){
+      const s=this.currentSkin;
+      if(s.id===Storage.getCurrent()){
+        btn.innerHTML='使用中';
+        btn.disabled=true;
+        btn.onclick=null;
+      } else if(Storage.hasSkin(s.id)){
+        btn.innerHTML='使 用';
+        btn.disabled=false;
+        btn.onclick=()=>this.equipSkin();
+      } else {
+        btn.innerHTML=`<span class="price"><svg><use href="#i-coin"/></svg>${s.price} 解锁</span>`;
+        btn.disabled=Storage.getCoins()<s.price;
+        btn.onclick=()=>this.unlockSkin();
+      }
     } else {
-      btn.innerHTML=`<span class="price"><svg><use href="#i-coin"/></svg>${s.price} 解锁</span>`;
-      btn.disabled=Storage.getCoins()<s.price;
-      btn.onclick=()=>this.unlock();
+      const w=this.currentWall;
+      if(w.id===Storage.getCurrentWall()){
+        btn.innerHTML='使用中';
+        btn.disabled=true;
+        btn.onclick=null;
+      } else if(Storage.hasWall(w.id)){
+        btn.innerHTML='使 用';
+        btn.disabled=false;
+        btn.onclick=()=>this.equipWall();
+      } else {
+        btn.innerHTML=`<span class="price"><svg><use href="#i-coin"/></svg>${w.price} 解锁</span>`;
+        btn.disabled=Storage.getCoins()<w.price;
+        btn.onclick=()=>this.unlockWall();
+      }
     }
   },
-  equip(){
-    Storage.setCurrent(this.current.id);
+  equipSkin(){
+    Storage.setCurrent(this.currentSkin.id);
     this.updateAction();
     this.drawPreview();
-    toast('已穿戴 '+this.current.name);
+    toast('已穿戴 '+this.currentSkin.name);
   },
-  unlock(){
-    const s=this.current;
+  unlockSkin(){
+    const s=this.currentSkin;
     if(Storage.getCoins()<s.price){toast('金币不足');return;}
     Storage.setCoins(Storage.getCoins()-s.price);
     Storage.unlock(s.id);
@@ -846,6 +1545,30 @@ const Shop = {
     this.drawPreview();
     document.getElementById('shop-coins').textContent=Storage.getCoins();
     toast('已解锁 '+s.name);
+  },
+  equipWall(){
+    Storage.setCurrentWall(this.currentWall.id);
+    this.applyWallpaper();
+    this.updateAction();
+    this.drawPreview();
+    toast('已使用 '+this.currentWall.name);
+  },
+  unlockWall(){
+    const w=this.currentWall;
+    if(Storage.getCoins()<w.price){toast('金币不足');return;}
+    Storage.setCoins(Storage.getCoins()-w.price);
+    Storage.unlockWall(w.id);
+    Storage.setCurrentWall(w.id);
+    this.applyWallpaper();
+    this.updateAction();
+    this.drawPreview();
+    document.getElementById('shop-coins').textContent=Storage.getCoins();
+    toast('已解锁 '+w.name);
+  },
+  applyWallpaper(){
+    const wall = Storage.getWallpaper();
+    document.documentElement.style.setProperty('--bg-1', wall.bg1);
+    document.documentElement.style.setProperty('--bg-2', wall.bg2);
   }
 };
 
@@ -1957,7 +2680,62 @@ const Game = {
   }
 };
 
-/* ============ 8. UI Wiring ============ */
+/* ============ 8. Tutorial ============ */
+const Tutorial = {
+  page:0,
+  total:4,
+  show(){
+    this.page=0;
+    this.updatePage();
+    showModal('modal-tutorial');
+    this.drawCanvas();
+  },
+  next(){
+    if(this.page < this.total - 1){
+      this.page++;
+      this.updatePage();
+    } else {
+      hideModal('modal-tutorial');
+    }
+  },
+  prev(){
+    if(this.page > 0){
+      this.page--;
+      this.updatePage();
+    }
+  },
+  updatePage(){
+    const pages = document.querySelectorAll('.tutorial-page');
+    pages.forEach((p,i)=>{
+      if(i===this.page) p.classList.add('active');
+      else p.classList.remove('active');
+    });
+    const dots = document.querySelectorAll('#tutorial-dots .dot');
+    dots.forEach((d,i)=>{
+      if(i===this.page) d.classList.add('active');
+      else d.classList.remove('active');
+    });
+    const btn = document.getElementById('btn-close-tutorial');
+    btn.textContent = this.page === this.total - 1 ? '我知道了' : '下一条';
+    const leftBtn = document.getElementById('btn-tutorial-prev');
+    leftBtn.style.opacity = this.page === 0 ? '0.4' : '1';
+  },
+  drawCanvas(){
+    const cv = document.getElementById('tutorial-canvas');
+    if(!cv) return;
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    cv.width=100*dpr; cv.height=130*dpr;
+    const ctx=cv.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,100,130);
+    ctx.save();
+    ctx.translate(50,115);
+    drawCharacter(ctx,Storage.getCurrent(),78,performance.now());
+    ctx.restore();
+  }
+};
+
+/* ============ 9. UI Wiring ============ */
 function showModal(id){ document.getElementById(id).classList.add('show'); }
 function hideModal(id){ document.getElementById(id).classList.remove('show'); }
 function showResult(icon,title,sub){
@@ -2005,6 +2783,7 @@ function tryRedeem(code){
 
 /* ============ 10. Init ============ */
 function init(){
+  Shop.applyWallpaper();
   // Home buttons
   document.getElementById('btn-start').addEventListener('click',()=>Router.show('play'));
   document.getElementById('btn-more').addEventListener('click',()=>Router.show('menu'));
@@ -2027,12 +2806,23 @@ function init(){
 
   // Shop arrows
   document.getElementById('btn-skin-prev').addEventListener('click',()=>{
-    Shop.index=(Shop.index-1+SKINS.length)%SKINS.length;
-    Shop.drawMain(); Shop.drawPreview(); Shop.updateAction();
+    Shop.skinIndex=(Shop.skinIndex-1+SKINS.length)%SKINS.length;
+    Shop.drawCurrent(); Shop.drawPreview(); Shop.updateAction(); Shop.updateTitle();
   });
   document.getElementById('btn-skin-next').addEventListener('click',()=>{
-    Shop.index=(Shop.index+1)%SKINS.length;
-    Shop.drawMain(); Shop.drawPreview(); Shop.updateAction();
+    Shop.skinIndex=(Shop.skinIndex+1)%SKINS.length;
+    Shop.drawCurrent(); Shop.drawPreview(); Shop.updateAction(); Shop.updateTitle();
+  });
+  document.getElementById('btn-wall-prev').addEventListener('click',()=>{
+    Shop.wallIndex=(Shop.wallIndex-1+WALLPAPERS.length)%WALLPAPERS.length;
+    Shop.drawCurrent(); Shop.drawPreview(); Shop.updateAction(); Shop.updateTitle();
+  });
+  document.getElementById('btn-wall-next').addEventListener('click',()=>{
+    Shop.wallIndex=(Shop.wallIndex+1)%WALLPAPERS.length;
+    Shop.drawCurrent(); Shop.drawPreview(); Shop.updateAction(); Shop.updateTitle();
+  });
+  document.querySelectorAll('.shop-tab').forEach(tab=>{
+    tab.addEventListener('click',()=>Shop.switchTab(tab.dataset.tab));
   });
 
   // Lottery
@@ -2040,7 +2830,13 @@ function init(){
   document.getElementById('btn-close-result').addEventListener('click',()=>hideModal('modal-result'));
 
   // Tutorial
-  document.getElementById('btn-close-tutorial').addEventListener('click',()=>hideModal('modal-tutorial'));
+  document.querySelector('.menu-card[data-target="tutorial"]').addEventListener('click',()=>{
+    Tutorial.show();
+  });
+  document.getElementById('btn-close-tutorial').addEventListener('click',()=>Tutorial.next());
+  document.getElementById('btn-tutorial-prev').addEventListener('click',()=>Tutorial.prev());
+  document.getElementById('btn-tutorial-next').addEventListener('click',()=>Tutorial.next());
+  document.getElementById('btn-tutorial-back').addEventListener('click',()=>hideModal('modal-tutorial'));
 
   // Redeem
   document.getElementById('btn-redeem-submit').addEventListener('click',()=>{
