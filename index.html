@@ -1050,17 +1050,62 @@ function drawLotteryCharacter(ctx,cx,cy,w,h,t){
   ctx.restore();
 }
 
-/* ============ 7. Game Engine ============ */
+/* ============ 7. Game Engine (WeChat Jump Style) ============ */
 const Game = {
   canvas:null, ctx:null, W:0, H:0, dpr:1,
   running:false, rafId:0, lastT:0,
+
+  ISO_ANGLE: Math.PI / 6,
+  ISO_UNIT: 1,
+
   blocks:[],
-  char:{x:0,y:0,vx:0,vy:0,rot:0,onGround:true,bounceT:0,landedOn:null,combo:0,squash:0,prevY:0},
-  cameraX:0,
+  char:{
+    x:0, z:0, y:0,
+    vx:0, vz:0, vy:0,
+    onGround:true,
+    landedOn:null,
+    squash:0,
+    stretch:0,
+    bounceT:0,
+    prevY:0,
+    rot:0
+  },
+
+  camera:{x:0, z:0, y:0},
+  targetCamera:{x:0, z:0, y:0},
+
   power:0, charging:false, chargeStart:0,
-  score:0, best:0, hintShown:false,
+  CHARGE_DURATION: 2.0,
+
+  score:0, combo:0, perfectStreak:0,
   particles:[],
-  lastGapType:0,
+  floatTexts:[],
+
+  BLOCK_BASE_SIZE: 65,
+  BLOCK_BASE_HEIGHT: 45,
+  CHAR_SIZE: 56,
+
+  GRAVITY: 2000,
+  MIN_JUMP_DIST: 45,
+  MAX_JUMP_DIST: 350,
+  MIN_JUMP_HEIGHT: 70,
+  MAX_JUMP_HEIGHT: 260,
+
+  isoToScreen(x, z, y){
+    const cosA = Math.cos(this.ISO_ANGLE);
+    const sinA = Math.sin(this.ISO_ANGLE);
+    const sx = (x - z) * cosA;
+    const sy = (x + z) * sinA - y;
+    return { sx, sy };
+  },
+  screenX(x, z, y=0){
+    const cosA = Math.cos(this.ISO_ANGLE);
+    return (x - z) * cosA - this.camera.x + this.W * 0.5;
+  },
+  screenY(x, z, y=0){
+    const sinA = Math.sin(this.ISO_ANGLE);
+    return (x + z) * sinA - y - this.camera.y + this.H * 0.62;
+  },
 
   init(){
     this.canvas=document.getElementById('game-canvas');
@@ -1069,6 +1114,7 @@ const Game = {
     window.addEventListener('resize',()=>this.resize());
     window.addEventListener('orientationchange',()=>setTimeout(()=>this.resize(),300));
   },
+
   resize(){
     const rect=this.canvas.getBoundingClientRect();
     this.dpr=Math.min(window.devicePixelRatio||1,2);
@@ -1076,87 +1122,115 @@ const Game = {
     this.canvas.height=Math.max(1,Math.floor(rect.height*this.dpr));
     this.ctx.setTransform(this.dpr,0,0,this.dpr,0,0);
     this.W=rect.width; this.H=rect.height;
-    this.groundY=this.H*0.7;
   },
-  BLOCK_SIZE: 80,
-  BLOCK_HEIGHT_RATIO: 0.42,
+
+  BLOCK_THEMES: [
+    { id:'basic',  name:'基础',  score:1, size:1.00, height:1.0, topColor:'#E8E4F0', frontColor:'#B8B0CC', rightColor:'#8E86A6', accent:false },
+    { id:'purple', name:'紫色',  score:2, size:0.90, height:0.9, topColor:'#D8C8F0', frontColor:'#A088CC', rightColor:'#7860A8', accent:false },
+    { id:'gift',   name:'礼盒',  score:3, size:0.85, height:1.1, topColor:'#FFB8B8', frontColor:'#E87878', rightColor:'#C04848', accent:true, accentColor:'#FFD93D' },
+    { id:'blue',   name:'蓝色',  score:2, size:0.92, height:0.95,topColor:'#B8D8F0', frontColor:'#68A0CC', rightColor:'#3870A0', accent:false },
+    { id:'gold',   name:'金色',  score:5, size:0.78, height:0.85,topColor:'#FFE8A8', frontColor:'#E8C060', rightColor:'#B88830', accent:true, accentColor:'#FF8848' }
+  ],
+
   start(){
-    if(this.running){ this.resize(); }
     this.running=true;
-    this.score=0; this.combo=0;
+    this.score=0; this.combo=0; this.perfectStreak=0;
     this.blocks=[];
-    const blockH = this.BLOCK_SIZE * this.BLOCK_HEIGHT_RATIO;
-    const topY = this.groundY - blockH;
-    this.char={x:0,y:topY,vx:0,vy:0,rot:0,onGround:true,bounceT:0,landedOn:null,combo:0,squash:0,prevY:topY};
-    this.cameraX=0;
-    this.charging=false; this.power=0; this.hintShown=false;
-    this.lastGapType=0;
-    this.particles = [];
+    this.particles=[];
+    this.floatTexts=[];
+    this.charging=false; this.power=0;
+
+    const startBlock = this.createBlock(0, 0, 0);
+    this.blocks.push(startBlock);
+
+    this.char.x = 0;
+    this.char.z = 0;
+    this.char.y = this.BLOCK_BASE_HEIGHT * startBlock.theme.height;
+    this.char.vx = 0; this.char.vz = 0; this.char.vy = 0;
+    this.char.onGround = true;
+    this.char.landedOn = startBlock;
+    this.char.squash = 0;
+    this.char.stretch = 0;
+    this.char.bounceT = 0;
+    this.char.prevY = this.char.y;
+    this.char.rot = 0;
+
+    this.spawnNextBlock();
+
+    this.camera.x = 0; this.camera.z = 0; this.camera.y = 0;
+    this.targetCamera.x = 0; this.targetCamera.z = 0; this.targetCamera.y = 0;
+    this.updateCameraTarget();
+
     document.getElementById('hud-power-fill').style.width='0%';
     document.getElementById('hud-hint').style.display='block';
-    const b1 = this.makeBlock(40, topY, 0);
-    b1.squash = 0;
-    this.blocks.push(b1);
-    this.spawnNextBlock();
-    this.char.x = b1.x + b1.w / 2;
-    this.updateCamera();
     this.updateScore();
+
     cancelAnimationFrame(this.rafId);
     this.lastT=performance.now();
     this.loop();
   },
-  makeBlock(x, y, gapType){
-    const s = this.BLOCK_SIZE;
-    // gapType 0=basic(gray), 1=gift box, 2=book
-    const themes = [
-      { id:'basic',  score:1,  size: 1.0,  height: 0.42 },
-      { id:'gift',   score:3,  size: 0.95, height: 0.55 },
-      { id:'book',   score:5,  size: 0.90, height: 0.50 }
-    ];
-    const theme = themes[gapType] || themes[0];
+
+  createBlock(worldX, worldZ, typeIdx){
+    const theme = this.BLOCK_THEMES[typeIdx % this.BLOCK_THEMES.length];
+    const size = this.BLOCK_BASE_SIZE * theme.size;
+    const height = this.BLOCK_BASE_HEIGHT * theme.height;
     return {
-      x: x,
-      y: y,
-      w: s * theme.size,
-      h: s * theme.height,
-      type: gapType,
-      theme: theme.id,
-      score: theme.score,
-      squash: 0 // 0 = normal, 1 = fully squashed
+      x: worldX,
+      z: worldZ,
+      size: size,
+      halfSize: size / 2,
+      height: height,
+      type: typeIdx,
+      theme: theme,
+      squash: 0,
+      shakeT: 0,
+      scored: false
     };
   },
+
   spawnNextBlock(){
-    let last = null;
-    for(const b of this.blocks){
-      if(!last || b.x > last.x) last = b;
-    }
+    const last = this.blocks[this.blocks.length - 1];
     if(!last) return;
-    const gaps = [
-      {min: 70,  max: 120, type:0, weight: 50},
-      {min: 130, max: 180, type:1, weight: 30},
-      {min: 190, max: 250, type:2, weight: 20}
+
+    const distOptions = [
+      { min: 70,  max: 120, typePool: [0, 0, 0, 1, 3], weight: 45 },
+      { min: 130, max: 180, typePool: [1, 2, 3, 0], weight: 35 },
+      { min: 190, max: 260, typePool: [2, 4, 4],    weight: 20 }
     ];
-    let pool = gaps.slice();
-    if(this.lastGapType >= 0){
-      pool = pool.map(g => ({...g, weight: g.type===this.lastGapType ? g.weight*0.5 : g.weight}));
-    }
-    const total = pool.reduce((s,g)=>s+g.weight, 0);
-    let r = Math.random() * total, chosen = pool[0];
-    for(const g of pool){ r -= g.weight; if(r<=0){ chosen = g; break; } }
-    const gap = chosen.min + Math.random() * (chosen.max - chosen.min);
-    const newX = last.x + last.w + gap;
-    const baseTopY = this.groundY - this.BLOCK_SIZE * 0.42;
-    const yVar = (Math.random() - 0.5) * 16;
-    const nb = this.makeBlock(newX, baseTopY + yVar, chosen.type);
+
+    const totalW = distOptions.reduce((s,d)=>s+d.weight,0);
+    let r = Math.random() * totalW;
+    let chosen = distOptions[0];
+    for(const d of distOptions){ r -= d.weight; if(r <= 0){ chosen = d; break; } }
+
+    const dist = chosen.min + Math.random() * (chosen.max - chosen.min);
+    const pool = chosen.typePool;
+    const typeIdx = pool[Math.floor(Math.random() * pool.length)];
+
+    const angle = (Math.random() - 0.5) * 0.4;
+    const dx = Math.cos(angle) * dist;
+    const dz = Math.sin(angle) * dist;
+
+    const nb = this.createBlock(last.x + dx, last.z + dz, typeIdx);
     this.blocks.push(nb);
-    this.lastGapType = chosen.type;
-    this.blocks = this.blocks.slice(-2);
   },
-  updateCamera(){
-    this.cameraX=this.char.x-this.W*0.3;
-    if(this.cameraX<-this.W*0.2) this.cameraX=-this.W*0.2;
+
+  updateCameraTarget(){
+    if(!this.char.landedOn) return;
+    const b = this.char.landedOn;
+    const next = this.blocks[this.blocks.indexOf(b) + 1];
+
+    let targetX, targetZ;
+    if(next){
+      targetX = (b.x + next.x) * 0.5;
+      targetZ = (b.z + next.z) * 0.5;
+    } else {
+      targetX = b.x;
+      targetZ = b.z;
+    }
+    this.targetCamera.x = targetX * Math.cos(this.ISO_ANGLE) - targetZ * Math.cos(this.ISO_ANGLE);
+    this.targetCamera.y = (targetX + targetZ) * Math.sin(this.ISO_ANGLE);
   },
-  screenX(worldX){ return worldX-this.cameraX; },
 
   onPressStart(){
     if(!this.running) return;
@@ -1165,30 +1239,45 @@ const Game = {
     this.chargeStart=performance.now();
     document.getElementById('hud-hint').style.display='none';
   },
+
   onPressEnd(){
     if(!this.charging) return;
     this.charging=false;
     const elapsed=(performance.now()-this.chargeStart)/1000;
-    const power=Math.min(elapsed/2.0,1);
+    const power=Math.min(elapsed/this.CHARGE_DURATION, 1);
     this.power=power;
     this.jump(power);
     document.getElementById('hud-power-fill').style.width='0%';
   },
+
   jump(power){
     this.char.onGround=false;
-    const minDist = 40;
-    const maxDist = 400;
-    const minHeight = 40;
-    const maxHeight = 200;
-    const dist = minDist + power * (maxDist - minDist);
-    const height = minHeight + power * (maxHeight - minHeight);
-    const gravity = 1400;
-    const upTime = Math.sqrt(2 * height / gravity);
+    this.char.squash = 0;
+    if(this.char.landedOn) this.char.landedOn.squash = 0;
+
+    const dist = this.MIN_JUMP_DIST + power * (this.MAX_JUMP_DIST - this.MIN_JUMP_DIST);
+    const height = this.MIN_JUMP_HEIGHT + power * (this.MAX_JUMP_HEIGHT - this.MIN_JUMP_HEIGHT);
+
+    const next = this.blocks[this.blocks.indexOf(this.char.landedOn) + 1];
+    let dirX = 1, dirZ = 0;
+    if(next){
+      const dx = next.x - this.char.x;
+      const dz = next.z - this.char.z;
+      const len = Math.sqrt(dx*dx + dz*dz) || 1;
+      dirX = dx / len;
+      dirZ = dz / len;
+    }
+
+    const upTime = Math.sqrt(2 * height / this.GRAVITY);
     const totalTime = upTime * 2;
-    this.char.vx = dist / totalTime;
-    this.char.vy = -Math.sqrt(2 * gravity * height);
-    this.char.rot=0;
-    this.char.rotSpeed=0;
+
+    this.char.vx = (dist * dirX) / totalTime;
+    this.char.vz = (dist * dirZ) / totalTime;
+    this.char.vy = Math.sqrt(2 * this.GRAVITY * height);
+    this.char.prevY = this.char.y;
+    this.char.stretch = 0;
+
+    this.spawnJumpParticles();
   },
 
   loop(){
@@ -1205,148 +1294,248 @@ const Game = {
   update(dt){
     if(this.charging){
       const elapsed=(performance.now()-this.chargeStart)/1000;
-      const p=Math.min(elapsed/2.0,1);
+      const p=Math.min(elapsed/this.CHARGE_DURATION, 1);
       document.getElementById('hud-power-fill').style.width=(p*100)+'%';
-      this.char.squash = p * 0.35;
+      this.char.squash = p * 0.5;
       if(this.char.landedOn){
-        this.char.landedOn.squash = p * 0.25;
+        this.char.landedOn.squash = p * 0.35;
       }
-      this.spawnChargeParticles(p);
+      if(Math.random() < 0.5) this.spawnChargeParticle(p);
     } else {
       if(this.char.squash > 0){
-        this.char.squash = Math.max(0, this.char.squash - dt * 4);
+        this.char.squash = Math.max(0, this.char.squash - dt * 5);
       }
       for(const b of this.blocks){
-        if(b.squash > 0){
-          b.squash = Math.max(0, b.squash - dt * 5);
-        }
+        if(b.squash > 0) b.squash = Math.max(0, b.squash - dt * 6);
+        if(b.shakeT > 0) b.shakeT = Math.max(0, b.shakeT - dt);
       }
     }
-
-    this.updateParticles(dt);
 
     if(!this.char.onGround){
       this.char.prevY = this.char.y;
-      this.char.vy += 1600*dt;
-      this.char.x += this.char.vx*dt;
-      this.char.y += this.char.vy*dt;
-      this.char.rot += this.char.rotSpeed;
+      this.char.vy -= this.GRAVITY * dt;
+      this.char.x += this.char.vx * dt;
+      this.char.z += this.char.vz * dt;
+      this.char.y += this.char.vy * dt;
 
+      const speedFrac = Math.abs(this.char.vy) / Math.sqrt(2 * this.GRAVITY * this.MAX_JUMP_HEIGHT);
       if(this.char.vy > 0){
-        for(const b of this.blocks){
-          if(b === this.char.landedOn) continue;
-          if(this.char.x >= b.x && this.char.x <= b.x + b.w){
-            if(this.char.prevY <= b.y + 2 && this.char.y >= b.y){
-              this.landOn(b);
-              break;
-            }
-          }
-        }
+        this.char.stretch = Math.min(0.25, speedFrac * 0.3);
+      } else {
+        this.char.stretch = Math.max(0, this.char.stretch - dt * 2);
       }
 
-      if(this.char.y > this.H + 100){
+      if(this.char.vy < 0){
+        this.checkLanding();
+      }
+
+      if(this.char.y < -300){
         this.end();
+        return;
       }
     } else {
-      let stillOnBlock = false;
-      for(const b of this.blocks){
-        if(this.char.x >= b.x && this.char.x <= b.x + b.w && Math.abs(this.char.y - b.y) < 5){
-          stillOnBlock = true;
-          break;
-        }
+      if(this.char.bounceT > 0){
+        this.char.bounceT -= dt;
+        if(this.char.bounceT < 0) this.char.bounceT = 0;
       }
-      if(!stillOnBlock){
-        this.char.onGround = false;
-        this.char.vy = 0;
-        this.char.vx = 0;
-        this.char.landedOn = null;
-      } else {
-        if(this.char.bounceT>0){
-          this.char.bounceT-=dt;
-          if(this.char.bounceT<0) this.char.bounceT=0;
+      this.char.stretch = Math.max(0, this.char.stretch - dt * 3);
+    }
+
+    this.updateParticles(dt);
+    this.updateFloatTexts(dt);
+
+    const camLerp = 1 - Math.pow(0.001, dt);
+    this.camera.x += (this.targetCamera.x - this.camera.x) * camLerp;
+    this.camera.y += (this.targetCamera.y - this.camera.y) * camLerp;
+
+    this.cullBlocks();
+  },
+
+  checkLanding(){
+    const cy = this.char.y;
+    const py = this.char.prevY;
+
+    for(const b of this.blocks){
+      if(b === this.char.landedOn) continue;
+
+      const topY = b.height * (1 - b.squash * 0.3);
+      if(py >= topY - 2 && cy <= topY + 2){
+        const dx = this.char.x - b.x;
+        const dz = this.char.z - b.z;
+        const halfS = b.halfSize - 2;
+
+        if(Math.abs(dx) <= halfS && Math.abs(dz) <= halfS){
+          this.landOn(b, dx, dz);
+          return;
         }
       }
     }
-
-    this.updateCamera();
   },
-  spawnChargeParticles(power){
+
+  landOn(b, dx, dz){
+    const wasNew = b !== this.char.landedOn;
+
+    this.char.y = b.height * (1 - (b.squash||0) * 0.3);
+    this.char.vy = 0;
+    this.char.vx = 0;
+    this.char.vz = 0;
+    this.char.onGround = true;
+    this.char.landedOn = b;
+    this.char.bounceT = 0.2;
+    this.char.stretch = 0;
+
+    b.shakeT = 0.15;
+    b.squash = 0.15;
+
+    this.spawnLandParticles(b);
+
+    if(wasNew && !b.scored){
+      b.scored = true;
+      const distFromCenter = Math.sqrt(dx*dx + dz*dz);
+      const perfect = distFromCenter < b.halfSize * 0.2;
+
+      let gain = b.theme.score;
+      let bonusText = '';
+
+      if(perfect){
+        this.perfectStreak++;
+        const perfectBonus = Math.min(this.perfectStreak, 10);
+        gain += perfectBonus;
+        bonusText = '完美! +' + perfectBonus;
+      } else {
+        this.perfectStreak = 0;
+      }
+
+      if(this.combo >= 1){
+        gain += 2;
+        if(!bonusText) bonusText = '连击+2';
+      }
+
+      this.combo++;
+      this.score += gain;
+      Storage.addCoins(gain);
+      if(this.score > Storage.getBest()) Storage.setBest(this.score);
+      this.updateScore();
+
+      const sx = this.screenX(b.x, b.z);
+      const sy = this.screenY(b.x, b.z, b.height);
+      this.addFloatText(sx, sy - 20, '+' + gain, perfect ? '#FFD700' : '#3DBE6F');
+      if(bonusText){
+        this.addFloatText(sx, sy - 45, bonusText, '#FF8848');
+      }
+
+      this.spawnNextBlock();
+      this.updateCameraTarget();
+    }
+
+    if(navigator.vibrate) try{ navigator.vibrate(15); }catch(e){}
+  },
+
+  cullBlocks(){
+    const camScreenX = this.W * 0.5;
+    while(this.blocks.length > 6){
+      const first = this.blocks[0];
+      const sx = this.screenX(first.x, first.z);
+      if(sx < -200){
+        this.blocks.shift();
+      } else {
+        break;
+      }
+    }
+  },
+
+  spawnChargeParticle(power){
     if(!this.char.landedOn) return;
-    if(Math.random() > 0.6) return;
     const b = this.char.landedOn;
-    const sx = this.screenX(this.char.x);
-    const baseY = b.y + b.h * (1 - b.squash * 0.5);
     const angle = Math.random() * Math.PI * 2;
-    const radius = 10 + Math.random() * 20;
-    const targetAngle = Math.PI * 0.5 + (Math.random() - 0.5) * 0.6;
+    const r = 12 + Math.random() * 18;
+    const px = this.char.x + Math.cos(angle) * r;
+    const pz = this.char.z + Math.sin(angle) * r;
+    const py = b.height * (1 - b.squash * 0.3);
+
     this.particles.push({
-      x: this.char.x + Math.cos(angle) * radius,
-      y: baseY - 10 + Math.random() * 20,
-      vx: Math.cos(targetAngle) * (30 + power * 60),
-      vy: -Math.sin(targetAngle) * (40 + power * 80),
-      life: 0.6,
-      maxLife: 0.6,
+      x: px, z: pz, y: py,
+      vx: -Math.cos(angle) * (20 + power * 50),
+      vz: -Math.sin(angle) * (20 + power * 50),
+      vy: 40 + power * 80 + Math.random() * 40,
+      life: 0.5 + Math.random() * 0.3,
+      maxLife: 0.8,
       size: 2 + Math.random() * 3,
-      color: `rgba(255,255,255,` + (0.6 + power * 0.3) + `)`
+      color: `rgba(200, 180, 240, ` + (0.7 + power * 0.3) + `)`
     });
   },
+
+  spawnJumpParticles(){
+    if(!this.char.landedOn) return;
+    const b = this.char.landedOn;
+    for(let i = 0; i < 12; i++){
+      const angle = (i / 12) * Math.PI * 2;
+      const r = 10 + Math.random() * 10;
+      this.particles.push({
+        x: this.char.x + Math.cos(angle) * r,
+        z: this.char.z + Math.sin(angle) * r,
+        y: b.height * (1 - b.squash * 0.3),
+        vx: Math.cos(angle) * (50 + Math.random() * 40),
+        vz: Math.sin(angle) * (50 + Math.random() * 40),
+        vy: 80 + Math.random() * 60,
+        life: 0.5,
+        maxLife: 0.5,
+        size: 3 + Math.random() * 3,
+        color: 'rgba(220, 210, 240, 0.8)'
+      });
+    }
+  },
+
+  spawnLandParticles(b){
+    for(let i = 0; i < 15; i++){
+      const angle = Math.random() * Math.PI * 2;
+      const r = 5 + Math.random() * 15;
+      this.particles.push({
+        x: b.x + Math.cos(angle) * r,
+        z: b.z + Math.sin(angle) * r,
+        y: b.height,
+        vx: Math.cos(angle) * (60 + Math.random() * 50),
+        vz: Math.sin(angle) * (60 + Math.random() * 50),
+        vy: 100 + Math.random() * 80,
+        life: 0.55,
+        maxLife: 0.55,
+        size: 2.5 + Math.random() * 2.5,
+        color: 'rgba(230, 220, 245, 0.85)'
+      });
+    }
+  },
+
   updateParticles(dt){
     for(let i = this.particles.length - 1; i >= 0; i--){
       const p = this.particles[i];
       p.x += p.vx * dt;
+      p.z += p.vz * dt;
       p.y += p.vy * dt;
-      p.vy += 300 * dt;
+      p.vy -= 400 * dt;
       p.life -= dt;
       if(p.life <= 0){
         this.particles.splice(i, 1);
       }
     }
   },
-  drawParticles(ctx){
-    for(const p of this.particles){
-      const alpha = p.life / p.maxLife;
-      ctx.fillStyle = p.color.replace(/[\d.]+\)$/, alpha.toFixed(2) + ')');
-      ctx.beginPath();
-      ctx.arc(this.screenX(p.x), p.y, p.size * alpha, 0, Math.PI * 2);
-      ctx.fill();
-    }
+
+  addFloatText(x, y, text, color){
+    this.floatTexts.push({
+      x, y, text, color,
+      life: 1.0,
+      maxLife: 1.0,
+      vy: -40
+    });
   },
 
-  landOn(b){
-    const wasOnBlock = this.char.landedOn;
-    this.char.y=b.y;
-    this.char.vy=0;
-    this.char.onGround=true;
-    this.char.rot=0;
-    this.char.landedOn=b;
-    this.char.bounceT=0.25;
-
-    // Landed on a different block = successful jump
-    if(b !== wasOnBlock){
-      const base = b.score || 1;
-      const comboBonus=(this.combo>=1)?2:0;
-      const gain=base+comboBonus;
-      this.combo++;
-      this.score+=gain;
-      Storage.addCoins(gain);
-      if(this.score>Storage.getBest()) Storage.setBest(this.score);
-      this.updateScore();
-      this.popupScore(this.screenX(this.char.x), this.H*0.3, '+'+gain);
-      // Spawn next block ahead, old one gets removed in spawnNextBlock
-      this.spawnNextBlock();
+  updateFloatTexts(dt){
+    for(let i = this.floatTexts.length - 1; i >= 0; i--){
+      const f = this.floatTexts[i];
+      f.y += f.vy * dt;
+      f.vy += 20 * dt;
+      f.life -= dt;
+      if(f.life <= 0) this.floatTexts.splice(i, 1);
     }
-
-    if(navigator.vibrate) try{ navigator.vibrate(20); }catch(e){}
-  },
-
-  popupScore(x,y,text){
-    const el=document.createElement('div');
-    el.className='score-popup';
-    el.textContent=text;
-    el.style.left=x+'px';
-    el.style.top=y+'px';
-    document.getElementById('view-play').appendChild(el);
-    setTimeout(()=>el.remove(),1200);
   },
 
   updateScore(){
@@ -1357,7 +1546,6 @@ const Game = {
   end(revive){
     this.running=false;
     cancelAnimationFrame(this.rafId);
-    // Update best in modal
     const best=Storage.getBest();
     const fmt = (n) => n < 100 ? String(n).padStart(2,'0') : String(n);
     document.getElementById('stat-best').textContent = fmt(best);
@@ -1365,7 +1553,7 @@ const Game = {
     document.getElementById('stat-coins').textContent=Storage.getCoins();
     const reviveBtn=document.getElementById('btn-revive');
     reviveBtn.disabled=Storage.getCoins()<100;
-    if(revive) return; // resumed
+    if(revive) return;
     setTimeout(()=>{
       document.getElementById('modal-gameover').classList.add('show');
     },500);
@@ -1374,401 +1562,235 @@ const Game = {
 
   draw(){
     const ctx=this.ctx;
-    // Sky gradient
+
     const grd=ctx.createLinearGradient(0,0,0,this.H);
-    grd.addColorStop(0,'#F4EFFA');
-    grd.addColorStop(1,'#E0D6F0');
+    grd.addColorStop(0,'#F0EAF8');
+    grd.addColorStop(1,'#DCD0F0');
     ctx.fillStyle=grd;
     ctx.fillRect(0,0,this.W,this.H);
 
-    // Decorative distant clouds
-    this.drawClouds(ctx);
+    this.drawBgDots(ctx);
 
-    // Ground baseline (faint)
-    ctx.strokeStyle='rgba(120,100,170,0.15)';
-    ctx.lineWidth=1;
-    ctx.beginPath();
-    ctx.moveTo(0,this.groundY+50);
-    ctx.lineTo(this.W,this.groundY+50);
-    ctx.stroke();
-
-    // Blocks
+    const drawList = [];
     for(const b of this.blocks){
-      this.drawBlock(ctx,b);
+      drawList.push({ type:'block', obj:b, depth: b.x + b.z });
+    }
+    for(const p of this.particles){
+      drawList.push({ type:'particle', obj:p, depth: p.x + p.z });
+    }
+    drawList.push({ type:'char', obj:this.char, depth: this.char.x + this.char.z + 0.1 });
+
+    drawList.sort((a,b) => a.depth - b.depth);
+
+    for(const item of drawList){
+      if(item.type === 'block') this.drawBlock(ctx, item.obj);
+      else if(item.type === 'particle') this.drawParticle(ctx, item.obj);
+      else if(item.type === 'char') this.drawChar(ctx);
     }
 
-    // Particles
-    this.drawParticles(ctx);
-
-    // Character
-    this.drawChar(ctx);
+    this.drawFloatTexts(ctx);
   },
-  drawClouds(ctx){
-    const cam=this.cameraX;
-    const off=cam*0.1;
-    ctx.fillStyle='rgba(255,255,255,0.5)';
-    for(const c of [{x:120-off*0.5,y:80,r:30},{x:340-off*0.7,y:140,r:22},{x:560-off*0.3,y:60,r:28}]){
+
+  drawBgDots(ctx){
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    const spacing = 50;
+    const offsetX = (this.camera.x * 0.3) % spacing;
+    const offsetY = (this.camera.y * 0.2) % spacing;
+    for(let y = -spacing; y < this.H + spacing; y += spacing){
+      for(let x = -spacing; x < this.W + spacing; x += spacing){
+        ctx.beginPath();
+        ctx.arc(x + offsetX, y + offsetY, 1.5, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+  },
+
+  drawBlock(ctx, b){
+    const squash = b.squash || 0;
+    const shake = b.shakeT > 0 ? (Math.random() - 0.5) * 3 * (b.shakeT / 0.15) : 0;
+
+    const size = b.size * (1 + squash * 0.25);
+    const height = b.height * (1 - squash);
+    const halfS = size / 2;
+
+    const cx = this.screenX(b.x + shake, b.z);
+    const cyTop = this.screenY(b.x + shake, b.z, height);
+    const cyBot = this.screenY(b.x + shake, b.z, 0);
+
+    const isoDx = halfS * Math.cos(this.ISO_ANGLE) * 2;
+    const isoDy = halfS * Math.sin(this.ISO_ANGLE) * 2;
+
+    const leftX = cx - isoDx / 2;
+    const rightX = cx + isoDx / 2;
+    const backLeftX = leftX - isoDx / 2;
+    const backRightX = rightX - isoDx / 2;
+    const backY = cyTop - isoDy / 2;
+
+    ctx.save();
+
+    ctx.fillStyle = 'rgba(60, 40, 100, 0.15)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cyBot + 6, halfS * 0.9, halfS * 0.35, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle = b.theme.rightColor;
+    ctx.beginPath();
+    ctx.moveTo(rightX, cyTop);
+    ctx.lineTo(backRightX, backY);
+    ctx.lineTo(backRightX, backY + height);
+    ctx.lineTo(rightX, cyBot);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = b.theme.frontColor;
+    ctx.beginPath();
+    ctx.moveTo(leftX, cyTop);
+    ctx.lineTo(rightX, cyTop);
+    ctx.lineTo(rightX, cyBot);
+    ctx.lineTo(leftX, cyBot);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.beginPath();
+    ctx.moveTo(leftX, cyTop);
+    ctx.lineTo(rightX, cyTop);
+    ctx.lineTo(rightX - 4, cyTop + 4);
+    ctx.lineTo(leftX + 4, cyTop + 4);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = b.theme.topColor;
+    ctx.beginPath();
+    ctx.moveTo(leftX, cyTop);
+    ctx.lineTo(rightX, cyTop);
+    ctx.lineTo(backRightX, backY);
+    ctx.lineTo(backLeftX, backY);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.beginPath();
+    ctx.moveTo(leftX + 3, cyTop - 1);
+    ctx.lineTo(rightX - 3, cyTop - 1);
+    ctx.lineTo(rightX - 6, cyTop + 2);
+    ctx.lineTo(leftX + 6, cyTop + 2);
+    ctx.closePath();
+    ctx.fill();
+
+    if(b.theme.accent && b.theme.accentColor){
+      const ac = b.theme.accentColor;
+      const accentW = size * 0.12;
+      const leftAcc = cx - accentW / 2;
+      const rightAcc = cx + accentW / 2;
+      const backLA = leftAcc - isoDx / 2;
+      const backRA = rightAcc - isoDx / 2;
+
+      ctx.fillStyle = ac;
+      ctx.fillRect(leftAcc, cyTop + 2, accentW, height - 2);
+
+      ctx.fillStyle = this.darkenColor(ac, 0.3);
       ctx.beginPath();
-      ctx.arc(c.x,c.y,c.r,0,Math.PI*2);
-      ctx.arc(c.x+c.r*0.7,c.y+4,c.r*0.7,0,Math.PI*2);
-      ctx.arc(c.x-c.r*0.6,c.y+4,c.r*0.6,0,Math.PI*2);
+      ctx.moveTo(rightAcc, cyTop + 2);
+      ctx.lineTo(backRA, backY + 2 + isoDy/2);
+      ctx.lineTo(backRA, backY + height);
+      ctx.lineTo(rightAcc, cyBot);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = ac;
+      ctx.beginPath();
+      ctx.moveTo(leftAcc, cyTop);
+      ctx.lineTo(rightAcc, cyTop);
+      ctx.lineTo(backRA, backY);
+      ctx.lineTo(backLA, backY);
+      ctx.closePath();
       ctx.fill();
     }
-  },
-  drawBlock(ctx,b){
-    const sx=this.screenX(b.x);
-    const s = b.w;
-    if(sx>this.W+150 || sx+s<-150) return;
-    const top = b.y;
-    const squash = b.squash || 0;
-    const sqH = 1 - squash;
-    const sqW = 1 + squash * 0.2;
-    const ws = s * sqW;
-    const isoDx = ws * 0.55;
-    const isoDy = ws * 0.28;
-    const blockH = b.h * sqH;
-    const bx = sx - (ws - s) / 2;
-    const by = top + (b.h - blockH);
 
-    // Shadow
-    ctx.fillStyle='rgba(50,30,80,0.18)';
-    ctx.beginPath();
-    ctx.ellipse(bx + ws/2 - isoDx*0.3, by + blockH + 4, ws*0.5, 5, 0, 0, Math.PI*2);
-    ctx.fill();
-
-    if(b.theme === 'gift'){
-      this.drawGiftBlock(ctx, bx, by, ws, blockH, isoDx, isoDy);
-    } else if(b.theme === 'book'){
-      this.drawBookBlock(ctx, bx, by, ws, blockH, isoDx, isoDy);
-    } else {
-      this.drawBasicBlock(ctx, bx, by, ws, blockH, isoDx, isoDy);
-    }
-  },
-  drawBasicBlock(ctx, x, y, w, h, isoDx, isoDy){
-    // Right face (darkest)
-    ctx.fillStyle = '#6B7280';
-    ctx.beginPath();
-    ctx.moveTo(x + w, y);
-    ctx.lineTo(x + w - isoDx, y - isoDy);
-    ctx.lineTo(x + w - isoDx, y + h - isoDy);
-    ctx.lineTo(x + w, y + h);
-    ctx.closePath();
-    ctx.fill();
-    // Right face inner shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.15)';
-    ctx.beginPath();
-    ctx.moveTo(x + w, y + h*0.6);
-    ctx.lineTo(x + w - isoDx, y + h*0.6 - isoDy);
-    ctx.lineTo(x + w - isoDx, y + h - isoDy);
-    ctx.lineTo(x + w, y + h);
-    ctx.closePath();
-    ctx.fill();
-
-    // Front face (medium)
-    ctx.fillStyle = '#9CA3AF';
-    ctx.fillRect(x, y, w, h);
-    // Front face highlight top
-    ctx.fillStyle = 'rgba(255,255,255,0.2)';
-    ctx.fillRect(x, y, w, h * 0.15);
-    // Front face shadow bottom
-    ctx.fillStyle = 'rgba(0,0,0,0.12)';
-    ctx.fillRect(x, y + h * 0.7, w, h * 0.3);
-
-    // Top face (lightest)
-    ctx.fillStyle = '#D1D5DB';
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + w, y);
-    ctx.lineTo(x + w - isoDx, y - isoDy);
-    ctx.lineTo(x - isoDx, y - isoDy);
-    ctx.closePath();
-    ctx.fill();
-    // Top face highlight front edge
-    ctx.fillStyle = '#E5E7EB';
-    ctx.beginPath();
-    ctx.moveTo(x + 2, y + 0.5);
-    ctx.lineTo(x + w - 2, y + 0.5);
-    ctx.lineTo(x + w - 5, y + 3);
-    ctx.lineTo(x + 5, y + 3);
-    ctx.closePath();
-    ctx.fill();
-    // Top face inner shadow (back edge)
-    ctx.fillStyle = 'rgba(0,0,0,0.08)';
-    ctx.beginPath();
-    ctx.moveTo(x - isoDx, y - isoDy);
-    ctx.lineTo(x + w - isoDx, y - isoDy);
-    ctx.lineTo(x + w - isoDx + 3, y - isoDy + 3);
-    ctx.lineTo(x - isoDx + 3, y - isoDy + 3);
-    ctx.closePath();
-    ctx.fill();
-
-    // Edge outline
-    ctx.strokeStyle = 'rgba(40,40,60,0.2)';
+    ctx.strokeStyle = 'rgba(40, 30, 70, 0.15)';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + w, y);
-    ctx.lineTo(x + w - isoDx, y - isoDy);
-    ctx.lineTo(x - isoDx, y - isoDy);
+    ctx.moveTo(leftX, cyTop);
+    ctx.lineTo(rightX, cyTop);
+    ctx.lineTo(backRightX, backY);
+    ctx.lineTo(backLeftX, backY);
     ctx.closePath();
-    ctx.moveTo(x + w, y);
-    ctx.lineTo(x + w, y + h);
-    ctx.moveTo(x + w - isoDx, y - isoDy);
-    ctx.lineTo(x + w - isoDx, y + h - isoDy);
+    ctx.moveTo(rightX, cyTop);
+    ctx.lineTo(rightX, cyBot);
+    ctx.moveTo(backRightX, backY);
+    ctx.lineTo(backRightX, backY + height);
     ctx.stroke();
-  },
-  drawGiftBlock(ctx, x, y, w, h, isoDx, isoDy){
-    const lidH = h * 0.22;
-    const bodyY = y + lidH;
-    const bodyH = h - lidH;
-    const ribbonW = w * 0.18;
-    const ribbonX = x + w/2 - ribbonW/2;
 
-    // Right face body (darkest red)
-    ctx.fillStyle = '#A03030';
-    ctx.beginPath();
-    ctx.moveTo(x + w, bodyY);
-    ctx.lineTo(x + w - isoDx, bodyY - isoDy);
-    ctx.lineTo(x + w - isoDx, y + h - isoDy);
-    ctx.lineTo(x + w, y + h);
-    ctx.closePath();
-    ctx.fill();
-    // Right face bottom shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.2)';
-    ctx.beginPath();
-    ctx.moveTo(x + w, y + h * 0.65);
-    ctx.lineTo(x + w - isoDx, y + h * 0.65 - isoDy);
-    ctx.lineTo(x + w - isoDx, y + h - isoDy);
-    ctx.lineTo(x + w, y + h);
-    ctx.closePath();
-    ctx.fill();
-
-    // Right face lid
-    ctx.fillStyle = '#C04040';
-    ctx.beginPath();
-    ctx.moveTo(x + w, y);
-    ctx.lineTo(x + w - isoDx, y - isoDy);
-    ctx.lineTo(x + w - isoDx, bodyY - isoDy);
-    ctx.lineTo(x + w, bodyY);
-    ctx.closePath();
-    ctx.fill();
-
-    // Front face body
-    ctx.fillStyle = '#E04848';
-    ctx.fillRect(x, bodyY, w, bodyH);
-    // Front face highlight
-    ctx.fillStyle = 'rgba(255,255,255,0.15)';
-    ctx.fillRect(x, bodyY, w, bodyH * 0.2);
-    // Front face shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.1)';
-    ctx.fillRect(x, y + h * 0.7, w, h * 0.3);
-
-    // Front face lid
-    ctx.fillStyle = '#F06060';
-    ctx.fillRect(x, y, w, lidH);
-    // Front lid highlight
-    ctx.fillStyle = 'rgba(255,255,255,0.25)';
-    ctx.fillRect(x, y, w, lidH * 0.35);
-
-    // Front ribbon vertical
-    ctx.fillStyle = '#FFD93D';
-    ctx.fillRect(ribbonX, y, ribbonW, h);
-    // Ribbon shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.1)';
-    ctx.fillRect(ribbonX + ribbonW - 2, y, 2, h);
-
-    // Top face (lightest red)
-    ctx.fillStyle = '#F57070';
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + w, y);
-    ctx.lineTo(x + w - isoDx, y - isoDy);
-    ctx.lineTo(x - isoDx, y - isoDy);
-    ctx.closePath();
-    ctx.fill();
-    // Top face highlight
-    ctx.fillStyle = '#FF8888';
-    ctx.beginPath();
-    ctx.moveTo(x + 2, y + 0.5);
-    ctx.lineTo(x + w - 2, y + 0.5);
-    ctx.lineTo(x + w - 5, y + 3);
-    ctx.lineTo(x + 5, y + 3);
-    ctx.closePath();
-    ctx.fill();
-
-    // Top ribbon horizontal
-    ctx.fillStyle = '#FFD93D';
-    ctx.beginPath();
-    ctx.moveTo(x, y + lidH*0.5);
-    ctx.lineTo(x + w, y + lidH*0.5);
-    ctx.lineTo(x + w - isoDx, y - isoDy + lidH*0.5);
-    ctx.lineTo(x - isoDx, y - isoDy + lidH*0.5);
-    ctx.closePath();
-    ctx.fill();
-
-    // Top ribbon vertical
-    ctx.fillStyle = '#FFD93D';
-    ctx.beginPath();
-    ctx.moveTo(ribbonX, y);
-    ctx.lineTo(ribbonX + ribbonW, y);
-    ctx.lineTo(ribbonX + ribbonW - isoDx, y - isoDy);
-    ctx.lineTo(ribbonX - isoDx, y - isoDy);
-    ctx.closePath();
-    ctx.fill();
-
-    // Bow on top center
-    const bowCx = x + w/2 - isoDx*0.5;
-    const bowCy = y - isoDy*0.5;
-    const bowR = w * 0.12;
-    ctx.fillStyle = '#FFD93D';
-    ctx.beginPath();
-    ctx.ellipse(bowCx - bowR*0.7, bowCy, bowR, bowR*0.7, -0.3, 0, Math.PI*2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(bowCx + bowR*0.7, bowCy, bowR, bowR*0.7, 0.3, 0, Math.PI*2);
-    ctx.fill();
-    ctx.fillStyle = '#E8B820';
-    ctx.beginPath();
-    ctx.arc(bowCx, bowCy, bowR*0.45, 0, Math.PI*2);
-    ctx.fill();
-
-    // Edges
-    ctx.strokeStyle = 'rgba(100,20,20,0.25)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + w, y);
-    ctx.lineTo(x + w - isoDx, y - isoDy);
-    ctx.lineTo(x - isoDx, y - isoDy);
-    ctx.closePath();
-    ctx.moveTo(x + w, y);
-    ctx.lineTo(x + w, y + h);
-    ctx.moveTo(x + w - isoDx, y - isoDy);
-    ctx.lineTo(x + w - isoDx, y + h - isoDy);
-    ctx.stroke();
-  },
-  drawBookBlock(ctx, x, y, w, h, isoDx, isoDy){
-    const coverW = w * 0.08;
-    const pagesH = h - coverW;
-
-    // Right face - spine (darkest blue)
-    ctx.fillStyle = '#153D5C';
-    ctx.beginPath();
-    ctx.moveTo(x + w, y);
-    ctx.lineTo(x + w - isoDx, y - isoDy);
-    ctx.lineTo(x + w - isoDx, y + h - isoDy);
-    ctx.lineTo(x + w, y + h);
-    ctx.closePath();
-    ctx.fill();
-    // Right face bottom shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.2)';
-    ctx.beginPath();
-    ctx.moveTo(x + w, y + h * 0.65);
-    ctx.lineTo(x + w - isoDx, y + h * 0.65 - isoDy);
-    ctx.lineTo(x + w - isoDx, y + h - isoDy);
-    ctx.lineTo(x + w, y + h);
-    ctx.closePath();
-    ctx.fill();
-
-    // Front face - cover (medium blue)
-    ctx.fillStyle = '#2C6E91';
-    ctx.fillRect(x, y, w, h);
-    // Front cover highlight
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.fillRect(x, y, w, h * 0.15);
-    // Front cover shadow bottom
-    ctx.fillStyle = 'rgba(0,0,0,0.12)';
-    ctx.fillRect(x, y + h * 0.7, w, h * 0.3);
-
-    // Pages (white side) on front face
-    ctx.fillStyle = '#F5F0E0';
-    ctx.fillRect(x + coverW, y + coverW, w - coverW*2, pagesH);
-    // Page lines
-    ctx.strokeStyle = 'rgba(150,140,120,0.2)';
-    ctx.lineWidth = 0.8;
-    for(let i = 0; i < 5; i++){
-      const ly = y + coverW + (pagesH/6) * (i+1);
-      ctx.beginPath();
-      ctx.moveTo(x + coverW, ly);
-      ctx.lineTo(x + w - coverW, ly);
-      ctx.stroke();
-    }
-
-    // Top face - cover (lightest blue)
-    ctx.fillStyle = '#3E8CB5';
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + w, y);
-    ctx.lineTo(x + w - isoDx, y - isoDy);
-    ctx.lineTo(x - isoDx, y - isoDy);
-    ctx.closePath();
-    ctx.fill();
-    // Top face highlight
-    ctx.fillStyle = '#5BA8D0';
-    ctx.beginPath();
-    ctx.moveTo(x + 2, y + 0.5);
-    ctx.lineTo(x + w - 2, y + 0.5);
-    ctx.lineTo(x + w - 5, y + 3);
-    ctx.lineTo(x + 5, y + 3);
-    ctx.closePath();
-    ctx.fill();
-
-    // Top page edge
-    ctx.fillStyle = '#F5F0E0';
-    ctx.beginPath();
-    ctx.moveTo(x + coverW, y + coverW*0.4);
-    ctx.lineTo(x + w - coverW, y + coverW*0.4);
-    ctx.lineTo(x + w - coverW - isoDx, y - isoDy + coverW*0.4);
-    ctx.lineTo(x + coverW - isoDx, y - isoDy + coverW*0.4);
-    ctx.closePath();
-    ctx.fill();
-
-    // Gold bookmark on top
-    ctx.fillStyle = '#FFD700';
-    const bmX = x + w * 0.75 - isoDx*0.5;
-    const bmY = y - isoDy*0.5;
-    ctx.fillRect(bmX - 3, bmY - 2, 6, h * 0.45 + isoDy*0.5);
-    // Bookmark shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.15)';
-    ctx.fillRect(bmX + 2, bmY - 1, 1.5, h * 0.45 + isoDy*0.5);
-
-    // Edges
-    ctx.strokeStyle = 'rgba(20,50,70,0.3)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + w, y);
-    ctx.lineTo(x + w - isoDx, y - isoDy);
-    ctx.lineTo(x - isoDx, y - isoDy);
-    ctx.closePath();
-    ctx.moveTo(x + w, y);
-    ctx.lineTo(x + w, y + h);
-    ctx.moveTo(x + w - isoDx, y - isoDy);
-    ctx.lineTo(x + w - isoDx, y + h - isoDy);
-    ctx.stroke();
-  },
-  drawChar(ctx){
-    const sx=this.screenX(this.char.x);
-    const charH=70;
-    const baseY=this.char.y;
-    const bounce=this.char.bounceT>0 ? Math.sin((0.25-this.char.bounceT)/0.25*Math.PI)*6 : 0;
-    const y=baseY-bounce;
-    const squash = this.char.squash || 0;
-    const sqH = 1 - squash;
-    const sqW = 1 + squash * 0.3;
-    const drawH = charH * sqH;
-    const charY = y + (charH - drawH);
-    // Shadow
-    ctx.fillStyle='rgba(0,0,0,0.18)';
-    ctx.beginPath();
-    ctx.ellipse(sx, y + 2, 20 * sqW, 4.5, 0, 0, Math.PI*2);
-    ctx.fill();
-    // Character
-    ctx.save();
-    ctx.translate(sx, charY);
-    ctx.scale(sqW, sqH);
-    drawCharacter(ctx, Storage.getCurrent(), charH, performance.now());
     ctx.restore();
+  },
+
+  darkenColor(hex, amount){
+    const h = hex.replace('#','');
+    const r = Math.max(0, parseInt(h.substr(0,2),16) * (1-amount));
+    const g = Math.max(0, parseInt(h.substr(2,2),16) * (1-amount));
+    const b = Math.max(0, parseInt(h.substr(4,2),16) * (1-amount));
+    return `rgb(${r|0},${g|0},${b|0})`;
+  },
+
+  drawParticle(ctx, p){
+    const alpha = p.life / p.maxLife;
+    const sx = this.screenX(p.x, p.z);
+    const sy = this.screenY(p.x, p.z, p.y);
+    const size = p.size * (0.5 + alpha * 0.5);
+
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(sx, sy, size, 0, Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  },
+
+  drawChar(ctx){
+    const ch = this.CHAR_SIZE;
+    const squash = this.char.squash || 0;
+    const stretch = this.char.stretch || 0;
+
+    const sqH = (1 - squash) * (1 + stretch);
+    const sqW = (1 + squash * 0.35) * (1 - stretch * 0.5);
+
+    const drawW = ch * sqW;
+
+    const sx = this.screenX(this.char.x, this.char.z);
+    const baseY = this.screenY(this.char.x, this.char.z, this.char.y);
+    const bounce = this.char.bounceT > 0 ? Math.sin((0.2 - this.char.bounceT)/0.2 * Math.PI) * 8 : 0;
+    const cy = baseY - bounce;
+
+    ctx.fillStyle = 'rgba(50, 30, 90, 0.2)';
+    ctx.beginPath();
+    ctx.ellipse(sx, baseY + 2, drawW * 0.35, drawW * 0.12, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.save();
+    ctx.translate(sx, cy);
+    ctx.scale(sqW, sqH);
+    drawCharacter(ctx, Storage.getCurrent(), ch, performance.now());
+    ctx.restore();
+  },
+
+  drawFloatTexts(ctx){
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 22px "Noto Sans SC", "PingFang SC", sans-serif';
+    for(const f of this.floatTexts){
+      const alpha = Math.min(1, f.life / 0.3);
+      const scale = 0.8 + (1 - f.life / f.maxLife) * 0.2;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(f.x, f.y);
+      ctx.scale(scale, scale);
+      ctx.fillStyle = f.color;
+      ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+      ctx.lineWidth = 4;
+      ctx.strokeText(f.text, 0, 0);
+      ctx.fillText(f.text, 0, 0);
+      ctx.restore();
+    }
   }
 };
 
@@ -1914,22 +1936,29 @@ function init(){
 }
 
 Game.revive=function(){
-  // Place character on the last landed block (or at current x, snapped to last block)
-  const lastB=this.char.landedOn;
+  const lastB = this.char.landedOn;
   if(lastB){
-    this.char.x=Math.min(this.char.x, lastB.x+lastB.w-2);
-    this.char.x=Math.max(this.char.x, lastB.x+2);
-    this.char.y=lastB.y;
+    this.char.x = lastB.x;
+    this.char.z = lastB.z;
+    this.char.y = lastB.height;
   } else {
-    // Fall back: place on first block
-    const b=this.blocks[0];
-    if(b){ this.char.x=b.x+b.w/2; this.char.y=b.y; }
+    const b = this.blocks[0];
+    if(b){
+      this.char.x = b.x;
+      this.char.z = b.z;
+      this.char.y = b.height;
+      this.char.landedOn = b;
+    }
   }
-  this.char.vx=0; this.char.vy=0; this.char.rot=0;
-  this.char.onGround=true;
-  this.updateCamera();
-  this.running=true;
-  this.lastT=performance.now();
+  this.char.vx = 0; this.char.vy = 0; this.char.vz = 0;
+  this.char.onGround = true;
+  this.char.squash = 0;
+  this.char.stretch = 0;
+  this.updateCameraTarget();
+  this.camera.x = this.targetCamera.x;
+  this.camera.y = this.targetCamera.y;
+  this.running = true;
+  this.lastT = performance.now();
   this.loop();
 };
 
