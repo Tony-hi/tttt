@@ -1126,13 +1126,13 @@ const Storage = {
 
 /* ============ 2. Skins & Wallpapers ============ */
 const SKINS = [
-  { id:'block',   name:'方块君',   price:0 },
-  { id:'compass', name:'圆规叔叔', price:0 },
+  { id:'block',   name:'方块君',    price:0 },
+  { id:'compass', name:'圆规叔叔',  price:0 },
   { id:'pawn',    name:'象棋-兵',   price:0 },
-  { id:'pencil',  name:'铅笔头',   price:300 },
-  { id:'eraser',  name:'橡皮君',   price:250 },
-  { id:'ruler',   name:'直尺先生', price:350 },
-  { id:'cutter',  name:'美工刀侠客', price:400 }
+  { id:'pencil',  name:'铅笔头',    price:300 },
+  { id:'eraser',  name:'橡皮君',    price:250 },
+  { id:'ruler',   name:'直尺先生',  price:350 },
+  { id:'cutter',  name:'美工刀侠客', price:0, exclusive:true }
 ];
 
 const WALLPAPERS = [
@@ -1778,6 +1778,10 @@ const Shop = {
         btn.innerHTML='使 用';
         btn.disabled=false;
         btn.onclick=()=>this.equipSkin();
+      } else if(s.exclusive){
+        btn.innerHTML='<span style="font-size:13px">抽奖/兑换码获得</span>';
+        btn.disabled=true;
+        btn.onclick=null;
       } else {
         btn.innerHTML=`<span class="price"><svg><use href="#i-coin"/></svg>${s.price} 解锁</span>`;
         btn.disabled=Storage.getCoins()<s.price;
@@ -1809,6 +1813,7 @@ const Shop = {
   },
   unlockSkin(){
     const s=this.currentSkin;
+    if(s.exclusive){toast('该皮肤仅可通过抽奖或兑换码获得');return;}
     if(Storage.getCoins()<s.price){toast('金币不足');return;}
     Storage.setCoins(Storage.getCoins()-s.price);
     Storage.unlock(s.id);
