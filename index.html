@@ -608,6 +608,35 @@ svg{display:block}
 .history-time{font-size:12px;color:var(--text-mute);font-weight:600;flex-shrink:0;margin-left:10px}
 .history-empty{text-align:center;padding:30px 0;color:var(--text-mute);font-size:14px;font-weight:600}
 
+/* 我的主题弹窗样式 */
+#modal-my-themes .modal-card{max-height:85vh;overflow-y:auto}
+.theme-list{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;max-height:200px;overflow-y:auto}
+.theme-list::-webkit-scrollbar{width:6px}
+.theme-list::-webkit-scrollbar-track{background:rgba(0,0,0,0.05);border-radius:3px}
+.theme-list::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:3px}
+.theme-list-item{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#F5F2FA;border-radius:12px;position:relative}
+.theme-list-item .theme-preview{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg, var(--bg1), var(--bg2));position:relative;overflow:hidden}
+.theme-list-item .theme-preview::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px);background-size:8px 8px}
+.theme-list-item .theme-name{font-size:14px;font-weight:700;color:var(--text)}
+.theme-list-item .btn-remove{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:#FF5252;color:#fff;border:none;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.theme-list-item .btn-remove:hover{background:#D32F2F}
+.theme-add-section{border-top:1px solid #eee;padding-top:16px;margin-top:8px}
+.theme-add-section h4{font-size:15px;font-weight:800;color:var(--text);margin:0 0 12px 0}
+.theme-add-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(70px, 1fr));gap:10px;max-height:250px;overflow-y:auto}
+.theme-add-grid::-webkit-scrollbar{width:6px}
+.theme-add-grid::-webkit-scrollbar-track{background:rgba(0,0,0,0.05);border-radius:3px}
+.theme-add-grid::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:3px}
+.theme-add-item{position:relative;cursor:pointer;border:2px solid transparent;border-radius:12px;overflow:hidden;transition:all .2s ease}
+.theme-add-item:hover{transform:scale(1.05)}
+.theme-add-item.selected{border-color:var(--green)}
+.theme-add-item .theme-thumb{width:100%;aspect-ratio:1;background:linear-gradient(135deg, var(--bg1), var(--bg2));position:relative}
+.theme-add-item .theme-thumb::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px);background-size:10px 10px}
+.theme-add-item .theme-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px}
+.theme-add-item .check-mark{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px}
+.modal-tip{display:flex;align-items:center;gap:8px;padding:12px 14px;background:#F5F2FA;border-radius:10px;margin-top:16px}
+.modal-tip .tip-icon{font-size:18px}
+.modal-tip span{font-size:14px;color:var(--text-mute);font-weight:600}
+
 .result-content{padding:10px 0 20px}
 .result-content .result-icon{font-size:72px;margin-bottom:8px;line-height:1}
 .result-content .result-title{font-size:24px;font-weight:900;color:var(--text);margin-bottom:4px}
@@ -958,6 +987,11 @@ svg{display:block}
           <span>我的权益</span>
           <span class="arrow-right"><svg width="20" height="20"><use href="#i-chevron-right"/></svg></span>
         </div>
+        <div class="menu-card wide" data-target="my-themes">
+          <div class="icon">🎨</div>
+          <span>我的主题</span>
+          <span class="arrow-right"><svg width="20" height="20"><use href="#i-chevron-right"/></svg></span>
+        </div>
         <div class="menu-card wide" id="menu-dev" data-target="dev" style="display:none">
           <div class="icon" style="color:#a8ff78">⚙️</div>
           <span style="color:#a8ff78">开发者模式</span>
@@ -1246,6 +1280,27 @@ svg{display:block}
       </div>
     </div>
 
+    <!-- 我的主题弹窗 -->
+    <div class="modal" id="modal-my-themes">
+      <div class="modal-mask"></div>
+      <div class="modal-card light">
+        <div class="modal-header">
+          <h3>🎨 我的主题</h3>
+          <button class="modal-close" id="btn-my-themes-close">×</button>
+        </div>
+        <p class="modal-desc">选择游戏随机时使用的主题（可多选）</p>
+        <div class="theme-list" id="my-themes-list"></div>
+        <div class="theme-add-section">
+          <h4>添加新主题</h4>
+          <div class="theme-add-grid" id="theme-add-grid"></div>
+        </div>
+        <div class="modal-tip">
+          <span class="tip-icon">💡</span>
+          <span id="my-themes-count">当前已选择 0 个主题</span>
+        </div>
+      </div>
+    </div>
+
     <div class="modal" id="modal-result">
       <div class="modal-mask"></div>
       <div class="modal-card light">
@@ -1368,7 +1423,7 @@ const Storage = {
   K_COINS:'jbc.coins', K_BEST:'jbc.bestScore', K_SKINS:'jbc.unlockedSkins', K_CURRENT:'jbc.currentSkin',
   K_WALLPAPERS:'jbc.unlockedWalls', K_CURRENT_WALL:'jbc.currentWallpaper', K_REVIVE:'jbc.reviveCount',
   K_BENEFITS:'jbc.benefitSwitches', K_HISTORY:'jbc.redeemHistory', K_FREE_LOTTERY:'jbc.freeLotteryDate',
-  K_THEMES:'jbc.unlockedThemes', K_CURRENT_THEME:'jbc.currentTheme',
+  K_THEMES:'jbc.unlockedThemes', K_CURRENT_THEME:'jbc.currentTheme', K_MY_THEMES:'jbc.myThemes',
   getCoins(){const v=parseInt(localStorage.getItem(this.K_COINS)||'0',10);return isNaN(v)?0:v;},
   setCoins(n){localStorage.setItem(this.K_COINS,String(Math.max(0,n|0)));},
   addCoins(n){const bonus=this.getBenefitEnabled('coinBonus',false)?Math.floor(n*0.5):0;this.setCoins(this.getCoins()+n+bonus);return bonus;},
@@ -1408,7 +1463,13 @@ const Storage = {
   unlockTheme(id){const arr=this.getUnlockedThemes();if(!arr.includes(id)){arr.push(id);this.setUnlockedThemes(arr);}},
   hasTheme(id){return this.getUnlockedThemes().includes(id);},
   setCurrentTheme(id){localStorage.setItem(this.K_CURRENT_THEME,id);},
-  getCurrentTheme(){return localStorage.getItem(this.K_CURRENT_THEME)||'purple';}
+  getCurrentTheme(){return localStorage.getItem(this.K_CURRENT_THEME)||'purple';},
+  // 我的主题列表（用户收藏的主题）
+  getMyThemes(){try{return JSON.parse(localStorage.getItem(this.K_MY_THEMES)||'["purple"]');}catch(e){return['purple'];}},
+  setMyThemes(arr){localStorage.setItem(this.K_MY_THEMES,JSON.stringify(arr));},
+  addMyTheme(id){const arr=this.getMyThemes();if(!arr.includes(id)){arr.push(id);this.setMyThemes(arr);}},
+  removeMyTheme(id){const arr=this.getMyThemes();const idx=arr.indexOf(id);if(idx>-1){arr.splice(idx,1);this.setMyThemes(arr);}},
+  hasMyTheme(id){return this.getMyThemes().includes(id);}
 };
 
 /* ============ 2. Skins & Wallpapers ============ */
@@ -2212,17 +2273,17 @@ function renderThemeSelector(containerId) {
   const container = document.getElementById(containerId);
   if(!container) return;
   
-  const currentThemeId = Storage.getCurrentWall();
+  const myThemes = Storage.getMyThemes();
   
   container.innerHTML = THEMES.map(theme => `
-    <div class="theme-item ${Storage.hasTheme(theme.id) ? 'unlocked' : 'locked'} ${theme.id === currentThemeId ? 'selected' : ''}" 
+    <div class="theme-item ${Storage.hasTheme(theme.id) ? 'unlocked' : 'locked'} ${myThemes.includes(theme.id) ? 'selected' : ''}" 
          data-theme-id="${theme.id}"
          onclick="selectTheme('${theme.id}')">
       <div class="theme-preview" style="background: linear-gradient(135deg, ${theme.bg1}, ${theme.bg2})">
         <span class="theme-emoji">${theme.emoji || '🎨'}</span>
       </div>
       <div class="theme-name">${theme.name}</div>
-      <div class="theme-price">${Storage.hasTheme(theme.id) ? (theme.id === currentThemeId ? '使用中' : '已解锁') : (theme.price === 0 ? '免费' : '💰' + theme.price)}</div>
+      <div class="theme-price">${Storage.hasTheme(theme.id) ? (myThemes.includes(theme.id) ? '已收藏' : '可添加') : (theme.price === 0 ? '免费' : '💰' + theme.price)}</div>
     </div>
   `).join('');
 }
@@ -2239,9 +2300,6 @@ function selectTheme(themeId) {
       Storage.unlockTheme(theme.id);
       toast('主题已解锁！');
       Storage.addRedeemHistory(theme.id, '购买主题：' + theme.name);
-      // 应用主题
-      applyThemeToGame(theme);
-      Storage.setCurrentWall(theme.id);
       renderThemeSelector('theme-selector');
       // 更新商店金币显示
       const shopCoins = document.getElementById('shop-coins');
@@ -2252,10 +2310,13 @@ function selectTheme(themeId) {
     return;
   }
   
-  // 应用主题
-  applyThemeToGame(theme);
-  Storage.setCurrentWall(theme.id);
-  toast('主题已应用：' + theme.name);
+  // 已解锁的主题，添加到我的主题
+  if(!Storage.hasMyTheme(theme.id)) {
+    Storage.addMyTheme(theme.id);
+    toast('已添加到我的主题');
+  } else {
+    toast('已在我的主题中');
+  }
   
   // 重新渲染主题选择器以更新选中状态
   renderThemeSelector('theme-selector');
@@ -2270,21 +2331,20 @@ function getThemePreview(themeId) {
 
 // 游戏开始时随机选择主题
 function startGameWithRandomTheme() {
-  // 解锁的主题列表
-  const unlockedThemes = THEMES.filter(t => Storage.hasTheme(t.id));
+  // 获取用户收藏的主题列表
+  const myThemes = Storage.getMyThemes();
   
-  if(unlockedThemes.length === 0) {
-    // 没有解锁的主题，使用默认主题
+  if(myThemes.length === 0) {
+    // 没有收藏的主题，使用默认主题
     applyThemeToGame(THEMES[0]);
     return;
   }
   
-  // 随机选择一个已解锁的主题
-  const randomTheme = unlockedThemes[Math.floor(Math.random() * unlockedThemes.length)];
-  applyThemeToGame(randomTheme);
-  
-  // 显示主题名称
-  toast('🎨 ' + randomTheme.name);
+  // 随机选择一个收藏的主题
+  const randomIndex = Math.floor(Math.random() * myThemes.length);
+  const themeId = myThemes[randomIndex];
+  const theme = THEMES.find(t => t.id === themeId) || THEMES[0];
+  applyThemeToGame(theme);
 }
 
 /* ============ 3. Character drawing (origin = feet center) ============ */
@@ -2779,6 +2839,7 @@ const Router = {
     if(viewId==='shop')    Shop.render();
     if(viewId==='lottery') Lottery.render();
     if(viewId==='play')    Game.start();
+    if(viewId==='my-themes') MyThemes.show();
   }
 };
 
@@ -3168,6 +3229,84 @@ function drawLotteryCharacter(ctx,cx,cy,w,h,t){
   ctx.fill();
   ctx.restore();
 }
+
+/* ============ 6.5 My Themes ============ */
+const MyThemes = {
+  show(){
+    showModal('modal-my-themes');
+    this.render();
+  },
+  render(){
+    this.renderSelected();
+    this.renderAddable();
+    this.updateCount();
+  },
+  renderSelected(){
+    const list = document.getElementById('my-themes-list');
+    const myThemes = Storage.getMyThemes();
+    
+    if(myThemes.length === 0) {
+      list.innerHTML = '<div class="history-empty">还没有选择任何主题</div>';
+      return;
+    }
+    
+    list.innerHTML = myThemes.map(themeId => {
+      const theme = THEMES.find(t => t.id === themeId);
+      if(!theme) return '';
+      return `
+        <div class="theme-list-item">
+          <div class="theme-preview" style="--bg1:${theme.bg1};--bg2:${theme.bg2}"></div>
+          <span class="theme-name">${theme.name}</span>
+          <button class="btn-remove" onclick="MyThemes.remove('${theme.id}')">×</button>
+        </div>
+      `;
+    }).join('');
+  },
+  renderAddable(){
+    const grid = document.getElementById('theme-add-grid');
+    const myThemes = Storage.getMyThemes();
+    const unlockedThemes = Storage.getUnlockedThemes();
+    
+    // 显示所有已解锁的主题
+    const addableThemes = unlockedThemes.filter(id => !myThemes.includes(id));
+    
+    if(addableThemes.length === 0) {
+      grid.innerHTML = '<div class="history-empty">所有已解锁的主题都已添加</div>';
+      return;
+    }
+    
+    grid.innerHTML = addableThemes.map(themeId => {
+      const theme = THEMES.find(t => t.id === themeId);
+      if(!theme) return '';
+      return `
+        <div class="theme-add-item" onclick="MyThemes.add('${theme.id}')">
+          <div class="theme-thumb" style="--bg1:${theme.bg1};--bg2:${theme.bg2}">
+            <div class="theme-emoji">${theme.emoji || '🎨'}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  },
+  add(themeId){
+    Storage.addMyTheme(themeId);
+    this.render();
+    toast('已添加主题');
+  },
+  remove(themeId){
+    const myThemes = Storage.getMyThemes();
+    if(myThemes.length <= 1) {
+      toast('至少保留一个主题');
+      return;
+    }
+    Storage.removeMyTheme(themeId);
+    this.render();
+    toast('已移除主题');
+  },
+  updateCount(){
+    const count = Storage.getMyThemes().length;
+    document.getElementById('my-themes-count').textContent = `当前已选择 ${count} 个主题`;
+  }
+};
 
 /* ============ 7. Game Engine (WeChat Jump Style) ============ */
 const Game = {
@@ -4440,13 +4579,6 @@ function init(){
     DevPanel.toggle();
   });
 
-  // 初始化主题
-  (function initTheme(){
-    const themeId = Storage.getCurrentTheme();
-    const theme = THEMES.find(t => t.id === themeId) || THEMES[0];
-    applyThemeToGame(theme);
-  })();
-  
   // Init dev panel
   DevPanel.init();
 
@@ -4511,6 +4643,7 @@ function init(){
     Benefits.showModal();
   });
   document.getElementById('btn-benefits-close').addEventListener('click',()=>hideModal('modal-benefits'));
+  document.getElementById('btn-my-themes-close').addEventListener('click',()=>hideModal('modal-my-themes'));
   document.getElementById('btn-redeem-history').addEventListener('click',()=>{renderHistory();showRedeemStage('history');});
   document.getElementById('btn-history-back').addEventListener('click',()=>showRedeemStage('main'));
 
