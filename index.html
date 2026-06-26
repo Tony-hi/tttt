@@ -798,6 +798,7 @@ svg{display:block}
     <symbol id="i-book" viewBox="0 0 48 48"><path d="M6 10c0-2 2-4 4-4h12v32H10c-2 0-4-2-4-4V10z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M42 10c0-2-2-4-4-4H26v32h12c2 0 4-2 4-4V10z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><line x1="12" y1="14" x2="18" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="20" x2="18" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="30" y1="14" x2="36" y2="14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="30" y1="20" x2="36" y2="20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
     <symbol id="i-gift" viewBox="0 0 48 48"><rect x="6" y="18" width="36" height="24" rx="3" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="6" y1="26" x2="42" y2="26" stroke="currentColor" stroke-width="2.5"/><line x1="24" y1="18" x2="24" y2="42" stroke="currentColor" stroke-width="2.5"/><path d="M24 18c-3-6-10-6-10-2s4 4 10 2zM24 18c3-6 10-6 10-2s-4 4-10 2z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/></symbol>
     <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></symbol>
   </defs>
 </svg>
 
@@ -1094,26 +1095,24 @@ svg{display:block}
       </div>
     </div>
 
-    <section class="view view-benefits" id="view-benefits">
-      <div class="benefits-header">
-        <button class="btn-back" id="btn-back-menu-benefits" aria-label="返回">
-          <svg><use href="#i-arrow-left"/></svg>
-        </button>
-        <h2 class="page-title">我的权益</h2>
-        <div class="benefits-revive-display">
-          <span>💖</span>
-          <span id="benefits-coins-revive">0</span>
+    <div class="modal" id="modal-benefits">
+      <div class="modal-mask"></div>
+      <div class="modal-card light redeem-card">
+        <div class="redeem-header">
+          <button class="btn-back small" id="btn-benefits-close" aria-label="关闭">
+            <svg><use href="#i-x"/></svg>
+          </button>
+          <h3>我的权益</h3>
+          <div style="width:32px"></div>
         </div>
+        <div class="redeem-revive-info">
+          <span class="revive-icon">💖</span>
+          <span class="revive-label">免费复活次数</span>
+          <span class="revive-count" id="modal-benefits-revive-count">0</span>
+        </div>
+        <div class="benefits-list" id="modal-benefits-list"></div>
       </div>
-      <div class="benefits-content">
-        <div class="benefits-intro">
-          <p>开启权益可获得更多游戏福利</p>
-        </div>
-        <div class="benefits-list-container">
-          <div class="benefits-list" id="benefits-list-page"></div>
-        </div>
-      </div>
-    </section>
+    </div>
 
     <div class="modal" id="modal-redeem">
       <div class="modal-mask"></div>
@@ -1136,20 +1135,6 @@ svg{display:block}
             <button class="redeem-link-btn" id="btn-my-benefits">我的权益</button>
             <button class="redeem-link-btn" id="btn-redeem-history">兑换记录</button>
           </div>
-        </div>
-        <div class="redeem-stage" id="redeem-stage-benefits" style="display:none">
-          <div class="redeem-header">
-            <button class="btn-back small" id="btn-benefits-back" aria-label="返回">
-              <svg><use href="#i-chevron-left"/></svg>
-            </button>
-            <h3>我的权益</h3>
-          </div>
-          <div class="redeem-revive-info">
-            <span class="revive-icon">💖</span>
-            <span class="revive-label">免费复活次数</span>
-            <span class="revive-count" id="benefits-revive-count">0</span>
-          </div>
-          <div class="benefits-list" id="benefits-list"></div>
         </div>
         <div class="redeem-stage" id="redeem-stage-history" style="display:none">
           <div class="redeem-header">
@@ -1733,9 +1718,6 @@ const Router = {
     if(viewId==='shop')    Shop.render();
     if(viewId==='lottery') Lottery.render();
     if(viewId==='play')    Game.start();
-    if(viewId==='benefits'){
-      renderBenefitsPage();
-    }
   }
 };
 
@@ -3321,7 +3303,6 @@ function init(){
   document.getElementById('btn-back-home').addEventListener('click',()=>Router.show('home'));
   document.getElementById('btn-back-menu-shop').addEventListener('click',()=>Router.show('menu'));
   document.getElementById('btn-back-menu-lottery').addEventListener('click',()=>Router.show('menu'));
-  document.getElementById('btn-back-menu-benefits').addEventListener('click',()=>Router.show('menu'));
 
   // Menu cards
   document.querySelectorAll('.menu-card').forEach(card=>{
@@ -3331,7 +3312,7 @@ function init(){
       else if(t==='lottery') Router.show('lottery');
       else if(t==='tutorial') showModal('modal-tutorial');
       else if(t==='redeem'){ showRedeemStage('main'); updateRedeemReviveCount(); showModal('modal-redeem'); }
-      else if(t==='benefits') Router.show('benefits');
+      else if(t==='benefits') Benefits.showModal();
     });
   });
 
@@ -3397,14 +3378,13 @@ function init(){
   }
   function showRedeemStage(stage){
     document.getElementById('redeem-stage-main').style.display = stage==='main'?'block':'none';
-    document.getElementById('redeem-stage-benefits').style.display = stage==='benefits'?'block':'none';
     document.getElementById('redeem-stage-history').style.display = stage==='history'?'block':'none';
   }
   document.getElementById('btn-my-benefits').addEventListener('click',()=>{
     hideModal('modal-redeem');
-    Router.show('benefits');
+    Benefits.showModal();
   });
-  document.getElementById('btn-benefits-back').addEventListener('click',()=>showRedeemStage('main'));
+  document.getElementById('btn-benefits-close').addEventListener('click',()=>hideModal('modal-benefits'));
   document.getElementById('btn-redeem-history').addEventListener('click',()=>{renderHistory();showRedeemStage('history');});
   document.getElementById('btn-history-back').addEventListener('click',()=>showRedeemStage('main'));
 
@@ -3415,12 +3395,6 @@ function init(){
       {key:'coinBonus',icon:'💰',name:'金币加成 +50%'},
       {key:'doubleScore',icon:'⭐',name:'双倍得分'}
     ],
-    getDesc(item){
-      if(item.key==='freeRevive') return '剩余 '+Storage.getRevives()+' 次，优先使用免费复活';
-      if(item.key==='coinBonus') return '获取金币时额外增加 50%';
-      if(item.key==='doubleScore') return '跳跃得分翻倍，冲分必备';
-      return '';
-    },
     isEnabled(key){
       return Storage.getBenefitEnabled(key, key==='freeRevive');
     },
@@ -3431,7 +3405,7 @@ function init(){
     },
     refreshAll(){
       this.render('benefits-list');
-      this.render('benefits-list-page');
+      this.render('modal-benefits-list');
       this.updateReviveCount();
     },
     render(listId){
@@ -3454,21 +3428,24 @@ function init(){
     },
     updateReviveCount(){
       const revives = Storage.getRevives();
-      const el1=document.getElementById('benefits-coins-revive');
+      const el1=document.getElementById('modal-benefits-revive-count');
       if(el1) el1.textContent=revives;
-      const el2=document.getElementById('benefits-revive-count');
-      if(el2) el2.textContent=revives;
       const el3=document.getElementById('redeem-revive-count');
       if(el3) el3.textContent=revives;
+    },
+    showModal(){
+      this.render('modal-benefits-list');
+      this.updateReviveCount();
+      showModal('modal-benefits');
     }
   };
 
   function renderBenefits(){
-    Benefits.render('benefits-list');
+    Benefits.render('modal-benefits-list');
     updateRedeemReviveCount();
   }
   function renderBenefitsPage(){
-    Benefits.render('benefits-list-page');
+    Benefits.render('modal-benefits-list');
     Benefits.updateReviveCount();
   }
   function updateRedeemReviveCount(){
