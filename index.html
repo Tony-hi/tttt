@@ -38,13 +38,39 @@ svg{display:block}
   position:absolute;inset:0;
   background:linear-gradient(180deg,var(--bg-1) 0%,var(--bg-2) 100%);
   overflow:hidden;
+  max-width:500px;
+  max-height:900px;
+  margin:0 auto;
 }
-@media(orientation:landscape){
+/* 横屏/平板/PC端适配 */
+@media (min-aspect-ratio: 1/1), (min-width: 768px) {
   .app{background:linear-gradient(180deg,var(--bg-1) 0%,var(--bg-2) 100%)}
   .app-inner{
-    width:min(100vw,56.25vh);height:min(100vh,177.78vw);
-    top:50%;left:50%;transform:translate(-50%,-50%);
-    box-shadow:var(--shadow-lg);border-radius:8px;
+    width:min(100vw, 56.25vh);
+    height:min(100vh, 177.78vw);
+    max-width:500px;
+    max-height:900px;
+    top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    box-shadow:var(--shadow-lg);border-radius:12px;
+  }
+}
+/* 超大屏幕居中显示 */
+@media (min-width: 1024px) and (min-height: 600px) {
+  .app-inner{
+    box-shadow:0 0 40px rgba(80,60,140,.3), var(--shadow-lg);
+  }
+}
+/* 竖屏移动端 */
+@media (orientation: portrait) and (max-width: 500px) {
+  .app-inner{
+    width:100%;
+    max-width:100%;
+    height:100%;
+    max-height:100%;
+    top:0;left:0;
+    transform:none;
+    border-radius:0;
   }
 }
 
@@ -467,6 +493,8 @@ svg{display:block}
 }
 .benefits-list-page .benefit-switch.active{background:var(--green)}
 .benefits-list-page .benefit-switch.active::after{transform:translateX(22px)}
+.benefit-item.locked{opacity:0.6}
+.benefit-item.locked .benefit-icon{filter:grayscale(0.5)}
 
 /* ============ Play View ============ */
 .view-play{background:linear-gradient(180deg,var(--bg-1) 0%,var(--bg-2) 100%)}
@@ -650,7 +678,78 @@ svg{display:block}
 .modal-tip .tip-icon{font-size:18px}
 .modal-tip span{font-size:14px;color:var(--text-mute);font-weight:600}
 
+.theme-tip-content{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:20px 0;
+}
+.theme-tip-emoji{
+  font-size:64px;
+  margin-bottom:12px;
+  animation:bounce-in .5s ease;
+}
+@keyframes bounce-in{
+  0%{transform:scale(0);opacity:0}
+  50%{transform:scale(1.2)}
+  100%{transform:scale(1);opacity:1}
+}
+.theme-tip-name{
+  font-size:28px;
+  font-weight:900;
+  color:var(--text);
+  margin-bottom:8px;
+}
+.theme-tip-desc{
+  font-size:14px;
+  color:var(--text-mute);
+  font-weight:600;
+}
+
 .result-content{padding:10px 0 20px}
+
+/* 新手引导样式 */
+.tutorial-guide-card{
+  max-width:320px;
+  text-align:center;
+  animation:fade-in .3s ease;
+}
+.guide-step h3{
+  font-size:24px;
+  font-weight:900;
+  color:var(--text);
+  margin:10px 0 8px;
+}
+.guide-step p{
+  font-size:14px;
+  color:var(--text-mute);
+  line-height:1.5;
+  margin-bottom:20px;
+}
+.guide-icon{
+  font-size:56px;
+  margin-bottom:8px;
+  animation:bounce .6s ease infinite;
+}
+@keyframes bounce{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-8px)}
+}
+.guide-next-btn,.guide-start-btn{
+  width:100%;
+  padding:14px;
+  font-size:16px;
+  font-weight:700;
+}
+.guide-start-btn{
+  background:linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color:#fff;
+}
+
+@keyframes fade-in{
+  from{opacity:0;transform:scale(.9)}
+  to{opacity:1;transform:scale(1)}
+}
 .result-content .result-icon{font-size:72px;margin-bottom:8px;line-height:1}
 .result-content .result-title{font-size:24px;font-weight:900;color:var(--text);margin-bottom:4px}
 .result-content .result-sub{font-size:16px;color:var(--text-mute);font-weight:700}
@@ -720,6 +819,49 @@ svg{display:block}
 .tutorial-arrow svg{width:14px;height:14px}
 .tutorial-arrow-left{left:12px}
 .tutorial-arrow-right{right:12px}
+/* 教程新增内容样式 */
+.tutorial-theme-circle{
+  background:linear-gradient(135deg,rgba(255,255,255,0.5),rgba(255,255,255,0.2));
+}
+.tut-theme-grid{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:8px;
+  padding:10px;
+}
+.tut-theme-item{
+  width:60px;height:60px;
+  border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+.tut-theme-item.tut-theme-locked{
+  opacity:0.5;
+  filter:grayscale(1);
+}
+.tut-benefit-list{
+  display:flex;flex-direction:column;gap:12px;
+  padding:10px 20px;
+  width:100%;
+}
+.tut-benefit-item{
+  display:flex;align-items:center;gap:10px;
+  font-size:14px;font-weight:700;
+  color:var(--text);
+}
+.tut-benefit-icon{
+  font-size:20px;
+}
+.tut-skin-display{
+  width:120px;height:120px;
+  display:flex;align-items:center;justify-content:center;
+}
+.tut-skin-name-label{
+  font-size:14px;font-weight:700;
+  color:var(--text);
+  margin-top:8px;
+}
 .tutorial-dots{
   display:flex;gap:8px;justify-content:center;
   margin:4px 0 14px;
@@ -1149,10 +1291,10 @@ svg{display:block}
           <div class="tutorial-page" data-page="0">
             <div class="tutorial-circle">
               <div class="tut-skin-label">
-                <span class="tut-skin-name">圆规叔叔</span>
+                <span class="tut-skin-name">方块君</span>
                 <span class="tut-skin-price">
                   <svg class="tut-coin-ico"><use href="#i-coin"/></svg>
-                  200
+                  免费
                 </span>
               </div>
               <div class="tut-char-display">
@@ -1160,7 +1302,7 @@ svg{display:block}
               </div>
               <div class="tut-skin-status">使用中</div>
             </div>
-            <p class="tutorial-text">金币可用于购买角色、道具</p>
+            <p class="tutorial-text">跳跃成功次数将1:1兑换为金币，金币可购买皮肤和主题</p>
           </div>
           <div class="tutorial-page" data-page="1">
             <div class="tutorial-circle">
@@ -1175,7 +1317,7 @@ svg{display:block}
               <div class="tut-arc"></div>
               <div class="tut-mini-char"></div>
             </div>
-            <p class="tutorial-text">进度条变为红色代表距离超过最大范围</p>
+            <p class="tutorial-text">进度条变为红色代表距离超过最大范围，需要松手停止蓄力</p>
           </div>
           <div class="tutorial-page" data-page="2">
             <div class="tutorial-circle">
@@ -1190,39 +1332,46 @@ svg{display:block}
               <div class="tut-arc tut-arc-green"></div>
               <div class="tut-mini-char"></div>
             </div>
-            <p class="tutorial-text">绿色进度代表安全距离内，可以放心跳</p>
+            <p class="tutorial-text">绿色进度代表安全距离内，可以松手放心跳</p>
           </div>
           <div class="tutorial-page" data-page="3">
+            <div class="tutorial-circle tutorial-theme-circle">
+              <div class="tut-theme-grid">
+                <div class="tut-theme-item" style="background:linear-gradient(135deg,#EFEAF7,#DCD3EE)">🎨</div>
+                <div class="tut-theme-item" style="background:linear-gradient(135deg,#FDE8EF,#F5CBD9)">🌸</div>
+                <div class="tut-theme-item" style="background:linear-gradient(135deg,#E3F0FA,#C2DDF0)">🌊</div>
+                <div class="tut-theme-item tut-theme-locked" style="background:#E0E0E0">🔒</div>
+              </div>
+            </div>
+            <p class="tutorial-text">主题商店有70+种主题可兑换，在「我的主题」中添加后，每次游戏会随机使用</p>
+          </div>
+          <div class="tutorial-page" data-page="4">
             <div class="tutorial-circle">
-              <div class="tut-gameover">
-                <div class="tut-go-title">游戏结束</div>
-                <div class="tut-go-stats">
-                  <div class="tut-go-stat">
-                    <div class="tut-go-label">历史最高</div>
-                    <div class="tut-go-val">20</div>
-                  </div>
-                  <div class="tut-go-stat">
-                    <div class="tut-go-label">本次得分</div>
-                    <div class="tut-go-val">0</div>
-                  </div>
+              <div class="tut-benefit-list">
+                <div class="tut-benefit-item">
+                  <span class="tut-benefit-icon">💖</span>
+                  <span>免费复活（剩余 3 次）</span>
                 </div>
-                <div class="tut-go-coins">
-                  <svg class="tut-coin-ico"><use href="#i-coin"/></svg>
-                  200
+                <div class="tut-benefit-item">
+                  <span class="tut-benefit-icon">💰</span>
+                  <span>金币加成 +50%</span>
                 </div>
-                <div class="tut-go-btns">
-                  <div class="tut-go-btn">
-                    <svg><use href="#i-refresh"/></svg>
-                    重新开始
-                  </div>
-                  <div class="tut-go-btn">
-                    <svg><use href="#i-arrow-left"/></svg>
-                    返回主页
-                  </div>
+                <div class="tut-benefit-item">
+                  <span class="tut-benefit-icon">⭐</span>
+                  <span>双倍得分</span>
                 </div>
               </div>
             </div>
-            <p class="tutorial-text">游戏结束后，跳跃成功次数将1:1兑换为金币</p>
+            <p class="tutorial-text">购买主题后解锁「金币加成」和「双倍得分」权益，让游戏更轻松！</p>
+          </div>
+          <div class="tutorial-page" data-page="5">
+            <div class="tutorial-circle">
+              <div class="tut-skin-display">
+                <canvas id="tutorial-skin-canvas"></canvas>
+              </div>
+              <div class="tut-skin-name-label">机器人</div>
+            </div>
+            <p class="tutorial-text">商店有16种角色皮肤可兑换，每种都有独特的动画效果！</p>
           </div>
         </div>
         <button class="tutorial-arrow tutorial-arrow-left" id="btn-tutorial-prev" aria-label="上一条">
@@ -1233,6 +1382,8 @@ svg{display:block}
         </button>
         <div class="tutorial-dots" id="tutorial-dots">
           <span class="dot active"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
           <span class="dot"></span>
           <span class="dot"></span>
           <span class="dot"></span>
@@ -1324,6 +1475,67 @@ svg{display:block}
         <div class="gameover-buttons">
           <button class="modal-btn secondary" id="btn-confirm-cancel">取消</button>
           <button class="modal-btn" id="btn-confirm-ok">确认</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主题提示弹窗 -->
+    <div class="modal" id="modal-theme-tip">
+      <div class="modal-mask" style="opacity:0.8"></div>
+      <div class="modal-card light" style="max-width:320px">
+        <div class="theme-tip-content">
+          <div class="theme-tip-emoji" id="theme-tip-emoji">🎨</div>
+          <div class="theme-tip-name" id="theme-tip-name">淡紫初心</div>
+          <div class="theme-tip-desc">本局游戏主题</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 新手引导弹窗 -->
+    <div class="modal" id="modal-tutorial-guide">
+      <div class="modal-mask" style="opacity:0.95;background:#000"></div>
+      <div class="modal-card light tutorial-guide-card">
+        <div class="guide-step" id="guide-step-1">
+          <div class="guide-icon">👆</div>
+          <h3>欢迎来到方块跳</h3>
+          <p>这是一款简单有趣的跳跃游戏</p>
+          <button class="modal-btn guide-next-btn" onclick="TutorialGuide.next()">下一步</button>
+        </div>
+        <div class="guide-step" id="guide-step-2" style="display:none">
+          <div class="guide-icon">🎯</div>
+          <h3>点击开始游戏</h3>
+          <p>在主页点击「开始游戏」按钮开始跳跃</p>
+          <button class="modal-btn guide-next-btn" onclick="TutorialGuide.next()">下一步</button>
+        </div>
+        <div class="guide-step" id="guide-step-3" style="display:none">
+          <div class="guide-icon">⏱️</div>
+          <h3>控制跳跃节奏</h3>
+          <p>根据方块距离，按住屏幕控制跳跃力度<br>松开手指，让角色跳跃到下一个方块</p>
+          <button class="modal-btn guide-next-btn" onclick="TutorialGuide.next()">下一步</button>
+        </div>
+        <div class="guide-step" id="guide-step-4" style="display:none">
+          <div class="guide-icon">🎨</div>
+          <h3>收集主题</h3>
+          <p>在「我的主题」中添加你喜欢的主题<br>每次游戏会随机使用一个主题</p>
+          <button class="modal-btn guide-next-btn" onclick="TutorialGuide.next()">下一步</button>
+        </div>
+        <div class="guide-step" id="guide-step-5" style="display:none">
+          <div class="guide-icon">🏪</div>
+          <h3>商店兑换</h3>
+          <p>在商店可以用金币兑换更多主题和皮肤<br>每局游戏结束都会获得金币奖励</p>
+          <button class="modal-btn guide-next-btn" onclick="TutorialGuide.next()">下一步</button>
+        </div>
+        <div class="guide-step" id="guide-step-6" style="display:none">
+          <div class="guide-icon">💖</div>
+          <h3>我的权益</h3>
+          <p>购买主题后可以解锁「金币加成」和「双倍得分」<br>让你的游戏更加轻松！</p>
+          <button class="modal-btn guide-next-btn" onclick="TutorialGuide.next()">下一步</button>
+        </div>
+        <div class="guide-step" id="guide-step-7" style="display:none">
+          <div class="guide-icon">🎮</div>
+          <h3>开始游戏吧！</h3>
+          <p>准备好了吗？快去体验跳跃的乐趣吧！</p>
+          <button class="modal-btn guide-start-btn" onclick="TutorialGuide.finish()">开始游戏</button>
         </div>
       </div>
     </div>
@@ -1449,8 +1661,9 @@ svg{display:block}
 const Storage = {
   K_COINS:'jbc.coins', K_BEST:'jbc.bestScore', K_SKINS:'jbc.unlockedSkins', K_CURRENT:'jbc.currentSkin',
   K_WALLPAPERS:'jbc.unlockedWalls', K_CURRENT_WALL:'jbc.currentWallpaper', K_REVIVE:'jbc.reviveCount',
-  K_BENEFITS:'jbc.benefitSwitches', K_HISTORY:'jbc.redeemHistory', K_FREE_LOTTERY:'jbc.freeLotteryDate',
+  K_BENEFITS:'jbc.benefitSwitches', K_BENEFITS_UNLOCK:'jbc.benefitUnlocks', K_HISTORY:'jbc.redeemHistory', K_FREE_LOTTERY:'jbc.freeLotteryDate',
   K_THEMES:'jbc.unlockedThemes', K_CURRENT_THEME:'jbc.currentTheme', K_MY_THEMES:'jbc.myThemes',
+  K_FIRST_VISIT:'jbc.firstVisit', K_TUTORIAL_DONE:'jbc.tutorialDone',
   getCoins(){const v=parseInt(localStorage.getItem(this.K_COINS)||'0',10);return isNaN(v)?0:v;},
   setCoins(n){localStorage.setItem(this.K_COINS,String(Math.max(0,n|0)));},
   addCoins(n){const bonus=this.getBenefitEnabled('coinBonus',false)?Math.floor(n*0.5):0;this.setCoins(this.getCoins()+n+bonus);return bonus;},
@@ -1479,6 +1692,15 @@ const Storage = {
   getBenefitSwitches(){try{return JSON.parse(localStorage.getItem(this.K_BENEFITS)||'{}');}catch(e){return {};}},
   setBenefitSwitch(key,val){const s=this.getBenefitSwitches();s[key]=val;localStorage.setItem(this.K_BENEFITS,JSON.stringify(s));},
   getBenefitEnabled(key,def=true){const s=this.getBenefitSwitches();return s[key]===undefined?def:s[key];},
+  // 权益解锁状态
+  getBenefitUnlocks(){try{return JSON.parse(localStorage.getItem(this.K_BENEFITS_UNLOCK)||'{"freeRevive":true}');}catch(e){return{'freeRevive':true};}},
+  setBenefitUnlocked(key){const s=this.getBenefitUnlocks();s[key]=true;localStorage.setItem(this.K_BENEFITS_UNLOCK,JSON.stringify(s));},
+  getBenefitUnlocked(key){const s=this.getBenefitUnlocks();return !!s[key];},
+  // 首次访问和教程
+  isFirstVisit(){return localStorage.getItem(this.K_FIRST_VISIT)===null;},
+  setVisited(){localStorage.setItem(this.K_FIRST_VISIT,'1');},
+  isTutorialDone(){return localStorage.getItem(this.K_TUTORIAL_DONE)==='1';},
+  setTutorialDone(){localStorage.setItem(this.K_TUTORIAL_DONE,'1');},
   getRedeemHistory(){try{return JSON.parse(localStorage.getItem(this.K_HISTORY)||'[]');}catch(e){return[];}},
   addRedeemHistory(code,reward){const h=this.getRedeemHistory();h.unshift({code,reward,time:Date.now()});if(h.length>50) h.length=50;localStorage.setItem(this.K_HISTORY,JSON.stringify(h));},
   getTodayStr(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();},
@@ -1487,12 +1709,21 @@ const Storage = {
   // 主题相关方法
   getUnlockedThemes(){try{return JSON.parse(localStorage.getItem(this.K_THEMES)||'["purple","pink","blue","mint","peach"]');}catch(e){return['purple','pink','blue','mint','peach'];}},
   setUnlockedThemes(arr){localStorage.setItem(this.K_THEMES,JSON.stringify(arr));},
-  unlockTheme(id){const arr=this.getUnlockedThemes();if(!arr.includes(id)){arr.push(id);this.setUnlockedThemes(arr);}},
+  unlockTheme(id){
+    const arr=this.getUnlockedThemes();
+    if(!arr.includes(id)){
+      arr.push(id);
+      this.setUnlockedThemes(arr);
+      // 购买主题时解锁金币加成和双倍得分权益
+      this.setBenefitUnlocked('coinBonus');
+      this.setBenefitUnlocked('doubleScore');
+    }
+  },
   hasTheme(id){return this.getUnlockedThemes().includes(id);},
   setCurrentTheme(id){localStorage.setItem(this.K_CURRENT_THEME,id);},
   getCurrentTheme(){return localStorage.getItem(this.K_CURRENT_THEME)||'purple';},
   // 我的主题列表（用户收藏的主题）
-  getMyThemes(){try{return JSON.parse(localStorage.getItem(this.K_MY_THEMES)||'["purple","pink","blue","mint","peach"]');}catch(e){return['purple','pink','blue','mint','peach'];}},
+  getMyThemes(){try{return JSON.parse(localStorage.getItem(this.K_MY_THEMES)||'["purple","pink","blue"]');}catch(e){return['purple','pink','blue'];}},
   setMyThemes(arr){localStorage.setItem(this.K_MY_THEMES,JSON.stringify(arr));},
   addMyTheme(id){const arr=this.getMyThemes();if(!arr.includes(id)){arr.push(id);this.setMyThemes(arr);}},
   removeMyTheme(id){const arr=this.getMyThemes();const idx=arr.indexOf(id);if(idx>-1){arr.splice(idx,1);this.setMyThemes(arr);}},
@@ -1505,22 +1736,22 @@ const SKINS = [
   { id:'compass', name:'圆规叔叔',  price:0 },
   { id:'pawn',    name:'象棋-兵',   price:0 },
   { id:'pencil',  name:'铅笔头',    price:300 },
-  { id:'eraser',  name:'橡皮君',    price:250 },
-  { id:'ruler',   name:'直尺先生',  price:350 },
+  { id:'eraser',  name:'橡皮君',    price:350 },
+  { id:'ruler',   name:'直尺先生',  price:400 },
   { id:'cutter',  name:'美工刀侠客', price:0, exclusive:true },
-  { id:'crab',    name:'小螃蟹',    price:400 },
-  { id:'rocket',  name:'小火箭',    price:500 },
-  { id:'robot',   name:'机器人',    price:450 },
-  { id:'mushroom',name:'小蘑菇',    price:350 },
-  { id:'cactus',  name:'仙人掌',    price:300 },
-  { id:'diamond', name:'钻石君',    price:600 },
-  { id:'star',    name:'星星仔',    price:400 },
-  { id:'heart',   name:'爱心酱',    price:350 },
-  { id:'egg',     name:'彩蛋君',    price:300 },
+  { id:'crab',    name:'小螃蟹',    price:800 },
+  { id:'rocket',  name:'小火箭',    price:1200 },
+  { id:'robot',   name:'机器人',    price:1500 },
+  { id:'mushroom',name:'小蘑菇',    price:600 },
+  { id:'cactus',  name:'仙人掌',    price:500 },
+  { id:'diamond', name:'钻石君',    price:2000 },
+  { id:'star',    name:'星星仔',    price:1800 },
+  { id:'heart',   name:'爱心酱',    price:1200 },
+  { id:'egg',     name:'彩蛋君',    price:800 },
 ];
 
 const THEMES = [
-  // 基础主题
+  // 基础主题（免费）
   { 
     id:'purple',   name:'淡紫初心',   price:0,   
     bg1:'#EFEAF7', bg2:'#DCD3EE', dot:'rgba(255,255,255,0.3)',
@@ -1542,22 +1773,24 @@ const THEMES = [
     charPrimary:'#85B5D5', charSecondary:'#B5D5F0', charAccent:'#A5C5E5',
     particle:'#B5D5F0', trail:'rgba(181,213,240,0.5)'
   },
+  // 普通主题
   { 
-    id:'green',    name:'薄荷森林',   price:200, 
+    id:'green',    name:'薄荷森林',   price:150, 
     bg1:'#E3F5EC', bg2:'#BFE5D0', dot:'rgba(255,255,255,0.3)',
     blockTop:'#A5E5B5', blockFront:'#80D090', blockRight:'#75C585', blockAccent:'#85D595',
     charPrimary:'#75C585', charSecondary:'#A5E5B5', charAccent:'#85D595',
     particle:'#A5E5B5', trail:'rgba(165,229,181,0.5)'
   },
   { 
-    id:'orange',   name:'暖阳橙橙',   price:200, 
+    id:'orange',   name:'暖阳橙橙',   price:150, 
     bg1:'#FFF0E0', bg2:'#FFD8B0', dot:'rgba(255,255,255,0.35)',
     blockTop:'#FFC595', blockFront:'#FFA070', blockRight:'#F5A565', blockAccent:'#FFB575',
     charPrimary:'#F5A565', charSecondary:'#FFC595', charAccent:'#FFB575',
     particle:'#FFC595', trail:'rgba(255,197,149,0.5)'
   },
+  // 中等主题
   { 
-    id:'dark',     name:'深夜星空',   price:300, 
+    id:'dark',     name:'深夜星空',   price:250, 
     bg1:'#3A3358', bg2:'#2A2440', dot:'rgba(255,255,255,0.2)',
     blockTop:'#5A5478', blockFront:'#454068', blockRight:'#8B85A8', blockAccent:'#7A74A8',
     charPrimary:'#8B85A8', charSecondary:'#5A5478', charAccent:'#7A74A8',
@@ -1566,7 +1799,7 @@ const THEMES = [
   
   // 水果主题
   { 
-    id:'apple',    name:'苹果派对',   price:300, 
+    id:'apple',    name:'苹果派对',   price:200, 
     bg1:'#FFE8E8', bg2:'#FFD0D0', dot:'rgba(255,100,100,0.3)',
     blockTop:'#FF6060', blockFront:'#E84040', blockRight:'#CC3030', blockAccent:'#FF5050',
     charPrimary:'#E84040', charSecondary:'#FF6060', charAccent:'#FF5050',
@@ -1574,7 +1807,7 @@ const THEMES = [
     emoji:'🍎'
   },
   { 
-    id:'grape',    name:'葡萄庄园',   price:300, 
+    id:'grape',    name:'葡萄庄园',   price:250, 
     bg1:'#F5E8FF', bg2:'#E8D0F5', dot:'rgba(180,100,255,0.3)',
     blockTop:'#A855F7', blockFront:'#8B45D0', blockRight:'#7020B0', blockAccent:'#9333EA',
     charPrimary:'#8B45D0', charSecondary:'#A855F7', charAccent:'#9333EA',
@@ -1590,7 +1823,7 @@ const THEMES = [
     emoji:'🍉'
   },
   { 
-    id:'orange2',  name:'橙子阳光',   price:300, 
+    id:'orange2',  name:'橙子阳光',   price:200, 
     bg1:'#FFF5E0', bg2:'#FFE8C0', dot:'rgba(255,180,80,0.3)',
     blockTop:'#FF9F43', blockFront:'#E88F33', blockRight:'#CC7020', blockAccent:'#FFA502',
     charPrimary:'#E88F33', charSecondary:'#FF9F43', charAccent:'#FFA502',
@@ -1598,7 +1831,7 @@ const THEMES = [
     emoji:'🍊'
   },
   { 
-    id:'banana',   name:'香蕉甜蜜',   price:300, 
+    id:'banana',   name:'香蕉甜蜜',   price:200, 
     bg1:'#FFFCE8', bg2:'#FFF8D0', dot:'rgba(255,230,100,0.3)',
     blockTop:'#FFD93D', blockFront:'#E5C930', blockRight:'#CCB020', blockAccent:'#FFE135',
     charPrimary:'#E5C930', charSecondary:'#FFD93D', charAccent:'#FFE135',
@@ -1606,7 +1839,7 @@ const THEMES = [
     emoji:'🍌'
   },
   { 
-    id:'cherry',   name:'樱桃浪漫',   price:300, 
+    id:'cherry',   name:'樱桃浪漫',   price:350, 
     bg1:'#FFE8F0', bg2:'#FFD0E0', dot:'rgba(255,100,150,0.3)',
     blockTop:'#FF6B8A', blockFront:'#E5506B', blockRight:'#CC4050', blockAccent:'#FF5580',
     charPrimary:'#E5506B', charSecondary:'#FF6B8A', charAccent:'#FF5580',
@@ -1614,7 +1847,7 @@ const THEMES = [
     emoji:'🍒'
   },
   { 
-    id:'strawberry',name:'草莓甜心',  price:300, 
+    id:'strawberry',name:'草莓甜心',  price:350, 
     bg1:'#FFE8EC', bg2:'#FFD0D8', dot:'rgba(255,100,130,0.3)',
     blockTop:'#FF6B7A', blockFront:'#E55565', blockRight:'#CC4045', blockAccent:'#FF5060',
     charPrimary:'#E55565', charSecondary:'#FF6B7A', charAccent:'#FF5060',
@@ -1630,7 +1863,7 @@ const THEMES = [
     emoji:'🍑'
   },
   { 
-    id:'lemon',    name:'柠檬清新',   price:300, 
+    id:'lemon',    name:'柠檬清新',   price:200, 
     bg1:'#FFFFF0', bg2:'#FFF8D0', dot:'rgba(255,255,100,0.3)',
     blockTop:'#FFF44F', blockFront:'#E5DF30', blockRight:'#CCC020', blockAccent:'#FFEB3B',
     charPrimary:'#E5DF30', charSecondary:'#FFF44F', charAccent:'#FFEB3B',
@@ -1638,7 +1871,7 @@ const THEMES = [
     emoji:'🍋'
   },
   { 
-    id:'kiwi',     name:'奇异果绿',   price:300, 
+    id:'kiwi',     name:'奇异果绿',   price:250, 
     bg1:'#F0FFE8', bg2:'#D8FFD0', dot:'rgba(150,255,100,0.3)',
     blockTop:'#8BC34A', blockFront:'#6B9A35', blockRight:'#508020', blockAccent:'#7CB342',
     charPrimary:'#6B9A35', charSecondary:'#8BC34A', charAccent:'#7CB342',
@@ -1656,7 +1889,7 @@ const THEMES = [
   
   // 甜品主题
   { 
-    id:'candy',    name:'糖果世界',   price:300, 
+    id:'candy',    name:'糖果世界',   price:400, 
     bg1:'#FFE8F5', bg2:'#FFD0E8', dot:'rgba(255,100,200,0.3)',
     blockTop:'#FF69B4', blockFront:'#E55099', blockRight:'#CC4080', blockAccent:'#FF1493',
     charPrimary:'#E55099', charSecondary:'#FF69B4', charAccent:'#FF1493',
@@ -1664,7 +1897,7 @@ const THEMES = [
     emoji:'🧁'
   },
   { 
-    id:'chocolate',name:'巧克力梦',   price:300, 
+    id:'chocolate',name:'巧克力梦',   price:350, 
     bg1:'#FFF0E0', bg2:'#FFD8C0', dot:'rgba(139,69,19,0.3)',
     blockTop:'#8B4513', blockFront:'#6B3510', blockRight:'#4A2508', blockAccent:'#A0522D',
     charPrimary:'#6B3510', charSecondary:'#8B4513', charAccent:'#A0522D',
@@ -1672,7 +1905,7 @@ const THEMES = [
     emoji:'🍫'
   },
   { 
-    id:'icecream', name:'冰淇淋夏',   price:300, 
+    id:'icecream', name:'冰淇淋夏',   price:400, 
     bg1:'#E8F8FF', bg2:'#D0F0FF', dot:'rgba(100,200,255,0.3)',
     blockTop:'#87CEEB', blockFront:'#65A5C5', blockRight:'#4080A0', blockAccent:'#7EC8E3',
     charPrimary:'#65A5C5', charSecondary:'#87CEEB', charAccent:'#7EC8E3',
@@ -1680,7 +1913,7 @@ const THEMES = [
     emoji:'🍦'
   },
   { 
-    id:'cake',     name:'蛋糕城堡',   price:300, 
+    id:'cake',     name:'蛋糕城堡',   price:500, 
     bg1:'#FFF0F5', bg2:'#FFD8E8', dot:'rgba(255,150,180,0.3)',
     blockTop:'#FFB6C1', blockFront:'#E595A0', blockRight:'#CC7080', blockAccent:'#FFA0B0',
     charPrimary:'#E595A0', charSecondary:'#FFB6C1', charAccent:'#FFA0B0',
@@ -1688,7 +1921,7 @@ const THEMES = [
     emoji:'🎂'
   },
   { 
-    id:'donut',    name:'甜甜圈日',   price:300, 
+    id:'donut',    name:'甜甜圈日',   price:350, 
     bg1:'#FFE8DC', bg2:'#FFD0C0', dot:'rgba(255,150,100,0.3)',
     blockTop:'#FF8C69', blockFront:'#E57050', blockRight:'#CC5030', blockAccent:'#FF7F50',
     charPrimary:'#E57050', charSecondary:'#FF8C69', charAccent:'#FF7F50',
@@ -1704,7 +1937,7 @@ const THEMES = [
     emoji:'🍪'
   },
   { 
-    id:'pudding',  name:'布丁小屋',   price:300, 
+    id:'pudding',  name:'布丁小屋',   price:400, 
     bg1:'#FFFCE8', bg2:'#FFF0D0', dot:'rgba(255,220,150,0.3)',
     blockTop:'#FFD700', blockFront:'#E5C200', blockRight:'#CCA800', blockAccent:'#FFE135',
     charPrimary:'#E5C200', charSecondary:'#FFD700', charAccent:'#FFE135',
@@ -1712,7 +1945,7 @@ const THEMES = [
     emoji:'🍮'
   },
   { 
-    id:'macaron',  name:'马卡龙彩',   price:300, 
+    id:'macaron',  name:'马卡龙彩',   price:500, 
     bg1:'#FFE8F8', bg2:'#FFD0F0', dot:'rgba(255,150,220,0.3)',
     blockTop:'#FF69B4', blockFront:'#E55099', blockRight:'#CC4080', blockAccent:'#FF85C1',
     charPrimary:'#E55099', charSecondary:'#FF69B4', charAccent:'#FF85C1',
@@ -1722,7 +1955,7 @@ const THEMES = [
   
   // 自然主题
   { 
-    id:'ocean',    name:'深海探险',   price:300, 
+    id:'ocean',    name:'深海探险',   price:400, 
     bg1:'#E0F8FF', bg2:'#B0E8FF', dot:'rgba(30,144,255,0.3)',
     blockTop:'#4169E1', blockFront:'#2E5CB8', blockRight:'#1A4090', blockAccent:'#4682B4',
     charPrimary:'#2E5CB8', charSecondary:'#4169E1', charAccent:'#4682B4',
@@ -1730,7 +1963,7 @@ const THEMES = [
     emoji:'🌊'
   },
   { 
-    id:'forest',   name:'森林奇遇',   price:300, 
+    id:'forest',   name:'森林奇遇',   price:400, 
     bg1:'#E8FFE8', bg2:'#C0F0C0', dot:'rgba(34,139,34,0.3)',
     blockTop:'#228B22', blockFront:'#1A6B1A', blockRight:'#105010', blockAccent:'#32CD32',
     charPrimary:'#1A6B1A', charSecondary:'#228B22', charAccent:'#32CD32',
@@ -1738,7 +1971,7 @@ const THEMES = [
     emoji:'🌲'
   },
   { 
-    id:'mountain', name:'山峦叠嶂',   price:300, 
+    id:'mountain', name:'山峦叠嶂',   price:450, 
     bg1:'#F0F8FF', bg2:'#D8E8F8', dot:'rgba(100,149,237,0.3)',
     blockTop:'#6495ED', blockFront:'#4A7AC0', blockRight:'#305090', blockAccent:'#5F9EA0',
     charPrimary:'#4A7AC0', charSecondary:'#6495ED', charAccent:'#5F9EA0',
@@ -1746,7 +1979,7 @@ const THEMES = [
     emoji:'🏔️'
   },
   { 
-    id:'sunset',   name:'日落晚霞',   price:300, 
+    id:'sunset',   name:'日落晚霞',   price:500, 
     bg1:'#FFE4C4', bg2:'#FFDAB9', dot:'rgba(255,140,0,0.3)',
     blockTop:'#FF7F50', blockFront:'#E56030', blockRight:'#CC4020', blockAccent:'#FF6347',
     charPrimary:'#E56030', charSecondary:'#FF7F50', charAccent:'#FF6347',
@@ -1754,7 +1987,7 @@ const THEMES = [
     emoji:'🌅'
   },
   { 
-    id:'rainbow',  name:'彩虹之约',   price:300, 
+    id:'rainbow',  name:'彩虹之约',   price:600, 
     bg1:'#FFF0F8', bg2:'#FFE0F0', dot:'rgba(255,0,255,0.2)',
     blockTop:'#FF1493', blockFront:'#E5007A', blockRight:'#CC0060', blockAccent:'#FF69B4',
     charPrimary:'#E5007A', charSecondary:'#FF1493', charAccent:'#FF69B4',
@@ -1762,7 +1995,7 @@ const THEMES = [
     rainbow:true, emoji:'🌈'
   },
   { 
-    id:'aurora',   name:'极光之舞',   price:300, 
+    id:'aurora',   name:'极光之舞',   price:800, 
     bg1:'#E0FFE8', bg2:'#B0FFD0', dot:'rgba(0,255,127,0.3)',
     blockTop:'#00FA9A', blockFront:'#00D080', blockRight:'#00A060', blockAccent:'#00FF7F',
     charPrimary:'#00D080', charSecondary:'#00FA9A', charAccent:'#00FF7F',
@@ -1770,7 +2003,7 @@ const THEMES = [
     emoji:'🌌'
   },
   { 
-    id:'cloud',    name:'云端漫步',   price:300, 
+    id:'cloud',    name:'云端漫步',   price:350, 
     bg1:'#F8F8FF', bg2:'#E8E8FF', dot:'rgba(255,255,255,0.5)',
     blockTop:'#E8E8F8', blockFront:'#D0D0E8', blockRight:'#C8C8E0', blockAccent:'#D8D8F0',
     charPrimary:'#D0D0E8', charSecondary:'#E8E8F8', charAccent:'#D8D8F0',
@@ -1778,7 +2011,7 @@ const THEMES = [
     emoji:'☁️'
   },
   { 
-    id:'firework', name:'烟花绽放',   price:300, 
+    id:'firework', name:'烟花绽放',   price:700, 
     bg1:'#1A1A2E', bg2:'#16213E', dot:'rgba(255,215,0,0.3)',
     blockTop:'#FFD700', blockFront:'#E5C200', blockRight:'#CCA800', blockAccent:'#FF4500',
     charPrimary:'#E5C200', charSecondary:'#FFD700', charAccent:'#FF4500',
@@ -1788,7 +2021,7 @@ const THEMES = [
   
   // 梦幻主题
   { 
-    id:'unicorn',  name:'独角兽梦',   price:300, 
+    id:'unicorn',  name:'独角兽梦',   price:600, 
     bg1:'#FFE8F5', bg2:'#FFD0E8', dot:'rgba(255,182,193,0.4)',
     blockTop:'#FFB6C1', blockFront:'#E590A0', blockRight:'#CC7080', blockAccent:'#DB7093',
     charPrimary:'#E590A0', charSecondary:'#FFB6C1', charAccent:'#DB7093',
@@ -1796,7 +2029,7 @@ const THEMES = [
     emoji:'🦄'
   },
   { 
-    id:'galaxy',   name:'银河漫游',   price:300, 
+    id:'galaxy',   name:'银河漫游',   price:800, 
     bg1:'#0D1B2A', bg2:'#1B263B', dot:'rgba(138,43,226,0.3)',
     blockTop:'#9370DB', blockFront:'#7B68EE', blockRight:'#6040D0', blockAccent:'#BA55D3',
     charPrimary:'#7B68EE', charSecondary:'#9370DB', charAccent:'#BA55D3',
@@ -1804,7 +2037,7 @@ const THEMES = [
     emoji:'🌌'
   },
   { 
-    id:'crystal',  name:'水晶宫殿',   price:300, 
+    id:'crystal',  name:'水晶宫殿',   price:700, 
     bg1:'#E8F0FF', bg2:'#D0E0FF', dot:'rgba(100,149,237,0.4)',
     blockTop:'#87CEFA', blockFront:'#6495ED', blockRight:'#4070C0', blockAccent:'#00BFFF',
     charPrimary:'#6495ED', charSecondary:'#87CEFA', charAccent:'#00BFFF',
@@ -1812,7 +2045,7 @@ const THEMES = [
     emoji:'💎'
   },
   { 
-    id:'fairy',    name:'仙子花园',   price:300, 
+    id:'fairy',    name:'仙子花园',   price:600, 
     bg1:'#F0FFF0', bg2:'#D0FFD0', dot:'rgba(144,238,144,0.4)',
     blockTop:'#98FB98', blockFront:'#7CCD7C', blockRight:'#60A060', blockAccent:'#90EE90',
     charPrimary:'#7CCD7C', charSecondary:'#98FB98', charAccent:'#90EE90',
@@ -1854,7 +2087,7 @@ const THEMES = [
   
   // 节日主题
   { 
-    id:'christmas',name:'圣诞快乐',   price:300, 
+    id:'christmas',name:'圣诞快乐',   price:500, 
     bg1:'#E8FFE8', bg2:'#C0F0C0', dot:'rgba(255,0,0,0.2)',
     blockTop:'#228B22', blockFront:'#1A6B1A', blockRight:'#105010', blockAccent:'#DC143C',
     charPrimary:'#1A6B1A', charSecondary:'#228B22', charAccent:'#DC143C',
@@ -1862,7 +2095,7 @@ const THEMES = [
     emoji:'🎄'
   },
   { 
-    id:'halloween',name:'万圣狂欢',   price:300, 
+    id:'halloween',name:'万圣狂欢',   price:450, 
     bg1:'#FFE4C4', bg2:'#EED8B0', dot:'rgba(255,140,0,0.3)',
     blockTop:'#FF8C00', blockFront:'#E07000', blockRight:'#C05000', blockAccent:'#FF6347',
     charPrimary:'#E07000', charSecondary:'#FF8C00', charAccent:'#FF6347',
@@ -1870,7 +2103,7 @@ const THEMES = [
     emoji:'🎃'
   },
   { 
-    id:'valentine',name:'情人浪漫',   price:300, 
+    id:'valentine',name:'情人浪漫',   price:500, 
     bg1:'#FFE8E8', bg2:'#FFD0D0', dot:'rgba(255,0,0,0.3)',
     blockTop:'#DC143C', blockFront:'#B01030', blockRight:'#800020', blockAccent:'#FF69B4',
     charPrimary:'#B01030', charSecondary:'#DC143C', charAccent:'#FF69B4',
@@ -1878,7 +2111,7 @@ const THEMES = [
     emoji:'💝'
   },
   { 
-    id:'newyear',  name:'新年钟声',   price:300, 
+    id:'newyear',  name:'新年钟声',   price:500, 
     bg1:'#FFE8E0', bg2:'#FFD0C0', dot:'rgba(255,215,0,0.3)',
     blockTop:'#FFD700', blockFront:'#E5C200', blockRight:'#CCA800', blockAccent:'#FF4500',
     charPrimary:'#E5C200', charSecondary:'#FFD700', charAccent:'#FF4500',
@@ -1886,7 +2119,7 @@ const THEMES = [
     emoji:'🎉'
   },
   { 
-    id:'lantern',  name:'元宵灯笼',   price:300, 
+    id:'lantern',  name:'元宵灯笼',   price:450, 
     bg1:'#FFE8DC', bg2:'#FFD0C0', dot:'rgba(255,100,0,0.3)',
     blockTop:'#FF4500', blockFront:'#E53500', blockRight:'#CC2000', blockAccent:'#FF6347',
     charPrimary:'#E53500', charSecondary:'#FF4500', charAccent:'#FF6347',
@@ -1894,7 +2127,7 @@ const THEMES = [
     emoji:'🏮'
   },
   { 
-    id:'midautumn',name:'中秋明月',   price:300, 
+    id:'midautumn',name:'中秋明月',   price:450, 
     bg1:'#1E3A5F', bg2:'#152A45', dot:'rgba(255,215,0,0.3)',
     blockTop:'#FFD700', blockFront:'#E5C200', blockRight:'#CCA800', blockAccent:'#FFF8DC',
     charPrimary:'#E5C200', charSecondary:'#FFD700', charAccent:'#FFF8DC',
@@ -1904,7 +2137,7 @@ const THEMES = [
   
   // 动漫/游戏主题
   { 
-    id:'pokemon',  name:'宝可梦球',   price:300, 
+    id:'pokemon',  name:'宝可梦球',   price:800, 
     bg1:'#FFE8E8', bg2:'#FFD0D0', dot:'rgba(255,0,0,0.3)',
     blockTop:'#FF0000', blockFront:'#DC0000', blockRight:'#B00000', blockAccent:'#0000FF',
     charPrimary:'#DC0000', charSecondary:'#FF0000', charAccent:'#0000FF',
@@ -1912,7 +2145,7 @@ const THEMES = [
     emoji:'⚪'
   },
   { 
-    id:'mario',    name:'马里奥兄弟', price:300, 
+    id:'mario',    name:'马里奥兄弟', price:800, 
     bg1:'#87CEEB', bg2:'#6BB8D9', dot:'rgba(255,215,0,0.3)',
     blockTop:'#FF0000', blockFront:'#E53935', blockRight:'#CC2020', blockAccent:'#FFD700',
     charPrimary:'#E53935', charSecondary:'#FF0000', charAccent:'#FFD700',
@@ -1920,7 +2153,7 @@ const THEMES = [
     emoji:'🍄'
   },
   { 
-    id:'zelda',    name:'塞尔达传说', price:300, 
+    id:'zelda',    name:'塞尔达传说', price:1000, 
     bg1:'#E8F5E8', bg2:'#C8E8C8', dot:'rgba(34,139,34,0.3)',
     blockTop:'#228B22', blockFront:'#1A6B1A', blockRight:'#105010', blockAccent:'#DAA520',
     charPrimary:'#1A6B1A', charSecondary:'#228B22', charAccent:'#DAA520',
@@ -1928,7 +2161,7 @@ const THEMES = [
     emoji:'🛡️'
   },
   { 
-    id:'animal',   name:'动物森友',   price:300, 
+    id:'animal',   name:'动物森友',   price:600, 
     bg1:'#E8FFE8', bg2:'#C8F0C8', dot:'rgba(119,158,85,0.3)',
     blockTop:'#8F9E55', blockFront:'#6B8A35', blockRight:'#507015', blockAccent:'#A0C060',
     charPrimary:'#6B8A35', charSecondary:'#8F9E55', charAccent:'#A0C060',
@@ -1936,7 +2169,7 @@ const THEMES = [
     emoji:'🦊'
   },
   { 
-    id:'genshin',  name:'原神世界',   price:300, 
+    id:'genshin',  name:'原神世界',   price:1000, 
     bg1:'#E8E0F8', bg2:'#D0C0E8', dot:'rgba(148,0,211,0.3)',
     blockTop:'#9370DB', blockFront:'#7B68EE', blockRight:'#6040D0', blockAccent:'#BA55D3',
     charPrimary:'#7B68EE', charSecondary:'#9370DB', charAccent:'#BA55D3',
@@ -1944,7 +2177,7 @@ const THEMES = [
     emoji:'⭐'
   },
   { 
-    id:'honkai',   name:'崩坏星穹',   price:300, 
+    id:'honkai',   name:'崩坏星穹',   price:1000, 
     bg1:'#E8F0FF', bg2:'#C0D8FF', dot:'rgba(30,144,255,0.3)',
     blockTop:'#4169E1', blockFront:'#2850C0', blockRight:'#1030A0', blockAccent:'#00BFFF',
     charPrimary:'#2850C0', charSecondary:'#4169E1', charAccent:'#00BFFF',
@@ -1954,7 +2187,7 @@ const THEMES = [
   
   // 特色主题
   { 
-    id:'neon',     name:'霓虹都市',   price:300, 
+    id:'neon',     name:'霓虹都市',   price:400, 
     bg1:'#1A0033', bg2:'#2D0050', dot:'rgba(255,0,255,0.4)',
     blockTop:'#FF00FF', blockFront:'#CC00CC', blockRight:'#990099', blockAccent:'#00FFFF',
     charPrimary:'#CC00CC', charSecondary:'#FF00FF', charAccent:'#00FFFF',
@@ -1962,7 +2195,7 @@ const THEMES = [
     neon:true, emoji:'💡'
   },
   { 
-    id:'retro',    name:'复古像素',   price:300, 
+    id:'retro',    name:'复古像素',   price:400, 
     bg1:'#2D2D2D', bg2:'#1A1A1A', dot:'rgba(0,255,0,0.3)',
     blockTop:'#33FF33', blockFront:'#00CC00', blockRight:'#009900', blockAccent:'#FFFF00',
     charPrimary:'#00CC00', charSecondary:'#33FF33', charAccent:'#FFFF00',
@@ -1970,7 +2203,7 @@ const THEMES = [
     retro:true, emoji:'👾'
   },
   { 
-    id:'hologram', name:'全息投影',   price:300, 
+    id:'hologram', name:'全息投影',   price:500, 
     bg1:'#0A0A20', bg2:'#101030', dot:'rgba(0,255,255,0.4)',
     blockTop:'#00FFFF', blockFront:'#00CCCC', blockRight:'#009999', blockAccent:'#FF00FF',
     charPrimary:'#00CCCC', charSecondary:'#00FFFF', charAccent:'#FF00FF',
@@ -1978,7 +2211,7 @@ const THEMES = [
     holo:true, emoji:'🔮'
   },
   { 
-    id:'cyberpunk',name:'赛博朋克',   price:300, 
+    id:'cyberpunk',name:'赛博朋克',   price:600, 
     bg1:'#0D0221', bg2:'#150734', dot:'rgba(255,0,128,0.4)',
     blockTop:'#FF0080', blockFront:'#CC0060', blockRight:'#990050', blockAccent:'#00FFFF',
     charPrimary:'#CC0060', charSecondary:'#FF0080', charAccent:'#00FFFF',
@@ -1986,7 +2219,7 @@ const THEMES = [
     cyber:true, emoji:'🤖'
   },
   { 
-    id:'steampunk',name:'蒸汽朋克',   price:300, 
+    id:'steampunk',name:'蒸汽朋克',   price:500, 
     bg1:'#3D2B1F', bg2:'#2A1F15', dot:'rgba(205,127,50,0.3)',
     blockTop:'#CD7F32', blockFront:'#A0522D', blockRight:'#704020', blockAccent:'#B8860B',
     charPrimary:'#A0522D', charSecondary:'#CD7F32', charAccent:'#B8860B',
@@ -1994,7 +2227,7 @@ const THEMES = [
     steam:true, emoji:'⚙️'
   },
   { 
-    id:'vaporwave',name:'蒸汽波',     price:300, 
+    id:'vaporwave',name:'蒸汽波',     price:500, 
     bg1:'#FF6EC7', bg2:'#FF6EB4', dot:'rgba(0,255,255,0.3)',
     blockTop:'#00FFFF', blockFront:'#00CCCC', blockRight:'#009999', blockAccent:'#FF00FF',
     charPrimary:'#00CCCC', charSecondary:'#00FFFF', charAccent:'#FF00FF',
@@ -2002,7 +2235,7 @@ const THEMES = [
     vapor:true, emoji:'💠'
   },
   { 
-    id:'pastel',   name:'马卡龙色',   price:300, 
+    id:'pastel',   name:'马卡龙色',   price:350, 
     bg1:'#FFE8DC', bg2:'#FFD8C8', dot:'rgba(255,182,193,0.3)',
     blockTop:'#FFB6C1', blockFront:'#E8A0A8', blockRight:'#CC8090', blockAccent:'#FFC0CB',
     charPrimary:'#E8A0A8', charSecondary:'#FFB6C1', charAccent:'#FFC0CB',
@@ -2010,7 +2243,7 @@ const THEMES = [
     pastel:true, emoji:'🌸'
   },
   { 
-    id:'harajuku', name:'原宿风格',   price:300, 
+    id:'harajuku', name:'原宿风格',   price:400, 
     bg1:'#FF69B4', bg2:'#FF85C1', dot:'rgba(255,255,0,0.3)',
     blockTop:'#FFFF00', blockFront:'#E5E500', blockRight:'#CCCC00', blockAccent:'#FF1493',
     charPrimary:'#E5E500', charSecondary:'#FFFF00', charAccent:'#FF1493',
@@ -2018,7 +2251,7 @@ const THEMES = [
     harajuku:true, emoji:'💜'
   },
   { 
-    id:'cottage',  name:'田园小屋',   price:300, 
+    id:'cottage',  name:'田园小屋',   price:350, 
     bg1:'#F0E68C', bg2:'#DAA520', dot:'rgba(139,69,19,0.2)',
     blockTop:'#8B4513', blockFront:'#6B350F', blockRight:'#4A2508', blockAccent:'#F4A460',
     charPrimary:'#6B350F', charSecondary:'#8B4513', charAccent:'#F4A460',
@@ -2026,7 +2259,7 @@ const THEMES = [
     emoji:'🏡'
   },
   { 
-    id:'zen',      name:'禅意花园',   price:300, 
+    id:'zen',      name:'禅意花园',   price:400, 
     bg1:'#F5F5DC', bg2:'#EEE8AA', dot:'rgba(0,100,0,0.2)',
     blockTop:'#556B2F', blockFront:'#3D4F22', blockRight:'#253315', blockAccent:'#8FBC8F',
     charPrimary:'#3D4F22', charSecondary:'#556B2F', charAccent:'#8FBC8F',
@@ -2036,7 +2269,7 @@ const THEMES = [
   
   // 宝石主题
   { 
-    id:'gold',     name:'黄金传说',   price:300, 
+    id:'gold',     name:'黄金传说',   price:600, 
     bg1:'#FFD700', bg2:'#FFC125', dot:'rgba(255,215,0,0.5)',
     blockTop:'#FFD700', blockFront:'#DAA520', blockRight:'#B8860B', blockAccent:'#FFE135',
     charPrimary:'#DAA520', charSecondary:'#FFD700', charAccent:'#FFE135',
@@ -2044,7 +2277,7 @@ const THEMES = [
     gold:true, emoji:'👑'
   },
   { 
-    id:'silver',   name:'白银骑士',   price:300, 
+    id:'silver',   name:'白银骑士',   price:400, 
     bg1:'#C0C0C0', bg2:'#A8A8A8', dot:'rgba(192,192,192,0.5)',
     blockTop:'#C0C0C0', blockFront:'#A0A0A0', blockRight:'#808080', blockAccent:'#D3D3D3',
     charPrimary:'#A0A0A0', charSecondary:'#C0C0C0', charAccent:'#D3D3D3',
@@ -2052,7 +2285,7 @@ const THEMES = [
     silver:true, emoji:'🥈'
   },
   { 
-    id:'diamond',  name:'钻石星辰',   price:300, 
+    id:'diamond',  name:'钻石星辰',   price:800, 
     bg1:'#E0F8FF', bg2:'#B0E8FF', dot:'rgba(173,216,230,0.5)',
     blockTop:'#ADD8E6', blockFront:'#8AC4D0', blockRight:'#60A0B0', blockAccent:'#B0C4DE',
     charPrimary:'#8AC4D0', charSecondary:'#ADD8E6', charAccent:'#B0C4DE',
@@ -2060,7 +2293,7 @@ const THEMES = [
     diamond:true, emoji:'💎'
   },
   { 
-    id:'ruby',     name:'红宝石光',   price:300, 
+    id:'ruby',     name:'红宝石光',   price:600, 
     bg1:'#FFE8E8', bg2:'#FFD0D0', dot:'rgba(220,20,60,0.4)',
     blockTop:'#DC143C', blockFront:'#B01030', blockRight:'#800020', blockAccent:'#FF69B4',
     charPrimary:'#B01030', charSecondary:'#DC143C', charAccent:'#FF69B4',
@@ -2068,7 +2301,7 @@ const THEMES = [
     ruby:true, emoji:'💎'
   },
   { 
-    id:'emerald',  name:'祖母绿林',   price:300, 
+    id:'emerald',  name:'祖母绿林',   price:600, 
     bg1:'#E0FFE0', bg2:'#B0FFB0', dot:'rgba(0,255,0,0.3)',
     blockTop:'#00FF00', blockFront:'#00CC00', blockRight:'#009900', blockAccent:'#32CD32',
     charPrimary:'#00CC00', charSecondary:'#00FF00', charAccent:'#32CD32',
@@ -2076,7 +2309,7 @@ const THEMES = [
     emerald:true, emoji:'💎'
   },
   { 
-    id:'sapphire', name:'蓝宝石海',   price:300, 
+    id:'sapphire', name:'蓝宝石海',   price:600, 
     bg1:'#E0F0FF', bg2:'#B0D8FF', dot:'rgba(30,144,255,0.4)',
     blockTop:'#4169E1', blockFront:'#2850C0', blockRight:'#1030A0', blockAccent:'#00BFFF',
     charPrimary:'#2850C0', charSecondary:'#4169E1', charAccent:'#00BFFF',
@@ -2084,7 +2317,7 @@ const THEMES = [
     sapphire:true, emoji:'💎'
   },
   { 
-    id:'amethyst', name:'紫水晶晶',   price:300, 
+    id:'amethyst', name:'紫水晶晶',   price:500, 
     bg1:'#F8E8FF', bg2:'#F0D0FF', dot:'rgba(148,0,211,0.4)',
     blockTop:'#9400D3', blockFront:'#7400B0', blockRight:'#540090', blockAccent:'#BA55D3',
     charPrimary:'#7400B0', charSecondary:'#9400D3', charAccent:'#BA55D3',
@@ -2092,7 +2325,7 @@ const THEMES = [
     amethyst:true, emoji:'💎'
   },
   { 
-    id:'topaz',    name:'黄玉阳光',   price:300, 
+    id:'topaz',    name:'黄玉阳光',   price:500, 
     bg1:'#FFF8E0', bg2:'#FFE8B0', dot:'rgba(255,215,0,0.4)',
     blockTop:'#FFC125', blockFront:'#D4A017', blockRight:'#A88000', blockAccent:'#FFD700',
     charPrimary:'#D4A017', charSecondary:'#FFC125', charAccent:'#FFD700',
@@ -2366,21 +2599,38 @@ function getThemePreview(themeId) {
 }
 
 // 游戏开始时随机选择主题
+
 function startGameWithRandomTheme() {
   // 获取用户收藏的主题列表
   const myThemes = Storage.getMyThemes();
   
   if(myThemes.length === 0) {
     // 没有收藏的主题，使用默认主题
-    applyThemeToGame(THEMES[0]);
-    return;
+    currentGameTheme = THEMES[0];
+  } else {
+    // 随机选择一个收藏的主题
+    const randomIndex = Math.floor(Math.random() * myThemes.length);
+    const themeId = myThemes[randomIndex];
+    currentGameTheme = THEMES.find(t => t.id === themeId) || THEMES[0];
   }
   
-  // 随机选择一个收藏的主题
-  const randomIndex = Math.floor(Math.random() * myThemes.length);
-  const themeId = myThemes[randomIndex];
-  const theme = THEMES.find(t => t.id === themeId) || THEMES[0];
-  applyThemeToGame(theme);
+  applyThemeToGame(currentGameTheme);
+  
+  // 显示主题提示弹窗
+  showThemeTip(currentGameTheme);
+}
+
+function showThemeTip(theme) {
+  const emoji = document.getElementById('theme-tip-emoji');
+  const name = document.getElementById('theme-tip-name');
+  if(emoji) emoji.textContent = theme.emoji || '🎨';
+  if(name) name.textContent = theme.name;
+  showModal('modal-theme-tip');
+  
+  // 2秒后自动关闭
+  setTimeout(() => {
+    hideModal('modal-theme-tip');
+  }, 2000);
 }
 
 /* ============ 3. Character drawing (origin = feet center) ============ */
@@ -5001,7 +5251,7 @@ const Game = {
 /* ============ 8. Tutorial ============ */
 const Tutorial = {
   page:0,
-  total:4,
+  total:6,
   show(){
     this.page=0;
     this.updatePage();
@@ -5296,7 +5546,42 @@ function drawHomeCharacter(){
   ctx.restore();
 }
 
+// 新手引导控制器
+const TutorialGuide = {
+  currentStep: 1,
+  totalSteps: 7,
+  show() {
+    this.currentStep = 1;
+    this.updateStep();
+    showModal('modal-tutorial-guide');
+  },
+  next() {
+    if(this.currentStep < this.totalSteps) {
+      this.currentStep++;
+      this.updateStep();
+    }
+  },
+  updateStep() {
+    for(let i = 1; i <= this.totalSteps; i++) {
+      const step = document.getElementById('guide-step-' + i);
+      if(step) {
+        step.style.display = i === this.currentStep ? 'block' : 'none';
+      }
+    }
+  },
+  finish() {
+    hideModal('modal-tutorial-guide');
+    Storage.setTutorialDone();
+  }
+};
+
 function init(){
+  // 检查是否需要显示新手引导
+  if(Storage.isFirstVisit() && !Storage.isTutorialDone()) {
+    Storage.setVisited();
+    setTimeout(() => TutorialGuide.show(), 500);
+  }
+  
   drawHomeCharacter();
   // Home buttons
   document.getElementById('btn-start').addEventListener('click',()=>Router.show('play'));
@@ -5405,14 +5690,22 @@ function init(){
   // Unified Benefits management
   const Benefits = {
     items:[
-      {key:'freeRevive',icon:'💖',name:'免费复活'},
-      {key:'coinBonus',icon:'💰',name:'金币加成 +50%'},
-      {key:'doubleScore',icon:'⭐',name:'双倍得分'}
+      {key:'freeRevive',icon:'💖',name:'免费复活',unlock:true,desc:'优先使用免费复活'},
+      {key:'coinBonus',icon:'💰',name:'金币加成 +50%',unlock:false,desc:'获取金币时额外增加 50%'},
+      {key:'doubleScore',icon:'⭐',name:'双倍得分',unlock:false,desc:'跳跃得分翻倍，冲分必备'}
     ],
+    isUnlocked(key){
+      if(key==='freeRevive') return true;
+      return Storage.getBenefitUnlocked(key);
+    },
     isEnabled(key){
       return Storage.getBenefitEnabled(key, key==='freeRevive');
     },
     toggle(key){
+      if(!this.isUnlocked(key)){
+        toast('该权益需要在商店购买主题后解锁');
+        return;
+      }
       const cur = this.isEnabled(key);
       Storage.setBenefitSwitch(key, !cur);
       this.refreshAll();
@@ -5427,11 +5720,12 @@ function init(){
       if(!list) return;
       const revives = Storage.getRevives();
       list.innerHTML=this.items.map(it=>{
-        const active=this.isEnabled(it.key);
-        const desc = it.key==='freeRevive' ? ('剩余 '+revives+' 次，优先使用免费复活') :
-                     it.key==='coinBonus' ? '获取金币时额外增加 50%' :
-                     '跳跃得分翻倍，冲分必备';
-        return '<div class="benefit-item"><div class="benefit-info"><div class="benefit-icon">'+it.icon+'</div><div class="benefit-text"><div class="benefit-name">'+it.name+'</div><div class="benefit-desc">'+desc+'</div></div></div><div class="benefit-switch '+(active?'active':'')+'" data-key="'+it.key+'"></div></div>';
+        const unlocked = this.isUnlocked(it.key);
+        const active = this.isEnabled(it.key);
+        const lockedClass = unlocked ? '' : 'locked';
+        const desc = it.key==='freeRevive' ? ('剩余 '+revives+' 次，'+it.desc) : it.desc;
+        const statusText = unlocked ? '' : '（需解锁）';
+        return '<div class="benefit-item '+lockedClass+'"><div class="benefit-info"><div class="benefit-icon">'+it.icon+'</div><div class="benefit-text"><div class="benefit-name">'+it.name+statusText+'</div><div class="benefit-desc">'+desc+'</div></div></div><div class="benefit-switch '+(active?'active':'')+'" data-key="'+it.key+'"></div></div>';
       }).join('');
       list.querySelectorAll('.benefit-switch').forEach(sw=>{
         sw.addEventListener('click',(e)=>{
