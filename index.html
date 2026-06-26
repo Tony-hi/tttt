@@ -897,7 +897,7 @@ svg{display:block}
           <span>我的权益</span>
           <span class="arrow-right"><svg width="20" height="20"><use href="#i-chevron-right"/></svg></span>
         </div>
-        <div class="menu-card wide" id="menu-dev" style="display:none">
+        <div class="menu-card wide" id="menu-dev" data-target="dev" style="display:none">
           <div class="icon" style="color:#a8ff78">⚙️</div>
           <span style="color:#a8ff78">开发者模式</span>
           <span class="arrow-right" style="color:#a8ff78"><svg width="20" height="20"><use href="#i-chevron-right"/></svg></span>
@@ -3573,7 +3573,8 @@ function init(){
 
   // Menu cards
   document.querySelectorAll('.menu-card').forEach(card=>{
-    card.addEventListener('click',()=>{
+    card.addEventListener('click',(e)=>{
+      e.stopPropagation();
       const t=card.dataset.target;
       if(t==='shop')    Router.show('shop');
       else if(t==='lottery') Router.show('lottery');
@@ -3582,7 +3583,9 @@ function init(){
       else if(t==='benefits') Benefits.showModal();
     });
   });
-  document.getElementById('menu-dev').addEventListener('click',()=>{
+
+  document.getElementById('menu-dev').addEventListener('click',(e)=>{
+    e.stopPropagation();
     DevPanel.toggle();
   });
 
@@ -3806,7 +3809,10 @@ function init(){
   document.getElementById('dev-add-revive-5').addEventListener('click',()=>{ Storage.addRevives(5); DevPanel.addLog('+5 复活'); toast('+5 复活'); });
   document.getElementById('dev-reset-data').addEventListener('click',()=>{
     if(confirm('确定要清空所有数据吗？此操作不可恢复！')){
-      localStorage.clear(); DevPanel.addLog('所有数据已清空'); toast('数据已清空');
+      const devEnabled = localStorage.getItem('jbc.devMode');
+      localStorage.clear();
+      if(devEnabled) localStorage.setItem('jbc.devMode', devEnabled);
+      DevPanel.addLog('所有数据已清空'); toast('数据已清空');
     }
   });
   document.getElementById('dev-reset-game').addEventListener('click',()=>{
@@ -3817,7 +3823,9 @@ function init(){
   // Click outside to close dev panel
   document.addEventListener('click',(e)=>{
     const panel = document.getElementById('dev-panel');
-    if(DevPanel.isOpen && panel && !panel.contains(e.target) && !e.target.closest('.modal-redeem')){
+    const redeemModal = document.getElementById('modal-redeem');
+    const menuDev = document.getElementById('menu-dev');
+    if(DevPanel.isOpen && panel && !panel.contains(e.target) && !(redeemModal && redeemModal.contains(e.target)) && !(menuDev && menuDev.contains(e.target))){
       DevPanel.toggle();
     }
   });
