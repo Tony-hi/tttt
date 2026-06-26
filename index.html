@@ -3400,7 +3400,10 @@ function init(){
     document.getElementById('redeem-stage-benefits').style.display = stage==='benefits'?'block':'none';
     document.getElementById('redeem-stage-history').style.display = stage==='history'?'block':'none';
   }
-  document.getElementById('btn-my-benefits').addEventListener('click',()=>{updateRedeemReviveCount();renderBenefits();showRedeemStage('benefits');});
+  document.getElementById('btn-my-benefits').addEventListener('click',()=>{
+    hideModal('modal-redeem');
+    Router.show('benefits');
+  });
   document.getElementById('btn-benefits-back').addEventListener('click',()=>showRedeemStage('main'));
   document.getElementById('btn-redeem-history').addEventListener('click',()=>{renderHistory();showRedeemStage('history');});
   document.getElementById('btn-history-back').addEventListener('click',()=>showRedeemStage('main'));
