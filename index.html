@@ -52,8 +52,17 @@ svg{display:block}
 .home-deco-blob2{position:absolute;bottom:80px;right:30px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.28);filter:blur(6px);pointer-events:none}
 .home-title{padding-top:9vh;text-align:center;position:relative;z-index:2}
 .home-title h1{
-  font-size:clamp(54px,14vw,84px);color:#fff;font-weight:900;letter-spacing:6px;line-height:1;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  line-height:1;
+}
+.home-title .title-line-1{
+  font-size:clamp(54px,14vw,84px);color:#fff;font-weight:900;letter-spacing:6px;
   text-shadow:0 4px 14px rgba(80,60,140,.18);
+}
+.home-title .title-line-2{
+  font-size:clamp(54px,14vw,84px);color:#fff;font-weight:900;letter-spacing:6px;
+  text-shadow:0 4px 14px rgba(80,60,140,.18);
+  margin-left:20px; /* 第二行向右错开 */
 }
 .home-title p{font-size:clamp(30px,8.5vw,50px);color:#fff;font-weight:800;margin-top:10px;letter-spacing:3px}
 .home-character{
@@ -1105,7 +1114,7 @@ svg{display:block}
       <div class="home-deco-blob"></div>
       <div class="home-deco-blob2"></div>
       <div class="home-title">
-        <h1>Tony方块跳</h1>
+        <h1><span class="title-line-1">Tony</span><span class="title-line-2">方块跳</span></h1>
       </div>
       <div class="home-character">
         <canvas id="home-canvas" width="200" height="240"></canvas>
