@@ -1735,7 +1735,6 @@ const Router = {
     if(viewId==='play')    Game.start();
     if(viewId==='benefits'){
       renderBenefitsPage();
-      document.getElementById('benefits-coins-revive').textContent=Storage.getRevives();
     }
   }
 };
@@ -3406,54 +3405,71 @@ function init(){
   document.getElementById('btn-redeem-history').addEventListener('click',()=>{renderHistory();showRedeemStage('history');});
   document.getElementById('btn-history-back').addEventListener('click',()=>showRedeemStage('main'));
 
-  function renderBenefits(){
-    const list=document.getElementById('benefits-list');
-    const items=[
-      {key:'freeRevive',icon:'💖',name:'免费复活',desc:'剩余 '+Storage.getRevives()+' 次，优先使用免费复活'},
-      {key:'coinBonus',icon:'💰',name:'金币加成 +50%',desc:'获取金币时额外增加 50%'},
-      {key:'doubleScore',icon:'⭐',name:'双倍得分',desc:'跳跃得分翻倍，冲分必备'}
-    ];
-    list.innerHTML=items.map(it=>{
-      const active=Storage.getBenefitEnabled(it.key,it.key==='freeRevive');
-      return '<div class="benefit-item"><div class="benefit-info"><div class="benefit-icon">'+it.icon+'</div><div class="benefit-text"><div class="benefit-name">'+it.name+'</div><div class="benefit-desc">'+it.desc+'</div></div></div><div class="benefit-switch '+(active?'active':'')+'" data-key="'+it.key+'"></div></div>';
-    }).join('');
-    list.querySelectorAll('.benefit-switch').forEach(sw=>{
-      sw.addEventListener('click',()=>{
-        const key=sw.dataset.key;
-        const cur=Storage.getBenefitEnabled(key,key==='freeRevive');
-        Storage.setBenefitSwitch(key,!cur);
-        sw.classList.toggle('active');
-        if(key==='freeRevive'){
-          renderBenefits();
-        }
+  // Unified Benefits management
+  const Benefits = {
+    items:[
+      {key:'freeRevive',icon:'💖',name:'免费复活'},
+      {key:'coinBonus',icon:'💰',name:'金币加成 +50%'},
+      {key:'doubleScore',icon:'⭐',name:'双倍得分'}
+    ],
+    getDesc(item){
+      if(item.key==='freeRevive') return '剩余 '+Storage.getRevives()+' 次，优先使用免费复活';
+      if(item.key==='coinBonus') return '获取金币时额外增加 50%';
+      if(item.key==='doubleScore') return '跳跃得分翻倍，冲分必备';
+      return '';
+    },
+    isEnabled(key){
+      return Storage.getBenefitEnabled(key, key==='freeRevive');
+    },
+    toggle(key){
+      const cur = this.isEnabled(key);
+      Storage.setBenefitSwitch(key, !cur);
+      this.refreshAll();
+    },
+    refreshAll(){
+      this.render('benefits-list');
+      this.render('benefits-list-page');
+      this.updateReviveCount();
+    },
+    render(listId){
+      const list=document.getElementById(listId);
+      if(!list) return;
+      const revives = Storage.getRevives();
+      list.innerHTML=this.items.map(it=>{
+        const active=this.isEnabled(it.key);
+        const desc = it.key==='freeRevive' ? ('剩余 '+revives+' 次，优先使用免费复活') :
+                     it.key==='coinBonus' ? '获取金币时额外增加 50%' :
+                     '跳跃得分翻倍，冲分必备';
+        return '<div class="benefit-item"><div class="benefit-info"><div class="benefit-icon">'+it.icon+'</div><div class="benefit-text"><div class="benefit-name">'+it.name+'</div><div class="benefit-desc">'+desc+'</div></div></div><div class="benefit-switch '+(active?'active':'')+'" data-key="'+it.key+'"></div></div>';
+      }).join('');
+      list.querySelectorAll('.benefit-switch').forEach(sw=>{
+        sw.addEventListener('click',(e)=>{
+          e.stopPropagation();
+          this.toggle(sw.dataset.key);
+        });
       });
-    });
+    },
+    updateReviveCount(){
+      const revives = Storage.getRevives();
+      const el1=document.getElementById('benefits-coins-revive');
+      if(el1) el1.textContent=revives;
+      const el2=document.getElementById('benefits-revive-count');
+      if(el2) el2.textContent=revives;
+      const el3=document.getElementById('redeem-revive-count');
+      if(el3) el3.textContent=revives;
+    }
+  };
+
+  function renderBenefits(){
+    Benefits.render('benefits-list');
+    updateRedeemReviveCount();
   }
   function renderBenefitsPage(){
-    const list=document.getElementById('benefits-list-page');
-    if(!list) return;
-    const revives = Storage.getRevives();
-    const items=[
-      {key:'freeRevive',icon:'💖',name:'免费复活',desc:'剩余 '+revives+' 次，优先使用免费复活'},
-      {key:'coinBonus',icon:'💰',name:'金币加成 +50%',desc:'获取金币时额外增加 50%'},
-      {key:'doubleScore',icon:'⭐',name:'双倍得分',desc:'跳跃得分翻倍，冲分必备'}
-    ];
-    list.innerHTML=items.map(it=>{
-      const active=Storage.getBenefitEnabled(it.key,it.key==='freeRevive');
-      return '<div class="benefit-item"><div class="benefit-info"><div class="benefit-icon">'+it.icon+'</div><div class="benefit-text"><div class="benefit-name">'+it.name+'</div><div class="benefit-desc">'+it.desc+'</div></div></div><div class="benefit-switch '+(active?'active':'')+'" data-key="'+it.key+'"></div></div>';
-    }).join('');
-    const reviveCountEl = document.getElementById('benefits-coins-revive');
-    if(reviveCountEl) reviveCountEl.textContent = revives;
-    list.querySelectorAll('.benefit-switch').forEach(sw=>{
-      sw.addEventListener('click',(e)=>{
-        e.stopPropagation();
-        const key=sw.dataset.key;
-        const def = key==='freeRevive';
-        const cur=Storage.getBenefitEnabled(key,def);
-        Storage.setBenefitSwitch(key,!cur);
-        renderBenefitsPage();
-      });
-    });
+    Benefits.render('benefits-list-page');
+    Benefits.updateReviveCount();
+  }
+  function updateRedeemReviveCount(){
+    Benefits.updateReviveCount();
   }
 
   function renderHistory(){
