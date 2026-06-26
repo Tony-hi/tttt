@@ -983,6 +983,10 @@ svg{display:block}
             <span>复活一次</span>
             <small id="revive-cost">100金币</small>
           </button>
+          <button class="modal-btn secondary" id="btn-home">
+            <span class="ico"><svg><use href="#i-arrow-left"/></svg></span>
+            <span>返回主页</span>
+          </button>
         </div>
       </div>
     </div>
@@ -3318,6 +3322,7 @@ function init(){
   document.getElementById('btn-back-home').addEventListener('click',()=>Router.show('home'));
   document.getElementById('btn-back-menu-shop').addEventListener('click',()=>Router.show('menu'));
   document.getElementById('btn-back-menu-lottery').addEventListener('click',()=>Router.show('menu'));
+  document.getElementById('btn-back-menu-benefits').addEventListener('click',()=>Router.show('menu'));
 
   // Menu cards
   document.querySelectorAll('.menu-card').forEach(card=>{
@@ -3427,8 +3432,9 @@ function init(){
   function renderBenefitsPage(){
     const list=document.getElementById('benefits-list-page');
     if(!list) return;
+    const revives = Storage.getRevives();
     const items=[
-      {key:'freeRevive',icon:'💖',name:'免费复活',desc:'剩余 '+Storage.getRevives()+' 次，优先使用免费复活'},
+      {key:'freeRevive',icon:'💖',name:'免费复活',desc:'剩余 '+revives+' 次，优先使用免费复活'},
       {key:'coinBonus',icon:'💰',name:'金币加成 +50%',desc:'获取金币时额外增加 50%'},
       {key:'doubleScore',icon:'⭐',name:'双倍得分',desc:'跳跃得分翻倍，冲分必备'}
     ];
@@ -3436,16 +3442,16 @@ function init(){
       const active=Storage.getBenefitEnabled(it.key,it.key==='freeRevive');
       return '<div class="benefit-item"><div class="benefit-info"><div class="benefit-icon">'+it.icon+'</div><div class="benefit-text"><div class="benefit-name">'+it.name+'</div><div class="benefit-desc">'+it.desc+'</div></div></div><div class="benefit-switch '+(active?'active':'')+'" data-key="'+it.key+'"></div></div>';
     }).join('');
+    const reviveCountEl = document.getElementById('benefits-coins-revive');
+    if(reviveCountEl) reviveCountEl.textContent = revives;
     list.querySelectorAll('.benefit-switch').forEach(sw=>{
-      sw.addEventListener('click',()=>{
+      sw.addEventListener('click',(e)=>{
+        e.stopPropagation();
         const key=sw.dataset.key;
-        const cur=Storage.getBenefitEnabled(key,key==='freeRevive');
+        const def = key==='freeRevive';
+        const cur=Storage.getBenefitEnabled(key,def);
         Storage.setBenefitSwitch(key,!cur);
-        sw.classList.toggle('active');
-        if(key==='freeRevive'){
-          renderBenefitsPage();
-          document.getElementById('benefits-coins-revive').textContent=Storage.getRevives();
-        }
+        renderBenefitsPage();
       });
     });
   }
@@ -3485,11 +3491,19 @@ function init(){
     hideModal('modal-gameover');
     Game.revive();
   });
+  document.getElementById('btn-home').addEventListener('click',()=>{
+    hideModal('modal-gameover');
+    Game.running=false;
+    cancelAnimationFrame(Game.rafId);
+    Router.show('home');
+    drawHomeCharacter();
+  });
 
   // Pause → back to home (saves data automatically)
   document.getElementById('btn-pause').addEventListener('click',()=>{
     Game.running=false; cancelAnimationFrame(Game.rafId);
-    Router.show('menu');
+    Router.show('home');
+    drawHomeCharacter();
   });
 
   // Game touch controls
