@@ -339,6 +339,73 @@ svg{display:block}
   80%{transform:translateX(6px) rotate(3deg)}
 }
 
+/* ============ Benefits View ============ */
+.view-benefits{display:flex;flex-direction:column}
+.benefits-header{
+  display:flex;align-items:center;padding:16px 20px;
+  background:var(--bg-2);border-bottom:1px solid rgba(0,0,0,.05);
+}
+.benefits-header .btn-back{margin-right:12px;flex-shrink:0}
+.benefits-header .page-title{flex:1;text-align:center;margin-right:40px}
+.benefits-revive-display{
+  display:flex;align-items:center;gap:6px;
+  padding:8px 14px;
+  background:linear-gradient(135deg,#FFE4E1,#FFC0CB);
+  border-radius:20px;
+  font-size:15px;font-weight:800;color:#D63384;
+}
+.benefits-content{
+  flex:1;padding:20px;overflow-y:auto;
+}
+.benefits-intro{
+  text-align:center;margin-bottom:20px;
+}
+.benefits-intro p{
+  font-size:14px;color:var(--text-muted);font-weight:500;
+}
+.benefits-list-container{
+  background:var(--card);
+  border-radius:var(--r-lg);
+  padding:16px;
+  box-shadow:var(--shadow);
+}
+.benefits-list-page .benefit-item{
+  display:flex;align-items:center;padding:16px 0;
+  border-bottom:1px solid rgba(0,0,0,.05);
+}
+.benefits-list-page .benefit-item:last-child{border-bottom:none}
+.benefits-list-page .benefit-info{
+  flex:1;display:flex;align-items:center;gap:14px;
+}
+.benefits-list-page .benefit-icon{
+  width:44px;height:44px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg-1);border-radius:12px;
+  font-size:22px;
+}
+.benefits-list-page .benefit-text{flex:1}
+.benefits-list-page .benefit-name{
+  font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;
+}
+.benefits-list-page .benefit-desc{
+  font-size:13px;color:var(--text-muted);
+}
+.benefits-list-page .benefit-switch{
+  width:52px;height:30px;border-radius:15px;
+  background:#E0E0E0;cursor:pointer;
+  position:relative;transition:background .3s;
+  flex-shrink:0;
+}
+.benefits-list-page .benefit-switch::after{
+  content:'';position:absolute;
+  top:3px;left:3px;
+  width:24px;height:24px;border-radius:50%;
+  background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2);
+  transition:transform .3s;
+}
+.benefits-list-page .benefit-switch.active{background:var(--green)}
+.benefits-list-page .benefit-switch.active::after{transform:translateX(22px)}
+
 /* ============ Play View ============ */
 .view-play{background:var(--bg-1)}
 #game-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
@@ -780,6 +847,11 @@ svg{display:block}
           <span>兑换码</span>
           <span class="arrow-right"><svg width="20" height="20"><use href="#i-chevron-right"/></svg></span>
         </div>
+        <div class="menu-card wide" data-target="benefits">
+          <div class="icon"><svg><use href="#i-heart"/></svg></div>
+          <span>我的权益</span>
+          <span class="arrow-right"><svg width="20" height="20"><use href="#i-chevron-right"/></svg></span>
+        </div>
       </div>
     </section>
 
@@ -1017,6 +1089,27 @@ svg{display:block}
         <button class="modal-btn tutorial-btn" id="btn-close-tutorial">下一条</button>
       </div>
     </div>
+
+    <section class="view view-benefits" id="view-benefits">
+      <div class="benefits-header">
+        <button class="btn-back" id="btn-back-menu-benefits" aria-label="返回">
+          <svg><use href="#i-arrow-left"/></svg>
+        </button>
+        <h2 class="page-title">我的权益</h2>
+        <div class="benefits-revive-display">
+          <span>💖</span>
+          <span id="benefits-coins-revive">0</span>
+        </div>
+      </div>
+      <div class="benefits-content">
+        <div class="benefits-intro">
+          <p>开启权益可获得更多游戏福利</p>
+        </div>
+        <div class="benefits-list-container">
+          <div class="benefits-list" id="benefits-list-page"></div>
+        </div>
+      </div>
+    </section>
 
     <div class="modal" id="modal-redeem">
       <div class="modal-mask"></div>
@@ -1636,6 +1729,10 @@ const Router = {
     if(viewId==='shop')    Shop.render();
     if(viewId==='lottery') Lottery.render();
     if(viewId==='play')    Game.start();
+    if(viewId==='benefits'){
+      renderBenefitsPage();
+      document.getElementById('benefits-coins-revive').textContent=Storage.getRevives();
+    }
   }
 };
 
@@ -3230,6 +3327,7 @@ function init(){
       else if(t==='lottery') Router.show('lottery');
       else if(t==='tutorial') showModal('modal-tutorial');
       else if(t==='redeem'){ showRedeemStage('main'); updateRedeemReviveCount(); showModal('modal-redeem'); }
+      else if(t==='benefits') Router.show('benefits');
     });
   });
 
@@ -3322,6 +3420,31 @@ function init(){
         sw.classList.toggle('active');
         if(key==='freeRevive'){
           renderBenefits();
+        }
+      });
+    });
+  }
+  function renderBenefitsPage(){
+    const list=document.getElementById('benefits-list-page');
+    if(!list) return;
+    const items=[
+      {key:'freeRevive',icon:'💖',name:'免费复活',desc:'剩余 '+Storage.getRevives()+' 次，优先使用免费复活'},
+      {key:'coinBonus',icon:'💰',name:'金币加成 +50%',desc:'获取金币时额外增加 50%'},
+      {key:'doubleScore',icon:'⭐',name:'双倍得分',desc:'跳跃得分翻倍，冲分必备'}
+    ];
+    list.innerHTML=items.map(it=>{
+      const active=Storage.getBenefitEnabled(it.key,it.key==='freeRevive');
+      return '<div class="benefit-item"><div class="benefit-info"><div class="benefit-icon">'+it.icon+'</div><div class="benefit-text"><div class="benefit-name">'+it.name+'</div><div class="benefit-desc">'+it.desc+'</div></div></div><div class="benefit-switch '+(active?'active':'')+'" data-key="'+it.key+'"></div></div>';
+    }).join('');
+    list.querySelectorAll('.benefit-switch').forEach(sw=>{
+      sw.addEventListener('click',()=>{
+        const key=sw.dataset.key;
+        const cur=Storage.getBenefitEnabled(key,key==='freeRevive');
+        Storage.setBenefitSwitch(key,!cur);
+        sw.classList.toggle('active');
+        if(key==='freeRevive'){
+          renderBenefitsPage();
+          document.getElementById('benefits-coins-revive').textContent=Storage.getRevives();
         }
       });
     });
