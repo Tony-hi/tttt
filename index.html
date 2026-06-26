@@ -897,6 +897,11 @@ svg{display:block}
           <span>我的权益</span>
           <span class="arrow-right"><svg width="20" height="20"><use href="#i-chevron-right"/></svg></span>
         </div>
+        <div class="menu-card wide" id="menu-dev" style="display:none">
+          <div class="icon" style="color:#a8ff78">⚙️</div>
+          <span style="color:#a8ff78">开发者模式</span>
+          <span class="arrow-right" style="color:#a8ff78"><svg width="20" height="20"><use href="#i-chevron-right"/></svg></span>
+        </div>
       </div>
     </section>
 
@@ -3421,7 +3426,9 @@ function tryRedeem(code){
 
 /* ============ 9.5 Developer Panel ============ */
 const DevPanel = {
+  K_DEV:'jbc.devMode',
   isOpen: false,
+  enabled: false,
   logs: [],
   powerMult: 1,
   jumpMult: 1,
@@ -3434,12 +3441,34 @@ const DevPanel = {
   score: 0,
   combo: 0,
   state: '等待',
+  init(){
+    this.enabled = localStorage.getItem(this.K_DEV)==='1';
+    this.updateMenuEntry();
+  },
+  updateMenuEntry(){
+    const el = document.getElementById('menu-dev');
+    if(el) el.style.display = this.enabled ? 'flex' : 'none';
+  },
+  enable(){
+    this.enabled = true;
+    localStorage.setItem(this.K_DEV,'1');
+    this.updateMenuEntry();
+  },
+  disable(){
+    this.enabled = false;
+    localStorage.removeItem(this.K_DEV);
+    this.updateMenuEntry();
+  },
   toggle(){
     this.isOpen = !this.isOpen;
     const panel = document.getElementById('dev-panel');
     if(panel) panel.classList.toggle('open', this.isOpen);
-    if(this.isOpen) this.addLog('开发者面板已打开');
-    else this.addLog('开发者面板已关闭');
+    if(this.isOpen){
+      this.addLog('开发者面板已打开');
+      this.enable();
+    } else {
+      this.addLog('开发者面板已关闭');
+    }
   },
   addLog(msg){
     const t = new Date().toLocaleTimeString();
@@ -3553,6 +3582,12 @@ function init(){
       else if(t==='benefits') Benefits.showModal();
     });
   });
+  document.getElementById('menu-dev').addEventListener('click',()=>{
+    DevPanel.toggle();
+  });
+
+  // Init dev panel
+  DevPanel.init();
 
   // Shop arrows
   document.getElementById('btn-skin-prev').addEventListener('click',()=>{
