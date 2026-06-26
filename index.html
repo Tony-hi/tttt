@@ -1315,6 +1315,19 @@ svg{display:block}
       </div>
     </div>
 
+    <!-- 确认弹窗 -->
+    <div class="modal" id="modal-confirm">
+      <div class="modal-mask"></div>
+      <div class="modal-card light">
+        <h3 id="confirm-title">确认</h3>
+        <p id="confirm-message" style="text-align:center;margin-bottom:20px">确定要执行此操作吗？</p>
+        <div class="gameover-buttons">
+          <button class="modal-btn secondary" id="btn-confirm-cancel">取消</button>
+          <button class="modal-btn" id="btn-confirm-ok">确认</button>
+        </div>
+      </div>
+    </div>
+
     <div class="modal" id="modal-result">
       <div class="modal-mask"></div>
       <div class="modal-card light">
@@ -1494,7 +1507,16 @@ const SKINS = [
   { id:'pencil',  name:'铅笔头',    price:300 },
   { id:'eraser',  name:'橡皮君',    price:250 },
   { id:'ruler',   name:'直尺先生',  price:350 },
-  { id:'cutter',  name:'美工刀侠客', price:0, exclusive:true }
+  { id:'cutter',  name:'美工刀侠客', price:0, exclusive:true },
+  { id:'crab',    name:'小螃蟹',    price:400 },
+  { id:'rocket',  name:'小火箭',    price:500 },
+  { id:'robot',   name:'机器人',    price:450 },
+  { id:'mushroom',name:'小蘑菇',    price:350 },
+  { id:'cactus',  name:'仙人掌',    price:300 },
+  { id:'diamond', name:'钻石君',    price:600 },
+  { id:'star',    name:'星星仔',    price:400 },
+  { id:'heart',   name:'爱心酱',    price:350 },
+  { id:'egg',     name:'彩蛋君',    price:300 },
 ];
 
 const THEMES = [
@@ -2287,17 +2309,15 @@ function renderThemeSelector(containerId) {
   const container = document.getElementById(containerId);
   if(!container) return;
   
-  const myThemes = Storage.getMyThemes();
-  
   container.innerHTML = THEMES.map(theme => `
-    <div class="theme-item ${Storage.hasTheme(theme.id) ? 'unlocked' : 'locked'} ${myThemes.includes(theme.id) ? 'selected' : ''}" 
+    <div class="theme-item ${Storage.hasTheme(theme.id) ? 'unlocked selected' : 'locked'}" 
          data-theme-id="${theme.id}"
          onclick="selectTheme('${theme.id}')">
       <div class="theme-preview" style="background: linear-gradient(135deg, ${theme.bg1}, ${theme.bg2})">
         <span class="theme-emoji">${theme.emoji || '🎨'}</span>
       </div>
       <div class="theme-name">${theme.name}</div>
-      <div class="theme-price">${Storage.hasTheme(theme.id) ? (myThemes.includes(theme.id) ? '已收藏' : '可添加') : (theme.price === 0 ? '免费' : '💰' + theme.price)}</div>
+      <div class="theme-price">${Storage.hasTheme(theme.id) ? '已解锁' : (theme.price === 0 ? '免费' : '💰' + theme.price)}</div>
     </div>
   `).join('');
 }
@@ -2307,33 +2327,35 @@ function selectTheme(themeId) {
   const theme = THEMES.find(t => t.id === themeId);
   if(!theme) return;
   
-  if(!Storage.hasTheme(theme.id) && theme.price > 0) {
-    // 需要购买
-    if(Storage.getCoins() >= theme.price) {
-      Storage.setCoins(Storage.getCoins() - theme.price);
-      Storage.unlockTheme(theme.id);
-      toast('主题已解锁！');
-      Storage.addRedeemHistory(theme.id, '购买主题：' + theme.name);
-      renderThemeSelector('theme-selector');
-      // 更新商店金币显示
-      const shopCoins = document.getElementById('shop-coins');
-      if(shopCoins) shopCoins.textContent = Storage.getCoins();
-    } else {
-      toast('金币不足！');
-    }
+  if(Storage.hasTheme(theme.id)) {
+    toast('此主题已解锁');
     return;
   }
   
-  // 已解锁的主题，添加到我的主题
-  if(!Storage.hasMyTheme(theme.id)) {
-    Storage.addMyTheme(theme.id);
-    toast('已添加到我的主题');
-  } else {
-    toast('已在我的主题中');
+  if(theme.price === 0) {
+    Storage.unlockTheme(theme.id);
+    toast('主题已解锁！');
+    renderThemeSelector('theme-selector');
+    return;
   }
   
-  // 重新渲染主题选择器以更新选中状态
-  renderThemeSelector('theme-selector');
+  if(Storage.getCoins() >= theme.price) {
+    showConfirmModal(
+      `兑换「${theme.name}」`,
+      `确定要花费 ${theme.price} 金币兑换此主题吗？`,
+      () => {
+        Storage.setCoins(Storage.getCoins() - theme.price);
+        Storage.unlockTheme(theme.id);
+        toast('主题已解锁！');
+        Storage.addRedeemHistory(theme.id, '购买主题：' + theme.name);
+        renderThemeSelector('theme-selector');
+        const shopCoins = document.getElementById('shop-coins');
+        if(shopCoins) shopCoins.textContent = Storage.getCoins();
+      }
+    );
+  } else {
+    toast('金币不足！');
+  }
 }
 
 // 获取当前主题预览
@@ -2829,6 +2851,678 @@ function drawCutterCharacter(ctx,size,t){
   ctx.restore();
 }
 
+function drawCrabCharacter(ctx,size,t){
+  const s=size/110;
+  const bob=Math.sin(t/300)*1.5*s;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0,2,20*s,4.5*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.translate(0,bob);
+  // 身体
+  ctx.fillStyle='#FF6B6B';
+  ctx.strokeStyle='#CC3030';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.ellipse(0,-30*s,22*s,18*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.stroke();
+  // 蟹钳 - 左
+  const clawWiggle=Math.sin(t/200)*3;
+  ctx.save();
+  ctx.translate(-22*s,-32*s);
+  ctx.rotate((-20+clawWiggle)*Math.PI/180);
+  ctx.fillStyle='#FF6B6B';
+  ctx.beginPath();
+  ctx.ellipse(-6*s,0,10*s,7*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle='#FF8888';
+  ctx.beginPath();
+  ctx.moveTo(-12*s,-4*s);
+  ctx.lineTo(-18*s,-2*s);
+  ctx.lineTo(-12*s,0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(-12*s,4*s);
+  ctx.lineTo(-18*s,2*s);
+  ctx.lineTo(-12*s,0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+  // 蟹钳 - 右
+  ctx.save();
+  ctx.translate(22*s,-32*s);
+  ctx.rotate((20-clawWiggle)*Math.PI/180);
+  ctx.fillStyle='#FF6B6B';
+  ctx.beginPath();
+  ctx.ellipse(6*s,0,10*s,7*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle='#FF8888';
+  ctx.beginPath();
+  ctx.moveTo(12*s,-4*s);
+  ctx.lineTo(18*s,-2*s);
+  ctx.lineTo(12*s,0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(12*s,4*s);
+  ctx.lineTo(18*s,2*s);
+  ctx.lineTo(12*s,0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+  // 眼睛
+  ctx.fillStyle='#fff';
+  ctx.beginPath();
+  ctx.arc(-8*s,-38*s,5*s,0,Math.PI*2);
+  ctx.arc(8*s,-38*s,5*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='#CC3030';
+  ctx.lineWidth=1.5*s;
+  ctx.stroke();
+  ctx.fillStyle='#2A2640';
+  ctx.beginPath();
+  ctx.arc(-7*s,-37*s,2.5*s,0,Math.PI*2);
+  ctx.arc(9*s,-37*s,2.5*s,0,Math.PI*2);
+  ctx.fill();
+  // 眼柄
+  ctx.strokeStyle='#CC3030';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.moveTo(-8*s,-30*s);
+  ctx.lineTo(-8*s,-43*s);
+  ctx.moveTo(8*s,-30*s);
+  ctx.lineTo(8*s,-43*s);
+  ctx.stroke();
+  // 嘴巴
+  ctx.strokeStyle='#CC3030';
+  ctx.lineWidth=1.5*s;
+  ctx.beginPath();
+  ctx.arc(0,-25*s,4*s,0,Math.PI);
+  ctx.stroke();
+  // 腿
+  ctx.strokeStyle='#CC3030';
+  ctx.lineWidth=2*s;
+  ctx.lineCap='round';
+  for(let i=0;i<3;i++){
+    const lx=-18*s+i*4*s;
+    const rx=18*s-i*4*s;
+    const y=-22*s+i*6*s;
+    ctx.beginPath();
+    ctx.moveTo(lx,y);
+    ctx.lineTo(lx-8*s,y+8*s);
+    ctx.moveTo(rx,y);
+    ctx.lineTo(rx+8*s,y+8*s);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawRocketCharacter(ctx,size,t){
+  const s=size/110;
+  const bob=Math.sin(t/250)*2*s;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0,2,16*s,4*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.translate(0,bob);
+  // 火焰
+  const flameH=8+Math.sin(t/80)*3;
+  ctx.fillStyle='#FF6B35';
+  ctx.beginPath();
+  ctx.moveTo(-8*s,0);
+  ctx.lineTo(0,flameH*s);
+  ctx.lineTo(8*s,0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle='#FFD93D';
+  ctx.beginPath();
+  ctx.moveTo(-5*s,0);
+  ctx.lineTo(0,flameH*0.6*s);
+  ctx.lineTo(5*s,0);
+  ctx.closePath();
+  ctx.fill();
+  // 火箭身体
+  ctx.fillStyle='#F8F8F8';
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.moveTo(-14*s,0);
+  ctx.lineTo(-14*s,-50*s);
+  ctx.quadraticCurveTo(0,-80*s,14*s,-50*s);
+  ctx.lineTo(14*s,0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // 红色条纹
+  ctx.fillStyle='#FF4757';
+  ctx.beginPath();
+  ctx.rect(-14*s,-35*s,28*s,8*s);
+  ctx.fill();
+  // 窗户
+  ctx.fillStyle='#74B9FF';
+  ctx.beginPath();
+  ctx.arc(0,-55*s,7*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=1.5*s;
+  ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,0.5)';
+  ctx.beginPath();
+  ctx.arc(-2*s,-57*s,2.5*s,0,Math.PI*2);
+  ctx.fill();
+  // 尾翼
+  ctx.fillStyle='#FF4757';
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.moveTo(-14*s,-5*s);
+  ctx.lineTo(-22*s,5*s);
+  ctx.lineTo(-14*s,0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(14*s,-5*s);
+  ctx.lineTo(22*s,5*s);
+  ctx.lineTo(14*s,0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // 眼睛（在窗户里）
+  ctx.fillStyle='#2A2640';
+  ctx.beginPath();
+  ctx.arc(-2.5*s,-54*s,1.5*s,0,Math.PI*2);
+  ctx.arc(2.5*s,-54*s,1.5*s,0,Math.PI*2);
+  ctx.fill();
+  // 微笑
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=1*s;
+  ctx.beginPath();
+  ctx.arc(0,-52*s,2.5*s,0.1*Math.PI,0.9*Math.PI);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawRobotCharacter(ctx,size,t){
+  const s=size/110;
+  const bob=Math.sin(t/300)*1.5*s;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0,2,18*s,4*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.translate(0,bob);
+  // 身体
+  ctx.fillStyle='#95A5A6';
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.roundRect(-16*s,-55*s,32*s,55*s,6*s);
+  ctx.fill();
+  ctx.stroke();
+  // 头部
+  ctx.fillStyle='#BDC3C7';
+  ctx.beginPath();
+  ctx.roundRect(-14*s,-75*s,28*s,22*s,5*s);
+  ctx.fill();
+  ctx.stroke();
+  // 天线
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.moveTo(0,-75*s);
+  ctx.lineTo(0,-85*s);
+  ctx.stroke();
+  ctx.fillStyle='#E74C3C';
+  ctx.beginPath();
+  ctx.arc(0,-88*s,3*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.strokeStyle='#C0392B';
+  ctx.lineWidth=1*s;
+  ctx.stroke();
+  // 眼睛
+  const eyeGlow=Math.sin(t/200)*0.3+0.7;
+  ctx.fillStyle=`rgba(46,204,113,${eyeGlow})`;
+  ctx.shadowColor='#2ECC71';
+  ctx.shadowBlur=5*s;
+  ctx.beginPath();
+  ctx.roundRect(-10*s,-70*s,7*s,8*s,2*s);
+  ctx.roundRect(3*s,-70*s,7*s,8*s,2*s);
+  ctx.fill();
+  ctx.shadowBlur=0;
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=1.5*s;
+  ctx.stroke();
+  // 嘴巴
+  ctx.fillStyle='#2A2640';
+  ctx.beginPath();
+  ctx.rect(-6*s,-59*s,12*s,3*s);
+  ctx.fill();
+  // 胸口屏幕
+  ctx.fillStyle='#2C3E50';
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=1.5*s;
+  ctx.beginPath();
+  ctx.roundRect(-10*s,-45*s,20*s,15*s,3*s);
+  ctx.fill();
+  ctx.stroke();
+  // 屏幕内容
+  ctx.fillStyle='#2ECC71';
+  ctx.font=`${6*s}px monospace`;
+  ctx.textAlign='center';
+  ctx.fillText('♥',0,-34*s);
+  // 手臂
+  ctx.fillStyle='#95A5A6';
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.roundRect(-22*s,-48*s,6*s,28*s,3*s);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.roundRect(16*s,-48*s,6*s,28*s,3*s);
+  ctx.fill();
+  ctx.stroke();
+  // 手
+  ctx.fillStyle='#7F8C8D';
+  ctx.beginPath();
+  ctx.arc(-19*s,-18*s,5*s,0,Math.PI*2);
+  ctx.arc(19*s,-18*s,5*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawMushroomCharacter(ctx,size,t){
+  const s=size/110;
+  const bob=Math.sin(t/300)*1.5*s;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0,2,18*s,4*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.translate(0,bob);
+  // 菌柄
+  ctx.fillStyle='#FFF8DC';
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.moveTo(-12*s,0);
+  ctx.lineTo(-10*s,-35*s);
+  ctx.lineTo(10*s,-35*s);
+  ctx.lineTo(12*s,0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // 菌盖
+  ctx.fillStyle='#E74C3C';
+  ctx.beginPath();
+  ctx.ellipse(0,-35*s,28*s,22*s,0,Math.PI,0);
+  ctx.fill();
+  ctx.stroke();
+  // 白点
+  ctx.fillStyle='#fff';
+  ctx.beginPath();
+  ctx.arc(-12*s,-45*s,4*s,0,Math.PI*2);
+  ctx.arc(8*s,-50*s,5*s,0,Math.PI*2);
+  ctx.arc(16*s,-40*s,3.5*s,0,Math.PI*2);
+  ctx.arc(-4*s,-52*s,3*s,0,Math.PI*2);
+  ctx.fill();
+  // 眼睛
+  ctx.fillStyle='#2A2640';
+  ctx.beginPath();
+  ctx.arc(-5*s,-22*s,3*s,0,Math.PI*2);
+  ctx.arc(5*s,-22*s,3*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();
+  ctx.arc(-4*s,-23*s,1.2*s,0,Math.PI*2);
+  ctx.arc(6*s,-23*s,1.2*s,0,Math.PI*2);
+  ctx.fill();
+  // 腮红
+  ctx.fillStyle='rgba(255,150,150,0.5)';
+  ctx.beginPath();
+  ctx.arc(-9*s,-18*s,3*s,0,Math.PI*2);
+  ctx.arc(9*s,-18*s,3*s,0,Math.PI*2);
+  ctx.fill();
+  // 嘴巴
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=1.5*s;
+  ctx.beginPath();
+  ctx.arc(0,-16*s,4*s,0.1*Math.PI,0.9*Math.PI);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawCactusCharacter(ctx,size,t){
+  const s=size/110;
+  const bob=Math.sin(t/400)*1*s;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0,2,16*s,4*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.translate(0,bob);
+  // 身体（仙人掌）
+  ctx.fillStyle='#27AE60';
+  ctx.strokeStyle='#1E8449';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.roundRect(-12*s,-60*s,24*s,60*s,10*s);
+  ctx.fill();
+  ctx.stroke();
+  // 左臂
+  ctx.fillStyle='#27AE60';
+  ctx.beginPath();
+  ctx.roundRect(-22*s,-45*s,10*s,20*s,5*s);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.rect(-12*s,-40*s,0,10*s);
+  ctx.fill();
+  ctx.stroke();
+  // 右臂
+  ctx.beginPath();
+  ctx.roundRect(12*s,-50*s,10*s,20*s,5*s);
+  ctx.fill();
+  ctx.stroke();
+  // 刺
+  ctx.strokeStyle='#1E8449';
+  ctx.lineWidth=1*s;
+  for(let i=0;i<5;i++){
+    const y=-10*s-i*12*s;
+    ctx.beginPath();
+    ctx.moveTo(-12*s,y);
+    ctx.lineTo(-16*s,y-2*s);
+    ctx.moveTo(12*s,y);
+    ctx.lineTo(16*s,y-2*s);
+    ctx.stroke();
+  }
+  // 花
+  ctx.fillStyle='#FF6B9D';
+  ctx.strokeStyle='#D63384';
+  ctx.lineWidth=1.5*s;
+  for(let i=0;i<5;i++){
+    const angle=i*72*Math.PI/180;
+    const px=Math.cos(angle)*5*s;
+    const py=-62*s+Math.sin(angle)*5*s;
+    ctx.beginPath();
+    ctx.ellipse(px,py,4*s,6*s,angle,0,Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.fillStyle='#FFD93D';
+  ctx.beginPath();
+  ctx.arc(0,-62*s,3.5*s,0,Math.PI*2);
+  ctx.fill();
+  // 眼睛
+  ctx.fillStyle='#2A2640';
+  ctx.beginPath();
+  ctx.arc(-5*s,-40*s,3*s,0,Math.PI*2);
+  ctx.arc(5*s,-40*s,3*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();
+  ctx.arc(-4*s,-41*s,1.2*s,0,Math.PI*2);
+  ctx.arc(6*s,-41*s,1.2*s,0,Math.PI*2);
+  ctx.fill();
+  // 嘴巴
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=1.5*s;
+  ctx.beginPath();
+  ctx.arc(0,-32*s,5*s,0.1*Math.PI,0.9*Math.PI);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawDiamondCharacter(ctx,size,t){
+  const s=size/110;
+  const bob=Math.sin(t/250)*2*s;
+  const sparkle=Math.sin(t/200)*0.3+0.7;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0,2,16*s,4*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.translate(0,bob);
+  // 钻石身体
+  ctx.fillStyle='#74B9FF';
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.moveTo(0,-70*s);
+  ctx.lineTo(22*s,-40*s);
+  ctx.lineTo(15*s,0);
+  ctx.lineTo(-15*s,0);
+  ctx.lineTo(-22*s,-40*s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // 高光
+  ctx.fillStyle=`rgba(255,255,255,${sparkle})`;
+  ctx.beginPath();
+  ctx.moveTo(-10*s,-50*s);
+  ctx.lineTo(0,-65*s);
+  ctx.lineTo(5*s,-55*s);
+  ctx.lineTo(-5*s,-35*s);
+  ctx.closePath();
+  ctx.fill();
+  // 切面线
+  ctx.strokeStyle='rgba(255,255,255,0.4)';
+  ctx.lineWidth=1*s;
+  ctx.beginPath();
+  ctx.moveTo(0,-70*s);
+  ctx.lineTo(0,0);
+  ctx.moveTo(-22*s,-40*s);
+  ctx.lineTo(22*s,-40*s);
+  ctx.stroke();
+  // 眼睛
+  ctx.fillStyle='#2A2640';
+  ctx.beginPath();
+  ctx.arc(-6*s,-25*s,3.5*s,0,Math.PI*2);
+  ctx.arc(6*s,-25*s,3.5*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();
+  ctx.arc(-5*s,-26*s,1.5*s,0,Math.PI*2);
+  ctx.arc(7*s,-26*s,1.5*s,0,Math.PI*2);
+  ctx.fill();
+  // 嘴巴
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=1.5*s;
+  ctx.beginPath();
+  ctx.arc(0,-17*s,4*s,0.1*Math.PI,0.9*Math.PI);
+  ctx.stroke();
+  // 闪烁星星
+  ctx.fillStyle=`rgba(255,255,255,${sparkle})`;
+  ctx.font=`${10*s}px serif`;
+  ctx.textAlign='center';
+  ctx.fillText('✦',-18*s,-55*s);
+  ctx.fillText('✦',18*s,-48*s);
+  ctx.restore();
+}
+
+function drawStarCharacter(ctx,size,t){
+  const s=size/110;
+  const bob=Math.sin(t/250)*2*s;
+  const spin=Math.sin(t/500)*5;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0,2,18*s,4*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.translate(0,bob);
+  ctx.rotate(spin*Math.PI/180);
+  // 星星形状
+  ctx.fillStyle='#FFD93D';
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  for(let i=0;i<10;i++){
+    const angle=i*36*Math.PI/180-Math.PI/2;
+    const r=i%2===0?30*s:14*s;
+    const x=Math.cos(angle)*r;
+    const y=-35*s+Math.sin(angle)*r;
+    if(i===0) ctx.moveTo(x,y);
+    else ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // 光晕
+  ctx.fillStyle='rgba(255,217,61,0.3)';
+  ctx.beginPath();
+  ctx.arc(0,-35*s,35*s,0,Math.PI*2);
+  ctx.fill();
+  // 眼睛
+  ctx.fillStyle='#2A2640';
+  ctx.beginPath();
+  ctx.arc(-6*s,-38*s,3.5*s,0,Math.PI*2);
+  ctx.arc(6*s,-38*s,3.5*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();
+  ctx.arc(-5*s,-39*s,1.5*s,0,Math.PI*2);
+  ctx.arc(7*s,-39*s,1.5*s,0,Math.PI*2);
+  ctx.fill();
+  // 腮红
+  ctx.fillStyle='rgba(255,150,100,0.5)';
+  ctx.beginPath();
+  ctx.arc(-10*s,-32*s,3*s,0,Math.PI*2);
+  ctx.arc(10*s,-32*s,3*s,0,Math.PI*2);
+  ctx.fill();
+  // 嘴巴
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=1.5*s;
+  ctx.beginPath();
+  ctx.arc(0,-30*s,5*s,0.1*Math.PI,0.9*Math.PI);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawHeartCharacter(ctx,size,t){
+  const s=size/110;
+  const bob=Math.sin(t/250)*2*s;
+  const beat=Math.sin(t/200)*0.05+1;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0,2,18*s,4*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.translate(0,bob);
+  ctx.scale(beat,beat);
+  // 爱心身体
+  ctx.fillStyle='#FF6B8A';
+  ctx.strokeStyle='#CC3355';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.moveTo(0,-15*s);
+  ctx.bezierCurveTo(-25*s,-50*s,-30*s,-25*s,0,5*s);
+  ctx.bezierCurveTo(30*s,-25*s,25*s,-50*s,0,-15*s);
+  ctx.fill();
+  ctx.stroke();
+  // 高光
+  ctx.fillStyle='rgba(255,255,255,0.4)';
+  ctx.beginPath();
+  ctx.ellipse(-10*s,-35*s,6*s,10*s,-20*Math.PI/180,0,Math.PI*2);
+  ctx.fill();
+  // 眼睛
+  ctx.fillStyle='#2A2640';
+  ctx.beginPath();
+  ctx.arc(-7*s,-28*s,3.5*s,0,Math.PI*2);
+  ctx.arc(7*s,-28*s,3.5*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();
+  ctx.arc(-6*s,-29*s,1.5*s,0,Math.PI*2);
+  ctx.arc(8*s,-29*s,1.5*s,0,Math.PI*2);
+  ctx.fill();
+  // 嘴巴
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=1.5*s;
+  ctx.beginPath();
+  ctx.arc(0,-20*s,4*s,0.1*Math.PI,0.9*Math.PI);
+  ctx.stroke();
+  // 小爱心装饰
+  ctx.fillStyle='#FFB6C1';
+  const hx=12*s, hy=-45*s;
+  ctx.beginPath();
+  ctx.moveTo(hx,hy-3*s);
+  ctx.bezierCurveTo(hx-5*s,hy-12*s,hx-8*s,hy-5*s,hx,hy+2*s);
+  ctx.bezierCurveTo(hx+8*s,hy-5*s,hx+5*s,hy-12*s,hx,hy-3*s);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawEggCharacter(ctx,size,t){
+  const s=size/110;
+  const bob=Math.sin(t/300)*1.5*s;
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(0,2,18*s,4*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.translate(0,bob);
+  // 蛋身体
+  ctx.fillStyle='#FFF8DC';
+  ctx.strokeStyle='#2A2640';
+  ctx.lineWidth=2*s;
+  ctx.beginPath();
+  ctx.ellipse(0,-32*s,20*s,32*s,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.stroke();
+  // 花纹
+  ctx.fillStyle='#FFB347';
+  ctx.beginPath();
+  ctx.ellipse(-10*s,-45*s,5*s,7*s,20*Math.PI/180,0,Math.PI*2);
+  ctx.ellipse(8*s,-50*s,4*s,6*s,-15*Math.PI/180,0,Math.PI*2);
+  ctx.ellipse(12*s,-25*s,5*s,6*s,30*Math.PI/180,0,Math.PI*2);
+  ctx.ellipse(-8*s,-20*s,4*s,5*s,-25*Math.PI/180,0,Math.PI*2);
+  ctx.fill();
+  // 眼睛
+  ctx.fillStyle='#2A2640';
+  ctx.beginPath();
+  ctx.arc(-6*s,-32*s,3.5*s,0,Math.PI*2);
+  ctx.arc(6*s,-32*s,3.5*s,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();
+  ctx.arc(-5*s,-33*s,1.5*s,0,Math.PI*2);
+  ctx.arc(7*s,-33*s,1.5*s,0,Math.PI*2);
+  ctx.fill();
+  // 腮红
+  ctx.fillStyle='rgba(255,150,150,0.5)';
+  ctx.beginPath();
+  ctx.arc(-10*s,-26*s,3*s,0,Math.PI*2);
+  ctx.arc(10*s,-26*s,3*s,0,Math.PI*2);
+  ctx.fill();
+  // 嘴巴 - 惊喜O型
+  ctx.fillStyle='#2A2640';
+  ctx.beginPath();
+  ctx.arc(0,-22*s,3.5*s,0,Math.PI*2);
+  ctx.fill();
+  // 头顶小裂纹
+  ctx.strokeStyle='#8B7355';
+  ctx.lineWidth=1.5*s;
+  ctx.beginPath();
+  ctx.moveTo(-3*s,-62*s);
+  ctx.lineTo(0,-58*s);
+  ctx.lineTo(3*s,-62*s);
+  ctx.lineTo(6*s,-56*s);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawCharacter(ctx,skinId,size,t){
   if(skinId==='block') drawBlockGuyCharacter(ctx,size,t);
   else if(skinId==='compass') drawCompassCharacter(ctx,size,t);
@@ -2837,6 +3531,15 @@ function drawCharacter(ctx,skinId,size,t){
   else if(skinId==='eraser') drawEraserCharacter(ctx,size,t);
   else if(skinId==='ruler') drawRulerCharacter(ctx,size,t);
   else if(skinId==='cutter') drawCutterCharacter(ctx,size,t);
+  else if(skinId==='crab') drawCrabCharacter(ctx,size,t);
+  else if(skinId==='rocket') drawRocketCharacter(ctx,size,t);
+  else if(skinId==='robot') drawRobotCharacter(ctx,size,t);
+  else if(skinId==='mushroom') drawMushroomCharacter(ctx,size,t);
+  else if(skinId==='cactus') drawCactusCharacter(ctx,size,t);
+  else if(skinId==='diamond') drawDiamondCharacter(ctx,size,t);
+  else if(skinId==='star') drawStarCharacter(ctx,size,t);
+  else if(skinId==='heart') drawHeartCharacter(ctx,size,t);
+  else if(skinId==='egg') drawEggCharacter(ctx,size,t);
   else drawBlockGuyCharacter(ctx,size,t);
 }
 
@@ -2995,14 +3698,20 @@ const Shop = {
     const s=this.currentSkin;
     if(s.exclusive){toast('该皮肤仅可通过抽奖或兑换码获得');return;}
     if(Storage.getCoins()<s.price){toast('金币不足');return;}
-    Storage.setCoins(Storage.getCoins()-s.price);
-    Storage.unlock(s.id);
-    Storage.setCurrent(s.id);
-    this.updateAction();
-    this.drawPreview();
-    drawHomeCharacter();
-    document.getElementById('shop-coins').textContent=Storage.getCoins();
-    toast('已解锁 '+s.name);
+    showConfirmModal(
+      `兑换「${s.name}」`,
+      `确定要花费 ${s.price} 金币兑换此皮肤吗？`,
+      () => {
+        Storage.setCoins(Storage.getCoins()-s.price);
+        Storage.unlock(s.id);
+        Storage.setCurrent(s.id);
+        this.updateAction();
+        this.drawPreview();
+        drawHomeCharacter();
+        document.getElementById('shop-coins').textContent=Storage.getCoins();
+        toast('已解锁 '+s.name);
+      }
+    );
   },
 };
 
@@ -4352,6 +5061,24 @@ function showResult(icon,title,sub){
   document.getElementById('result-title').textContent=title;
   document.getElementById('result-sub').textContent=sub;
   showModal('modal-result');
+}
+function showConfirmModal(title, message, onConfirm){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-message').textContent=message;
+  const okBtn = document.getElementById('btn-confirm-ok');
+  const cancelBtn = document.getElementById('btn-confirm-cancel');
+  const newOk = okBtn.cloneNode(true);
+  const newCancel = cancelBtn.cloneNode(true);
+  okBtn.parentNode.replaceChild(newOk, okBtn);
+  cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+  newOk.addEventListener('click', () => {
+    hideModal('modal-confirm');
+    if(onConfirm) onConfirm();
+  });
+  newCancel.addEventListener('click', () => {
+    hideModal('modal-confirm');
+  });
+  showModal('modal-confirm');
 }
 function toast(msg){
   const t=document.createElement('div');
