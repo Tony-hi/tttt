@@ -189,6 +189,80 @@ svg{display:block}
   background-image:radial-gradient(rgba(255,255,255,0.4) 1.5px, transparent 1.5px);
   background-size:24px 24px;
 }
+
+/* 主题预览样式 */
+.theme-selector{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(90px, 1fr));
+  gap:12px;
+  padding:12px 16px;
+  max-height:400px;
+  overflow-y:auto;
+}
+.theme-selector::-webkit-scrollbar{width:6px}
+.theme-selector::-webkit-scrollbar-track{background:rgba(0,0,0,0.1);border-radius:3px}
+.theme-selector::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.2);border-radius:3px}
+.theme-item{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  padding:8px;
+  border-radius:12px;
+  background:rgba(255,255,255,0.05);
+  cursor:pointer;
+  transition:all .2s ease;
+  border:2px solid transparent;
+}
+.theme-item:hover{
+  background:rgba(255,255,255,0.1);
+  transform:translateY(-2px);
+}
+.theme-item.selected{
+  border-color:var(--green);
+  background:rgba(74,222,128,0.1);
+}
+.theme-item.locked{
+  opacity:0.6;
+}
+.theme-item.locked:hover{
+  opacity:0.8;
+}
+.theme-preview{
+  width:60px;
+  height:60px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:var(--shadow);
+  position:relative;
+  overflow:hidden;
+}
+.theme-preview::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background-image:radial-gradient(rgba(255,255,255,0.4) 1px, transparent 1px);
+  background-size:10px 10px;
+}
+.theme-emoji{
+  font-size:24px;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  position:relative;
+  z-index:1;
+}
+.theme-name{
+  font-size:11px;
+  color:var(--text);
+  font-weight:600;
+  text-align:center;
+  line-height:1.2;
+}
+.theme-price{
+  font-size:10px;
+  color:var(--text-secondary);
+}
 .btn-arrow{
   width:46px;height:46px;border-radius:50%;
   background:#fff;display:flex;align-items:center;justify-content:center;
@@ -947,6 +1021,7 @@ svg{display:block}
           <svg><use href="#i-tri-right"/></svg>
         </button>
       </div>
+      <div class="theme-selector" id="theme-selector"></div>
       <div class="shop-preview" id="shop-preview"></div>
       <div class="btn-action-wrap">
         <button class="btn-action" id="btn-skin-action">使用中</button>
@@ -1319,6 +1394,7 @@ const Storage = {
   K_COINS:'jbc.coins', K_BEST:'jbc.bestScore', K_SKINS:'jbc.unlockedSkins', K_CURRENT:'jbc.currentSkin',
   K_WALLPAPERS:'jbc.unlockedWalls', K_CURRENT_WALL:'jbc.currentWallpaper', K_REVIVE:'jbc.reviveCount',
   K_BENEFITS:'jbc.benefitSwitches', K_HISTORY:'jbc.redeemHistory', K_FREE_LOTTERY:'jbc.freeLotteryDate',
+  K_THEMES:'jbc.unlockedThemes', K_CURRENT_THEME:'jbc.currentTheme',
   getCoins(){const v=parseInt(localStorage.getItem(this.K_COINS)||'0',10);return isNaN(v)?0:v;},
   setCoins(n){localStorage.setItem(this.K_COINS,String(Math.max(0,n|0)));},
   addCoins(n){const bonus=this.getBenefitEnabled('coinBonus',false)?Math.floor(n*0.5):0;this.setCoins(this.getCoins()+n+bonus);return bonus;},
@@ -1338,7 +1414,7 @@ const Storage = {
   setCurrentWall(id){localStorage.setItem(this.K_CURRENT_WALL,id);},
   getWallpaper(){
     const id = this.getCurrentWall();
-    return WALLPAPERS.find(w=>w.id===id) || WALLPAPERS[0];
+    return THEMES.find(w=>w.id===id) || THEMES[0];
   },
   getRevives(){const v=parseInt(localStorage.getItem(this.K_REVIVE)||'0',10);return isNaN(v)?0:v;},
   setRevives(n){localStorage.setItem(this.K_REVIVE,String(Math.max(0,n|0)));},
@@ -1351,7 +1427,14 @@ const Storage = {
   addRedeemHistory(code,reward){const h=this.getRedeemHistory();h.unshift({code,reward,time:Date.now()});if(h.length>50) h.length=50;localStorage.setItem(this.K_HISTORY,JSON.stringify(h));},
   getTodayStr(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();},
   hasFreeLottery(){return localStorage.getItem(this.K_FREE_LOTTERY)!==this.getTodayStr();},
-  useFreeLottery(){localStorage.setItem(this.K_FREE_LOTTERY,this.getTodayStr());}
+  useFreeLottery(){localStorage.setItem(this.K_FREE_LOTTERY,this.getTodayStr());},
+  // 主题相关方法
+  getUnlockedThemes(){try{return JSON.parse(localStorage.getItem(this.K_THEMES)||'["purple","pink","blue"]');}catch(e){return['purple','pink','blue'];}},
+  setUnlockedThemes(arr){localStorage.setItem(this.K_THEMES,JSON.stringify(arr));},
+  unlockTheme(id){const arr=this.getUnlockedThemes();if(!arr.includes(id)){arr.push(id);this.setUnlockedThemes(arr);}},
+  hasTheme(id){return this.getUnlockedThemes().includes(id);},
+  setCurrentTheme(id){localStorage.setItem(this.K_CURRENT_THEME,id);},
+  getCurrentTheme(){return localStorage.getItem(this.K_CURRENT_THEME)||'purple';}
 };
 
 /* ============ 2. Skins & Wallpapers ============ */
@@ -1365,14 +1448,216 @@ const SKINS = [
   { id:'cutter',  name:'美工刀侠客', price:0, exclusive:true }
 ];
 
-const WALLPAPERS = [
-  { id:'purple', name:'淡紫初心', price:0,   bg1:'#EFEAF7', bg2:'#DCD3EE', dot:'rgba(255,255,255,0.3)' },
-  { id:'pink',   name:'粉樱梦境', price:0, bg1:'#FDE8EF', bg2:'#F5CBD9', dot:'rgba(255,255,255,0.35)' },
-  { id:'blue',   name:'海盐晴空', price:0, bg1:'#E3F0FA', bg2:'#C2DDF0', dot:'rgba(255,255,255,0.35)' },
-  { id:'green',  name:'薄荷森林', price:200, bg1:'#E3F5EC', bg2:'#BFE5D0', dot:'rgba(255,255,255,0.3)' },
-  { id:'orange', name:'暖阳橙橙', price:200, bg1:'#FFF0E0', bg2:'#FFD8B0', dot:'rgba(255,255,255,0.35)' },
-  { id:'dark',   name:'深夜星空', price:300, bg1:'#3A3358', bg2:'#2A2440', dot:'rgba(255,255,255,0.2)' }
+const THEMES = [
+  // 基础主题
+  { id:'purple',   name:'淡紫初心',   price:0,   bg1:'#EFEAF7', bg2:'#DCD3EE', dot:'rgba(255,255,255,0.3)',  block:'#C4B5DC', crab:'#8B7BB5', accent:'#9B8DC7' },
+  { id:'pink',     name:'粉樱梦境',   price:0,   bg1:'#FDE8EF', bg2:'#F5CBD9', dot:'rgba(255,255,255,0.35)', block:'#F5B5C8', crab:'#E89AAA', accent:'#FFB5C8' },
+  { id:'blue',     name:'海盐晴空',   price:0,   bg1:'#E3F0FA', bg2:'#C2DDF0', dot:'rgba(255,255,255,0.35)', block:'#B5D5F0', crab:'#85B5D5', accent:'#A5C5E5' },
+  { id:'green',    name:'薄荷森林',   price:200, bg1:'#E3F5EC', bg2:'#BFE5D0', dot:'rgba(255,255,255,0.3)',  block:'#A5E5B5', crab:'#75C585', accent:'#85D595' },
+  { id:'orange',   name:'暖阳橙橙',   price:200, bg1:'#FFF0E0', bg2:'#FFD8B0', dot:'rgba(255,255,255,0.35)', block:'#FFC595', crab:'#F5A565', accent:'#FFB575' },
+  { id:'dark',     name:'深夜星空',   price:300, bg1:'#3A3358', bg2:'#2A2440', dot:'rgba(255,255,255,0.2)',  block:'#5A5478', crab:'#8B85A8', accent:'#7A74A8' },
+  
+  // 水果主题
+  { id:'apple',    name:'苹果派对',   price:300, bg1:'#FFE8E8', bg2:'#FFD0D0', dot:'rgba(255,100,100,0.3)',   block:'#FF6060', crab:'#E84040', accent:'#FF5050', fruit:'🍎' },
+  { id:'grape',    name:'葡萄庄园',   price:300, bg1:'#F5E8FF', bg2:'#E8D0F5', dot:'rgba(180,100,255,0.3)',  block:'#A855F7', crab:'#8B45D0', accent:'#9333EA', fruit:'🍇' },
+  { id:'watermelon',name:'西瓜乐园',  price:300, bg1:'#E8FFE8', bg2:'#D0FFD0', dot:'rgba(100,255,100,0.3)',  block:'#FF6B6B', crab:'#E85555', accent:'#FF5555', fruit:'🍉' },
+  { id:'orange2',  name:'橙子阳光',   price:300, bg1:'#FFF5E0', bg2:'#FFE8C0', dot:'rgba(255,180,80,0.3)',   block:'#FF9F43', crab:'#E88F33', accent:'#FFA502', fruit:'🍊' },
+  { id:'banana',   name:'香蕉甜蜜',   price:300, bg1:'#FFFCE8', bg2:'#FFF8D0', dot:'rgba(255,230,100,0.3)',  block:'#FFD93D', crab:'#E5C930', accent:'#FFE135', fruit:'🍌' },
+  { id:'cherry',   name:'樱桃浪漫',   price:300, bg1:'#FFE8F0', bg2:'#FFD0E0', dot:'rgba(255,100,150,0.3)',  block:'#FF6B8A', crab:'#E5506B', accent:'#FF5580', fruit:'🍒' },
+  { id:'strawberry',name:'草莓甜心',  price:300, bg1:'#FFE8EC', bg2:'#FFD0D8', dot:'rgba(255,100,130,0.3)',  block:'#FF6B7A', crab:'#E55565', accent:'#FF5060', fruit:'🍓' },
+  { id:'peach',    name:'桃子清甜',   price:300, bg1:'#FFE8E0', bg2:'#FFD0C0', dot:'rgba(255,180,150,0.3)',  block:'#FFAB91', crab:'#E59070', accent:'#FFA07A', fruit:'🍑' },
+  { id:'lemon',    name:'柠檬清新',   price:300, bg1:'#FFFFF0', bg2:'#FFF8D0', dot:'rgba(255,255,100,0.3)',  block:'#FFF44F', crab:'#E5DF30', accent:'#FFEB3B', fruit:'🍋' },
+  { id:'kiwi',     name:'奇异果绿',   price:300, bg1:'#F0FFE8', bg2:'#D8FFD0', dot:'rgba(150,255,100,0.3)',  block:'#8BC34A', crab:'#6B9A35', accent:'#7CB342', fruit:'🥝' },
+  { id:'coconut',  name:'椰子海岸',   price:300, bg1:'#FFF8F0', bg2:'#FFE8D8', dot:'rgba(255,220,180,0.3)',  block:'#D2691E', crab:'#B87333', accent:'#CD853F', fruit:'🥥' },
+  
+  // 甜品主题
+  { id:'candy',    name:'糖果世界',   price:300, bg1:'#FFE8F5', bg2:'#FFD0E8', dot:'rgba(255,100,200,0.3)',  block:'#FF69B4', crab:'#E55099', accent:'#FF1493', candy:'🧁' },
+  { id:'chocolate',name:'巧克力梦',   price:300, bg1:'#FFF0E0', bg2:'#FFD8C0', dot:'rgba(139,69,19,0.3)',   block:'#8B4513', crab:'#6B3510', accent:'#A0522D', candy:'🍫' },
+  { id:'icecream', name:'冰淇淋夏',   price:300, bg1:'#E8F8FF', bg2:'#D0F0FF', dot:'rgba(100,200,255,0.3)',  block:'#87CEEB', crab:'#65A5C5', accent:'#7EC8E3', candy:'🍦' },
+  { id:'cake',     name:'蛋糕城堡',   price:300, bg1:'#FFF0F5', bg2:'#FFD8E8', dot:'rgba(255,150,180,0.3)',  block:'#FFB6C1', crab:'#E595A0', accent:'#FFA0B0', candy:'🎂' },
+  { id:'donut',    name:'甜甜圈日',   price:300, bg1:'#FFE8DC', bg2:'#FFD0C0', dot:'rgba(255,150,100,0.3)',  block:'#FF8C69', crab:'#E57050', accent:'#FF7F50', candy:'🍩' },
+  { id:'cookie',   name:'饼干时光',   price:300, bg1:'#FFF5E0', bg2:'#FFE8C0', dot:'rgba(210,180,140,0.3)',  block:'#D2691E', crab:'#B87333', accent:'#DEB887', candy:'🍪' },
+  { id:'pudding',  name:'布丁小屋',   price:300, bg1:'#FFFCE8', bg2:'#FFF0D0', dot:'rgba(255,220,150,0.3)',  block:'#FFD700', crab:'#E5C200', accent:'#FFE135', candy:'🍮' },
+  { id:'macaron',  name:'马卡龙彩',   price:300, bg1:'#FFE8F8', bg2:'#FFD0F0', dot:'rgba(255,150,220,0.3)',  block:'#FF69B4', crab:'#E55099', accent:'#FF85C1', candy:'🧁' },
+  
+  // 自然主题
+  { id:'ocean',    name:'深海探险',   price:300, bg1:'#E0F8FF', bg2:'#B0E8FF', dot:'rgba(30,144,255,0.3)',   block:'#4169E1', crab:'#2E5CB8', accent:'#4682B4', nature:'🌊' },
+  { id:'forest',   name:'森林奇遇',   price:300, bg1:'#E8FFE8', bg2:'#C0F0C0', dot:'rgba(34,139,34,0.3)',    block:'#228B22', crab:'#1A6B1A', accent:'#32CD32', nature:'🌲' },
+  { id:'mountain', name:'山峦叠嶂',   price:300, bg1:'#F0F8FF', bg2:'#D8E8F8', dot:'rgba(100,149,237,0.3)',  block:'#6495ED', crab:'#4A7AC0', accent:'#5F9EA0', nature:'🏔️' },
+  { id:'sunset',   name:'日落晚霞',   price:300, bg1:'#FFE4C4', bg2:'#FFDAB9', dot:'rgba(255,140,0,0.3)',     block:'#FF7F50', crab:'#E56030', accent:'#FF6347', nature:'🌅' },
+  { id:'rainbow',  name:'彩虹之约',   price:300, bg1:'#FFF0F8', bg2:'#FFE0F0', dot:'rgba(255,0,255,0.2)',    block:'#FF1493', crab:'#E5007A', accent:'#FF69B4', rainbow:true },
+  { id:'aurora',   name:'极光之舞',   price:300, bg1:'#E0FFE8', bg2:'#B0FFD0', dot:'rgba(0,255,127,0.3)',    block:'#00FA9A', crab:'#00D080', accent:'#00FF7F', nature:'🌌' },
+  { id:'cloud',    name:'云端漫步',   price:300, bg1:'#F8F8FF', bg2:'#E8E8FF', dot:'rgba(255,255,255,0.5)',  block:'#E8E8F8', crab:'#C8C8E0', accent:'#D8D8F0', nature:'☁️' },
+  { id:'firework', name:'烟花绽放',   price:300, bg1:'#1A1A2E', bg2:'#16213E', dot:'rgba(255,215,0,0.3)',    block:'#FFD700', crab:'#E5C200', accent:'#FF4500', nature:'🎆' },
+  
+  // 梦幻主题
+  { id:'unicorn',  name:'独角兽梦',   price:300, bg1:'#FFE8F5', bg2:'#FFD0E8', dot:'rgba(255,182,193,0.4)',  block:'#FFB6C1', crab:'#FF69B4', accent:'#DB7093', magic:'🦄' },
+  { id:'galaxy',   name:'银河漫游',   price:300, bg1:'#0D1B2A', bg2:'#1B263B', dot:'rgba(138,43,226,0.3)',   block:'#9370DB', crab:'#7B68EE', accent:'#BA55D3', magic:'🌌' },
+  { id:'crystal',  name:'水晶宫殿',   price:300, bg1:'#E8F0FF', bg2:'#D0E0FF', dot:'rgba(100,149,237,0.4)',  block:'#87CEFA', crab:'#6495ED', accent:'#00BFFF', magic:'💎' },
+  { id:'fairy',    name:'仙子花园',   price:300, bg1:'#F0FFF0', bg2:'#D0FFD0', dot:'rgba(144,238,144,0.4)',  block:'#98FB98', crab:'#7CCD7C', accent:'#90EE90', magic:'🧚' },
+  { id:'mermaid',  name:'人鱼传说',   price:300, bg1:'#E0F8F8', bg2:'#B0F0F0', dot:'rgba(64,224,208,0.4)',  block:'#40E0D0', crab:'#30C0B0', accent:'#48D1CC', magic:'🧜‍♀️' },
+  { id:'dragon',   name:'龙之秘境',   price:300, bg1:'#F0E8FF', bg2:'#D8C8FF', dot:'rgba(138,43,226,0.4)',   block:'#8A2BE2', crab:'#6A1BE0', accent:'#9932CC', magic:'🐉' },
+  { id:'wizard',   name:'巫师学院',   price:300, bg1:'#2D1B4E', bg2:'#1A0F2E', dot:'rgba(148,0,211,0.4)',   block:'#9400D3', crab:'#7400B0', accent:'#BA55D3', magic:'🧙' },
+  { id:'angel',    name:'天使羽翼',   price:300, bg1:'#FFF8F0', bg2:'#FFE8D8', dot:'rgba(255,250,240,0.5)',  block:'#FFFAFA', crab:'#F0F0F0', accent:'#E8E8E8', magic:'👼' },
+  
+  // 节日主题
+  { id:'christmas',name:'圣诞快乐',   price:300, bg1:'#E8FFE8', bg2:'#C0F0C0', dot:'rgba(255,0,0,0.2)',     block:'#228B22', crab:'#006400', accent:'#DC143C', holiday:'🎄' },
+  { id:'halloween',name:'万圣狂欢',   price:300, bg1:'#FFE4C4', bg2:'#EED8B0', dot:'rgba(255,140,0,0.3)',   block:'#FF8C00', crab:'#E07000', accent:'#FF6347', holiday:'🎃' },
+  { id:'valentine',name:'情人浪漫',   price:300, bg1:'#FFE8E8', bg2:'#FFD0D0', dot:'rgba(255,0,0,0.3)',     block:'#DC143C', crab:'#B01030', accent:'#FF69B4', holiday:'💝' },
+  { id:'newyear',  name:'新年钟声',   price:300, bg1:'#FFE8E0', bg2:'#FFD0C0', dot:'rgba(255,215,0,0.3)',   block:'#FFD700', crab:'#E5C200', accent:'#FF4500', holiday:'🎉' },
+  { id:'lantern',  name:'元宵灯笼',   price:300, bg1:'#FFE8DC', bg2:'#FFD0C0', dot:'rgba(255,100,0,0.3)',   block:'#FF4500', crab:'#E53500', accent:'#FF6347', holiday:'🏮' },
+  { id:'midautumn',name:'中秋明月',   price:300, bg1:'#1E3A5F', bg2:'#152A45', dot:'rgba(255,215,0,0.3)',   block:'#FFD700', crab:'#E5C200', accent:'#FFF8DC', holiday:'🥮' },
+  
+  // 动漫/游戏主题
+  { id:'pokemon',  name:'宝可梦球',   price:300, bg1:'#FFE8E8', bg2:'#FFD0D0', dot:'rgba(255,0,0,0.3)',     block:'#FF0000', crab:'#DC0000', accent:'#0000FF', game:'⚪' },
+  { id:'mario',    name:'马里奥兄弟', price:300, bg1:'#87CEEB', bg2:'#6BB8D9', dot:'rgba(255,215,0,0.3)',   block:'#FF0000', crab:'#E53935', accent:'#FFD700', game:'🍄' },
+  { id:'zelda',    name:'塞尔达传说', price:300, bg1:'#E8F5E8', bg2:'#C8E8C8', dot:'rgba(34,139,34,0.3)',   block:'#228B22', crab:'#1A6B1A', accent:'#DAA520', game:'🛡️' },
+  { id:'animal',   name:'动物森友',   price:300, bg1:'#E8FFE8', bg2:'#C8F0C8', dot:'rgba(119,158,85,0.3)',  block:'#8F9E55', crab:'#6B8A35', accent:'#A0C060', game:'🦊' },
+  { id:'genshin',  name:'原神世界',   price:300, bg1:'#E8E0F8', bg2:'#D0C0E8', dot:'rgba(148,0,211,0.3)',   block:'#9370DB', crab:'#7B68EE', accent:'#BA55D3', game:'⭐' },
+  { id:'honkai',   name:'崩坏星穹',   price:300, bg1:'#E8F0FF', bg2:'#C0D8FF', dot:'rgba(30,144,255,0.3)',  block:'#4169E1', crab:'#2850C0', accent:'#00BFFF', game:'🚀' },
+  
+  // 特色主题
+  { id:'neon',     name:'霓虹都市',   price:300, bg1:'#1A0033', bg2:'#2D0050', dot:'rgba(255,0,255,0.4)',   block:'#FF00FF', crab:'#CC00CC', accent:'#00FFFF', neon:true },
+  { id:'retro',    name:'复古像素',   price:300, bg1:'#2D2D2D', bg2:'#1A1A1A', dot:'rgba(0,255,0,0.3)',     block:'#33FF33', crab:'#00CC00', accent:'#FFFF00', retro:true },
+  { id:'hologram', name:'全息投影',   price:300, bg1:'#0A0A20', bg2:'#101030', dot:'rgba(0,255,255,0.4)',   block:'#00FFFF', crab:'#00CCCC', accent:'#FF00FF', holo:true },
+  { id:'cyberpunk',name:'赛博朋克',   price:300, bg1:'#0D0221', bg2:'#150734', dot:'rgba(255,0,128,0.4)',   block:'#FF0080', crab:'#CC0060', accent:'#00FFFF', cyber:true },
+  { id:'steampunk',name:'蒸汽朋克',   price:300, bg1:'#3D2B1F', bg2:'#2A1F15', dot:'rgba(205,127,50,0.3)',  block:'#CD7F32', crab:'#A0522D', accent:'#B8860B', steam:true },
+  { id:'vaporwave',name:'蒸汽波',     price:300, bg1:'#FF6EC7', bg2:'#FF6EB4', dot:'rgba(0,255,255,0.3)',  block:'#00FFFF', crab:'#00CCCC', accent:'#FF00FF', vapor:true },
+  { id:'pastel',   name:'马卡龙色',   price:300, bg1:'#FFE8DC', bg2:'#FFD8C8', dot:'rgba(255,182,193,0.3)',  block:'#FFB6C1', crab:'#E8A0A8', accent:'#FFC0CB', pastel:true },
+  { id:'harajuku', name:'原宿风格',   price:300, bg1:'#FF69B4', bg2:'#FF85C1', dot:'rgba(255,255,0,0.3)',   block:'#FFFF00', crab:'#E5E500', accent:'#FF1493', harajuku:true },
+  { id:'cottage',  name:'田园小屋',   price:300, bg1:'#F0E68C', bg2:'#DAA520', dot:'rgba(139,69,19,0.2)',   block:'#8B4513', crab:'#6B350F', accent:'#F4A460', cottage:true },
+  { id:'zen',      name:'禅意花园',   price:300, bg1:'#F5F5DC', bg2:'#EEE8AA', dot:'rgba(0,100,0,0.2)',    block:'#556B2F', crab:'#3D4F22', accent:'#8FBC8F', zen:true },
+  
+  // 更多特色
+  { id:'gold',     name:'黄金传说',   price:300, bg1:'#FFD700', bg2:'#FFC125', dot:'rgba(255,215,0,0.5)',   block:'#FFD700', crab:'#DAA520', accent:'#FFE135', gold:true },
+  { id:'silver',   name:'白银骑士',   price:300, bg1:'#C0C0C0', bg2:'#A8A8A8', dot:'rgba(192,192,192,0.5)', block:'#C0C0C0', crab:'#A0A0A0', accent:'#D3D3D3', silver:true },
+  { id:'diamond',  name:'钻石星辰',   price:300, bg1:'#E0F8FF', bg2:'#B0E8FF', dot:'rgba(173,216,230,0.5)', block:'#ADD8E6', crab:'#8AC4D0', accent:'#B0C4DE', diamond:true },
+  { id:'ruby',     name:'红宝石光',   price:300, bg1:'#FFE8E8', bg2:'#FFD0D0', dot:'rgba(220,20,60,0.4)',   block:'#DC143C', crab:'#B01030', accent:'#FF69B4', ruby:true },
+  { id:'emerald',  name:'祖母绿林',   price:300, bg1:'#E0FFE0', bg2:'#B0FFB0', dot:'rgba(0,255,0,0.3)',    block:'#00FF00', crab:'#00CC00', accent:'#32CD32', emerald:true },
+  { id:'sapphire', name:'蓝宝石海',   price:300, bg1:'#E0F0FF', bg2:'#B0D8FF', dot:'rgba(30,144,255,0.4)',  block:'#4169E1', crab:'#2850C0', accent:'#00BFFF', sapphire:true },
+  { id:'amethyst', name:'紫水晶晶',   price:300, bg1:'#F8E8FF', bg2:'#F0D0FF', dot:'rgba(148,0,211,0.4)',  block:'#9400D3', crab:'#7400B0', accent:'#BA55D3', amethyst:true },
+  { id:'topaz',    name:'黄玉阳光',   price:300, bg1:'#FFF8E0', bg2:'#FFE8B0', dot:'rgba(255,215,0,0.4)',  block:'#FFC125', crab:'#D4A017', accent:'#FFD700', topaz:true },
 ];
+
+// 当前游戏使用的主题（随机选择）
+let currentGameTheme = null;
+
+// 获取随机主题
+function getRandomTheme() {
+  return THEMES[Math.floor(Math.random() * THEMES.length)];
+}
+
+// 应用主题到游戏
+function applyThemeToGame(theme) {
+  if(!theme) return;
+  currentGameTheme = theme;
+  
+  // 更新 CSS 变量
+  document.documentElement.style.setProperty('--bg-1', theme.bg1);
+  document.documentElement.style.setProperty('--bg-2', theme.bg2);
+  document.documentElement.style.setProperty('--dot-color', theme.dot);
+  
+  // 存储当前主题
+  Storage.setCurrentTheme(theme.id);
+}
+
+// 获取当前游戏主题
+function getCurrentGameTheme() {
+  return currentGameTheme;
+}
+
+// 渲染主题选择器
+function renderThemeSelector(containerId) {
+  const container = document.getElementById(containerId);
+  if(!container) return;
+  
+  container.innerHTML = THEMES.map(theme => `
+    <div class="theme-item ${Storage.hasTheme(theme.id) ? 'unlocked' : 'locked'}" 
+         data-theme-id="${theme.id}"
+         onclick="selectTheme('${theme.id}')">
+      <div class="theme-preview" style="background: linear-gradient(135deg, ${theme.bg1}, ${theme.bg2})">
+        ${theme.rainbow ? '<span class="theme-emoji">🌈</span>' : ''}
+        ${theme.neon ? '<span class="theme-emoji">💡</span>' : ''}
+        ${theme.holo ? '<span class="theme-emoji">🔮</span>' : ''}
+        ${theme.cyber ? '<span class="theme-emoji">🤖</span>' : ''}
+        ${theme.fruit ? `<span class="theme-emoji">${theme.fruit}</span>` : ''}
+        ${theme.candy ? `<span class="theme-emoji">${theme.candy}</span>` : ''}
+        ${theme.nature ? `<span class="theme-emoji">${theme.nature}</span>` : ''}
+        ${theme.magic ? `<span class="theme-emoji">${theme.magic}</span>` : ''}
+        ${theme.holiday ? `<span class="theme-emoji">${theme.holiday}</span>` : ''}
+        ${theme.game ? `<span class="theme-emoji">${theme.game}</span>` : ''}
+        ${theme.retro ? '<span class="theme-emoji">👾</span>' : ''}
+        ${theme.steam ? '<span class="theme-emoji">⚙️</span>' : ''}
+        ${theme.vapor ? '<span class="theme-emoji">💠</span>' : ''}
+        ${theme.pastel ? '<span class="theme-emoji">🌸</span>' : ''}
+        ${theme.harajuku ? '<span class="theme-emoji">💜</span>' : ''}
+        ${theme.cottage ? '<span class="theme-emoji">🏡</span>' : ''}
+        ${theme.zen ? '<span class="theme-emoji">🎋</span>' : ''}
+        ${theme.gold ? '<span class="theme-emoji">👑</span>' : ''}
+        ${theme.silver ? '<span class="theme-emoji">🥈</span>' : ''}
+        ${theme.diamond ? '<span class="theme-emoji">💎</span>' : ''}
+        ${theme.ruby ? '<span class="theme-emoji">💎</span>' : ''}
+        ${theme.emerald ? '<span class="theme-emoji">💎</span>' : ''}
+        ${theme.sapphire ? '<span class="theme-emoji">💎</span>' : ''}
+        ${theme.amethyst ? '<span class="theme-emoji">💎</span>' : ''}
+        ${theme.topaz ? '<span class="theme-emoji">💎</span>' : ''}
+      </div>
+      <div class="theme-name">${theme.name}</div>
+      <div class="theme-price">${Storage.hasTheme(theme.id) ? '已解锁' : (theme.price === 0 ? '免费' : '💰' + theme.price)}</div>
+    </div>
+  `).join('');
+}
+
+// 选择主题
+function selectTheme(themeId) {
+  const theme = THEMES.find(t => t.id === themeId);
+  if(!theme) return;
+  
+  if(!Storage.hasTheme(theme.id) && theme.price > 0) {
+    // 需要购买
+    if(Storage.getCoins() >= theme.price) {
+      Storage.setCoins(Storage.getCoins() - theme.price);
+      Storage.unlockTheme(theme.id);
+      toast('主题已解锁！');
+      Storage.addRedeemHistory(theme.id, '购买主题：' + theme.name);
+      renderThemeSelector('theme-selector');
+    } else {
+      toast('金币不足！');
+    }
+    return;
+  }
+  
+  // 应用主题
+  Storage.setCurrentWall(theme.id);
+  Shop.updateWallpaperPreview();
+  toast('主题已应用：' + theme.name);
+}
+
+// 获取当前主题预览
+function getThemePreview(themeId) {
+  const theme = THEMES.find(t => t.id === themeId);
+  if(!theme) return '';
+  return `linear-gradient(135deg, ${theme.bg1}, ${theme.bg2})`;
+}
+
+// 游戏开始时随机选择主题
+function startGameWithRandomTheme() {
+  // 解锁的主题列表
+  const unlockedThemes = THEMES.filter(t => Storage.hasTheme(t.id));
+  
+  if(unlockedThemes.length === 0) {
+    // 没有解锁的主题，使用默认主题
+    applyThemeToGame(THEMES[0]);
+    return;
+  }
+  
+  // 随机选择一个已解锁的主题
+  const randomTheme = unlockedThemes[Math.floor(Math.random() * unlockedThemes.length)];
+  applyThemeToGame(randomTheme);
+  
+  // 显示主题名称
+  toast('🎨 ' + randomTheme.name);
+}
 
 /* ============ 3. Character drawing (origin = feet center) ============ */
 function drawCompassCharacter(ctx,size,t){
@@ -1875,17 +2160,21 @@ const Shop = {
   skinIndex:0,
   wallIndex:0,
   get currentSkin(){ return SKINS[this.skinIndex]; },
-  get currentWall(){ return WALLPAPERS[this.wallIndex]; },
+  get currentWall(){ return THEMES[this.wallIndex] || THEMES[0]; },
   render(){
     this.skinIndex = Math.max(0, SKINS.findIndex(s=>s.id===Storage.getCurrent()));
     if(this.skinIndex<0) this.skinIndex=0;
-    this.wallIndex = Math.max(0, WALLPAPERS.findIndex(w=>w.id===Storage.getCurrentWall()));
+    this.wallIndex = Math.max(0, THEMES.findIndex(w=>w.id===Storage.getCurrentWall()));
     if(this.wallIndex<0) this.wallIndex=0;
     document.getElementById('shop-coins').textContent = Storage.getCoins();
     this.switchTab(this.tab);
     this._ro=this._ro||new ResizeObserver(()=>{this.drawCurrent();});
     const stage=document.querySelector('.shop-stage');
     if(stage && !stage.dataset.bound) { this._ro.observe(stage); stage.dataset.bound='1'; }
+    // 渲染主题选择器
+    if(typeof renderThemeSelector === 'function') {
+      renderThemeSelector('theme-selector');
+    }
   },
   switchTab(tab){
     this.tab = tab;
@@ -1969,7 +2258,7 @@ const Shop = {
         wrap.appendChild(item);
       });
     } else {
-      WALLPAPERS.forEach((w,i)=>{
+      THEMES.forEach((w,i)=>{
         const item=document.createElement('div');
         item.className='preview-item wallpaper-preview-item';
         if(w.id===this.currentWall.id) item.classList.add('selected');
@@ -2403,6 +2692,9 @@ const Game = {
   ],
 
   start(){
+    // 随机选择主题
+    startGameWithRandomTheme();
+    
     this.running=true;
     this.score=0; this.combo=0; this.perfectStreak=0;
     this.blocks=[];
@@ -3602,11 +3894,11 @@ function init(){
     Shop.drawCurrent(); Shop.drawPreview(); Shop.updateAction(); Shop.updateTitle();
   });
   document.getElementById('btn-wall-prev').addEventListener('click',()=>{
-    Shop.wallIndex=(Shop.wallIndex-1+WALLPAPERS.length)%WALLPAPERS.length;
+    Shop.wallIndex=(Shop.wallIndex-1+THEMES.length)%THEMES.length;
     Shop.drawCurrent(); Shop.drawPreview(); Shop.updateAction(); Shop.updateTitle();
   });
   document.getElementById('btn-wall-next').addEventListener('click',()=>{
-    Shop.wallIndex=(Shop.wallIndex+1)%WALLPAPERS.length;
+    Shop.wallIndex=(Shop.wallIndex+1)%THEMES.length;
     Shop.drawCurrent(); Shop.drawPreview(); Shop.updateAction(); Shop.updateTitle();
   });
   document.querySelectorAll('.shop-tab').forEach(tab=>{
