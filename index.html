@@ -40,7 +40,7 @@ svg{display:block}
   overflow:hidden;
 }
 @media(orientation:landscape){
-  .app{background:linear-gradient(180deg,#C9BEDF 0%,#B0A4D2 100%)}
+  .app{background:linear-gradient(180deg,var(--bg-1) 0%,var(--bg-2) 100%)}
   .app-inner{
     width:min(100vw,56.25vh);height:min(100vh,177.78vw);
     top:50%;left:50%;transform:translate(-50%,-50%);
@@ -153,9 +153,6 @@ svg{display:block}
   display:flex;align-items:center;justify-content:center;
   height:42vh;min-height:280px;padding:0 16px;
 }
-.shop-stage-wallpaper{
-  height:38vh;min-height:260px;
-}
 .shop-character{
   width:60vw;max-width:300px;height:100%;
   display:flex;align-items:center;justify-content:center;
@@ -168,29 +165,7 @@ svg{display:block}
   font-size:14px;padding:4px 14px;border-radius:14px;
   white-space:nowrap;
 }
-.shop-wallpaper-preview{
-  width:55vw;max-width:260px;height:100%;
-  display:flex;align-items:center;justify-content:center;
-  position:relative;
-}
-.wallpaper-preview-box{
-  width:100%;height:85%;
-  border-radius:24px;
-  overflow:hidden;
-  position:relative;
-  box-shadow:var(--shadow-lg);
-}
-.wallpaper-preview-bg{
-  position:absolute;inset:0;
-  background:linear-gradient(180deg,var(--bg-1) 0%,var(--bg-2) 100%);
-}
-.wallpaper-preview-dots{
-  position:absolute;inset:0;
-  background-image:radial-gradient(rgba(255,255,255,0.4) 1.5px, transparent 1.5px);
-  background-size:24px 24px;
-}
-
-/* 主题预览样式 */
+/* 主题选择器样式 */
 .theme-selector{
   display:grid;
   grid-template-columns:repeat(auto-fill, minmax(90px, 1fr));
@@ -198,10 +173,22 @@ svg{display:block}
   padding:12px 16px;
   max-height:400px;
   overflow-y:auto;
+  width:100%;
+  box-sizing:border-box;
 }
 .theme-selector::-webkit-scrollbar{width:6px}
 .theme-selector::-webkit-scrollbar-track{background:rgba(0,0,0,0.1);border-radius:3px}
 .theme-selector::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.2);border-radius:3px}
+.shop-stage-theme{
+  width:100%;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding:0;
+  min-height:300px;
+  max-height:400px;
+  overflow:hidden;
+}
 .theme-item{
   display:flex;
   flex-direction:column;
@@ -219,7 +206,7 @@ svg{display:block}
   transform:translateY(-2px);
 }
 .theme-item.selected{
-  border-color:var(--green);
+  border-color:var(--green, #4ade80);
   background:rgba(74,222,128,0.1);
 }
 .theme-item.locked{
@@ -992,7 +979,7 @@ svg{display:block}
       </div>
       <div class="shop-tabs">
         <button class="shop-tab active" data-tab="skin">物品样式</button>
-        <button class="shop-tab" data-tab="wallpaper">主题壁纸</button>
+        <button class="shop-tab" data-tab="theme">主题</button>
       </div>
       <div class="shop-stage" id="shop-stage-skin">
         <button class="btn-arrow" id="btn-skin-prev" aria-label="上一个">
@@ -1006,22 +993,9 @@ svg{display:block}
           <svg><use href="#i-tri-right"/></svg>
         </button>
       </div>
-      <div class="shop-stage shop-stage-wallpaper" id="shop-stage-wallpaper" style="display:none">
-        <button class="btn-arrow" id="btn-wall-prev" aria-label="上一个">
-          <svg><use href="#i-tri-left"/></svg>
-        </button>
-        <div class="shop-wallpaper-preview">
-          <div class="wallpaper-preview-box" id="wallpaper-preview-box">
-            <div class="wallpaper-preview-bg"></div>
-            <div class="wallpaper-preview-dots"></div>
-          </div>
-          <div class="shop-name-overlay" id="shop-wall-overlay">淡紫初心</div>
-        </div>
-        <button class="btn-arrow" id="btn-wall-next" aria-label="下一个">
-          <svg><use href="#i-tri-right"/></svg>
-        </button>
+      <div class="shop-stage shop-stage-theme" id="shop-stage-theme" style="display:none">
+        <div class="theme-selector" id="theme-selector"></div>
       </div>
-      <div class="theme-selector" id="theme-selector"></div>
       <div class="shop-preview" id="shop-preview"></div>
       <div class="btn-action-wrap">
         <button class="btn-action" id="btn-skin-action">使用中</button>
@@ -2238,39 +2212,17 @@ function renderThemeSelector(containerId) {
   const container = document.getElementById(containerId);
   if(!container) return;
   
+  const currentThemeId = Storage.getCurrentWall();
+  
   container.innerHTML = THEMES.map(theme => `
-    <div class="theme-item ${Storage.hasTheme(theme.id) ? 'unlocked' : 'locked'}" 
+    <div class="theme-item ${Storage.hasTheme(theme.id) ? 'unlocked' : 'locked'} ${theme.id === currentThemeId ? 'selected' : ''}" 
          data-theme-id="${theme.id}"
          onclick="selectTheme('${theme.id}')">
       <div class="theme-preview" style="background: linear-gradient(135deg, ${theme.bg1}, ${theme.bg2})">
-        ${theme.rainbow ? '<span class="theme-emoji">🌈</span>' : ''}
-        ${theme.neon ? '<span class="theme-emoji">💡</span>' : ''}
-        ${theme.holo ? '<span class="theme-emoji">🔮</span>' : ''}
-        ${theme.cyber ? '<span class="theme-emoji">🤖</span>' : ''}
-        ${theme.fruit ? `<span class="theme-emoji">${theme.fruit}</span>` : ''}
-        ${theme.candy ? `<span class="theme-emoji">${theme.candy}</span>` : ''}
-        ${theme.nature ? `<span class="theme-emoji">${theme.nature}</span>` : ''}
-        ${theme.magic ? `<span class="theme-emoji">${theme.magic}</span>` : ''}
-        ${theme.holiday ? `<span class="theme-emoji">${theme.holiday}</span>` : ''}
-        ${theme.game ? `<span class="theme-emoji">${theme.game}</span>` : ''}
-        ${theme.retro ? '<span class="theme-emoji">👾</span>' : ''}
-        ${theme.steam ? '<span class="theme-emoji">⚙️</span>' : ''}
-        ${theme.vapor ? '<span class="theme-emoji">💠</span>' : ''}
-        ${theme.pastel ? '<span class="theme-emoji">🌸</span>' : ''}
-        ${theme.harajuku ? '<span class="theme-emoji">💜</span>' : ''}
-        ${theme.cottage ? '<span class="theme-emoji">🏡</span>' : ''}
-        ${theme.zen ? '<span class="theme-emoji">🎋</span>' : ''}
-        ${theme.gold ? '<span class="theme-emoji">👑</span>' : ''}
-        ${theme.silver ? '<span class="theme-emoji">🥈</span>' : ''}
-        ${theme.diamond ? '<span class="theme-emoji">💎</span>' : ''}
-        ${theme.ruby ? '<span class="theme-emoji">💎</span>' : ''}
-        ${theme.emerald ? '<span class="theme-emoji">💎</span>' : ''}
-        ${theme.sapphire ? '<span class="theme-emoji">💎</span>' : ''}
-        ${theme.amethyst ? '<span class="theme-emoji">💎</span>' : ''}
-        ${theme.topaz ? '<span class="theme-emoji">💎</span>' : ''}
+        <span class="theme-emoji">${theme.emoji || '🎨'}</span>
       </div>
       <div class="theme-name">${theme.name}</div>
-      <div class="theme-price">${Storage.hasTheme(theme.id) ? '已解锁' : (theme.price === 0 ? '免费' : '💰' + theme.price)}</div>
+      <div class="theme-price">${Storage.hasTheme(theme.id) ? (theme.id === currentThemeId ? '使用中' : '已解锁') : (theme.price === 0 ? '免费' : '💰' + theme.price)}</div>
     </div>
   `).join('');
 }
@@ -2287,7 +2239,13 @@ function selectTheme(themeId) {
       Storage.unlockTheme(theme.id);
       toast('主题已解锁！');
       Storage.addRedeemHistory(theme.id, '购买主题：' + theme.name);
+      // 应用主题
+      applyThemeToGame(theme);
+      Storage.setCurrentWall(theme.id);
       renderThemeSelector('theme-selector');
+      // 更新商店金币显示
+      const shopCoins = document.getElementById('shop-coins');
+      if(shopCoins) shopCoins.textContent = Storage.getCoins();
     } else {
       toast('金币不足！');
     }
@@ -2295,9 +2253,12 @@ function selectTheme(themeId) {
   }
   
   // 应用主题
+  applyThemeToGame(theme);
   Storage.setCurrentWall(theme.id);
-  Shop.updateWallpaperPreview();
   toast('主题已应用：' + theme.name);
+  
+  // 重新渲染主题选择器以更新选中状态
+  renderThemeSelector('theme-selector');
 }
 
 // 获取当前主题预览
@@ -2826,13 +2787,17 @@ const Shop = {
   tab:'skin',
   skinIndex:0,
   wallIndex:0,
+  themeIndex:0,
   get currentSkin(){ return SKINS[this.skinIndex]; },
+  get currentTheme(){ return THEMES[this.themeIndex] || THEMES[0]; },
   get currentWall(){ return THEMES[this.wallIndex] || THEMES[0]; },
   render(){
     this.skinIndex = Math.max(0, SKINS.findIndex(s=>s.id===Storage.getCurrent()));
     if(this.skinIndex<0) this.skinIndex=0;
     this.wallIndex = Math.max(0, THEMES.findIndex(w=>w.id===Storage.getCurrentWall()));
     if(this.wallIndex<0) this.wallIndex=0;
+    this.themeIndex = Math.max(0, THEMES.findIndex(t=>t.id===Storage.getCurrentTheme()));
+    if(this.themeIndex<0) this.themeIndex=0;
     document.getElementById('shop-coins').textContent = Storage.getCoins();
     this.switchTab(this.tab);
     this._ro=this._ro||new ResizeObserver(()=>{this.drawCurrent();});
@@ -2849,21 +2814,24 @@ const Shop = {
       t.classList.toggle('active', t.dataset.tab===tab);
     });
     document.getElementById('shop-stage-skin').style.display = tab==='skin' ? 'flex' : 'none';
-    document.getElementById('shop-stage-wallpaper').style.display = tab==='wallpaper' ? 'flex' : 'none';
+    document.getElementById('shop-stage-theme').style.display = tab==='theme' ? 'flex' : 'none';
+    document.getElementById('shop-preview').style.display = tab==='skin' ? 'block' : 'none';
+    document.getElementById('btn-skin-action').style.display = tab==='skin' ? 'block' : 'none';
     this.drawCurrent();
     this.drawPreview();
     this.updateAction();
     this.updateTitle();
   },
   updateTitle(){
-    const title = this.tab==='skin' ? this.currentSkin.name : this.currentWall.name;
-    document.getElementById('shop-skin-name').textContent = title;
+    if(this.tab==='skin'){
+      document.getElementById('shop-skin-name').textContent = this.currentSkin.name;
+    } else {
+      document.getElementById('shop-skin-name').textContent = '主题选择';
+    }
   },
   drawCurrent(){
     if(this.tab==='skin'){
       this.drawMainSkin();
-    } else {
-      this.drawMainWallpaper();
     }
   },
   drawMainSkin(){
@@ -2884,14 +2852,6 @@ const Shop = {
     drawCharacter(ctx,this.currentSkin.id,Math.min(rect.width*0.6,rect.height*0.7),performance.now());
     ctx.restore();
     document.getElementById('shop-skin-overlay').textContent=this.currentSkin.name;
-  },
-  drawMainWallpaper(){
-    const wall = this.currentWall;
-    const bg = document.querySelector('.wallpaper-preview-bg');
-    const dots = document.querySelector('.wallpaper-preview-dots');
-    if(bg) bg.style.background = `linear-gradient(180deg, ${wall.bg1} 0%, ${wall.bg2} 100%)`;
-    if(dots) dots.style.backgroundImage = `radial-gradient(${wall.dot} 1.5px, transparent 1.5px)`;
-    document.getElementById('shop-wall-overlay').textContent = wall.name;
   },
   drawPreview(){
     const wrap=document.getElementById('shop-preview');
@@ -2924,32 +2884,6 @@ const Shop = {
         });
         wrap.appendChild(item);
       });
-    } else {
-      THEMES.forEach((w,i)=>{
-        const item=document.createElement('div');
-        item.className='preview-item wallpaper-preview-item';
-        if(w.id===this.currentWall.id) item.classList.add('selected');
-        if(!Storage.hasWall(w.id)) item.classList.add('locked');
-        const thumb=document.createElement('div');
-        thumb.className='wallpaper-thumb';
-        thumb.style.background = `linear-gradient(180deg, ${w.bg1} 0%, ${w.bg2} 100%)`;
-        thumb.style.position='relative';
-        thumb.innerHTML = `<div style="position:absolute;inset:0;background-image:radial-gradient(${w.dot} 1px, transparent 1px);background-size:12px 12px;border-radius:14px;"></div>`;
-        item.appendChild(thumb);
-        if(!Storage.hasWall(w.id)){
-          const lock=document.createElement('div');
-          lock.className='lock'; lock.textContent='🔒';
-          item.appendChild(lock);
-        }
-        item.addEventListener('click',()=>{
-          this.wallIndex=i;
-          this.drawCurrent();
-          this.drawPreview();
-          this.updateAction();
-          this.updateTitle();
-        });
-        wrap.appendChild(item);
-      });
     }
   },
   updateAction(){
@@ -2973,21 +2907,6 @@ const Shop = {
         btn.disabled=Storage.getCoins()<s.price;
         btn.onclick=()=>this.unlockSkin();
       }
-    } else {
-      const w=this.currentWall;
-      if(w.id===Storage.getCurrentWall()){
-        btn.innerHTML='使用中';
-        btn.disabled=true;
-        btn.onclick=null;
-      } else if(Storage.hasWall(w.id)){
-        btn.innerHTML='使 用';
-        btn.disabled=false;
-        btn.onclick=()=>this.equipWall();
-      } else {
-        btn.innerHTML=`<span class="price"><svg><use href="#i-coin"/></svg>${w.price} 解锁</span>`;
-        btn.disabled=Storage.getCoins()<w.price;
-        btn.onclick=()=>this.unlockWall();
-      }
     }
   },
   equipSkin(){
@@ -3010,32 +2929,6 @@ const Shop = {
     document.getElementById('shop-coins').textContent=Storage.getCoins();
     toast('已解锁 '+s.name);
   },
-  equipWall(){
-    Storage.setCurrentWall(this.currentWall.id);
-    this.applyWallpaper();
-    this.updateAction();
-    this.drawPreview();
-    drawHomeCharacter();
-    toast('已使用 '+this.currentWall.name);
-  },
-  unlockWall(){
-    const w=this.currentWall;
-    if(Storage.getCoins()<w.price){toast('金币不足');return;}
-    Storage.setCoins(Storage.getCoins()-w.price);
-    Storage.unlockWall(w.id);
-    Storage.setCurrentWall(w.id);
-    this.applyWallpaper();
-    this.updateAction();
-    this.drawPreview();
-    drawHomeCharacter();
-    document.getElementById('shop-coins').textContent=Storage.getCoins();
-    toast('已解锁 '+w.name);
-  },
-  applyWallpaper(){
-    const wall = Storage.getWallpaper();
-    document.documentElement.style.setProperty('--bg-1', wall.bg1);
-    document.documentElement.style.setProperty('--bg-2', wall.bg2);
-  }
 };
 
 /* ============ 6. Lottery ============ */
@@ -4519,7 +4412,6 @@ function drawHomeCharacter(){
 }
 
 function init(){
-  Shop.applyWallpaper();
   drawHomeCharacter();
   // Home buttons
   document.getElementById('btn-start').addEventListener('click',()=>Router.show('play'));
@@ -4548,6 +4440,13 @@ function init(){
     DevPanel.toggle();
   });
 
+  // 初始化主题
+  (function initTheme(){
+    const themeId = Storage.getCurrentTheme();
+    const theme = THEMES.find(t => t.id === themeId) || THEMES[0];
+    applyThemeToGame(theme);
+  })();
+  
   // Init dev panel
   DevPanel.init();
 
@@ -4558,14 +4457,6 @@ function init(){
   });
   document.getElementById('btn-skin-next').addEventListener('click',()=>{
     Shop.skinIndex=(Shop.skinIndex+1)%SKINS.length;
-    Shop.drawCurrent(); Shop.drawPreview(); Shop.updateAction(); Shop.updateTitle();
-  });
-  document.getElementById('btn-wall-prev').addEventListener('click',()=>{
-    Shop.wallIndex=(Shop.wallIndex-1+THEMES.length)%THEMES.length;
-    Shop.drawCurrent(); Shop.drawPreview(); Shop.updateAction(); Shop.updateTitle();
-  });
-  document.getElementById('btn-wall-next').addEventListener('click',()=>{
-    Shop.wallIndex=(Shop.wallIndex+1)%THEMES.length;
     Shop.drawCurrent(); Shop.drawPreview(); Shop.updateAction(); Shop.updateTitle();
   });
   document.querySelectorAll('.shop-tab').forEach(tab=>{
