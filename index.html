@@ -1459,14 +1459,14 @@ const Storage = {
   hasFreeLottery(){return localStorage.getItem(this.K_FREE_LOTTERY)!==this.getTodayStr();},
   useFreeLottery(){localStorage.setItem(this.K_FREE_LOTTERY,this.getTodayStr());},
   // 主题相关方法
-  getUnlockedThemes(){try{return JSON.parse(localStorage.getItem(this.K_THEMES)||'["purple","pink","blue"]');}catch(e){return['purple','pink','blue'];}},
+  getUnlockedThemes(){try{return JSON.parse(localStorage.getItem(this.K_THEMES)||'["purple","pink","blue","mint","peach"]');}catch(e){return['purple','pink','blue','mint','peach'];}},
   setUnlockedThemes(arr){localStorage.setItem(this.K_THEMES,JSON.stringify(arr));},
   unlockTheme(id){const arr=this.getUnlockedThemes();if(!arr.includes(id)){arr.push(id);this.setUnlockedThemes(arr);}},
   hasTheme(id){return this.getUnlockedThemes().includes(id);},
   setCurrentTheme(id){localStorage.setItem(this.K_CURRENT_THEME,id);},
   getCurrentTheme(){return localStorage.getItem(this.K_CURRENT_THEME)||'purple';},
   // 我的主题列表（用户收藏的主题）
-  getMyThemes(){try{return JSON.parse(localStorage.getItem(this.K_MY_THEMES)||'["purple"]');}catch(e){return['purple'];}},
+  getMyThemes(){try{return JSON.parse(localStorage.getItem(this.K_MY_THEMES)||'["purple","pink","blue","mint","peach"]');}catch(e){return['purple','pink','blue','mint','peach'];}},
   setMyThemes(arr){localStorage.setItem(this.K_MY_THEMES,JSON.stringify(arr));},
   addMyTheme(id){const arr=this.getMyThemes();if(!arr.includes(id)){arr.push(id);this.setMyThemes(arr);}},
   removeMyTheme(id){const arr=this.getMyThemes();const idx=arr.indexOf(id);if(idx>-1){arr.splice(idx,1);this.setMyThemes(arr);}},
@@ -3924,9 +3924,12 @@ const Game = {
   draw(){
     const ctx=this.ctx;
 
+    // 使用当前主题的背景色
+    const bg1 = getComputedStyle(document.documentElement).getPropertyValue('--bg-1').trim() || '#F0EAF8';
+    const bg2 = getComputedStyle(document.documentElement).getPropertyValue('--bg-2').trim() || '#DCD0F0';
     const grd=ctx.createLinearGradient(0,0,0,this.H);
-    grd.addColorStop(0,'#F0EAF8');
-    grd.addColorStop(1,'#DCD0F0');
+    grd.addColorStop(0, bg1);
+    grd.addColorStop(1, bg2);
     ctx.fillStyle=grd;
     ctx.fillRect(0,0,this.W,this.H);
 
@@ -3959,7 +3962,8 @@ const Game = {
   },
 
   drawBgDots(ctx){
-    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    const dotColor = getComputedStyle(document.documentElement).getPropertyValue('--dot-color').trim() || 'rgba(255,255,255,0.3)';
+    ctx.fillStyle = dotColor;
     const spacing = 50;
     const offsetX = (this.camera.x * 0.3) % spacing;
     const offsetY = (this.camera.y * 0.2) % spacing;
@@ -4583,6 +4587,14 @@ function init(){
 
   // Init dev panel
   DevPanel.init();
+
+  // 初始化主页主题（使用我的主题列表中的第一个主题）
+  (function initHomeTheme(){
+    const myThemes = Storage.getMyThemes();
+    let themeId = myThemes.length > 0 ? myThemes[0] : 'purple';
+    const theme = THEMES.find(t => t.id === themeId) || THEMES[0];
+    applyThemeToGame(theme);
+  })();
 
   // Shop arrows
   document.getElementById('btn-skin-prev').addEventListener('click',()=>{
