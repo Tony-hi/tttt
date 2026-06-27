@@ -6602,6 +6602,19 @@ const TutorialGuide = {
 };
 
 function init(){
+  // 首次用户交互时激活音频上下文
+  const unlockAudio = () => {
+    if(Sound.ctx && Sound.ctx.state === 'suspended') {
+      Sound.ctx.resume();
+    }
+    document.removeEventListener('click', unlockAudio);
+    document.removeEventListener('touchstart', unlockAudio);
+    document.removeEventListener('keydown', unlockAudio);
+  };
+  document.addEventListener('click', unlockAudio);
+  document.addEventListener('touchstart', unlockAudio);
+  document.addEventListener('keydown', unlockAudio);
+  
   // 检查是否需要显示新手引导（只在第一次进入时显示）
   if(!Storage.isTutorialDone()) {
     setTimeout(() => TutorialGuide.show(), 500);
