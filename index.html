@@ -5278,7 +5278,7 @@ const SoundSettings = {
       setTimeout(() => Sound.playUnlock(), 3000);
       setTimeout(() => Sound.playPurchase(), 3500);
       setTimeout(() => Sound.playVictory(), 4000);
-      setTimeout(() => Sound.playFail(), 4800);
+      setTimeout(() => Sound.playVictory(), 4800);
     };
     
     Router.show('sound');
@@ -5883,7 +5883,7 @@ const Game = {
   end(revive){
     this.running=false;
     cancelAnimationFrame(this.rafId);
-    Sound.playFail();
+    Sound.playVictory();
     const best=Storage.getBest();
     const fmt = (n) => n < 100 ? String(n).padStart(2,'0') : String(n);
     document.getElementById('stat-best').textContent = fmt(best);
@@ -6355,7 +6355,7 @@ function toast(msg, type){
   if(type === 'success') {
     Sound.playSuccess();
   } else if(type === 'error') {
-    Sound.playError();
+    Sound.playVictory();
   } else if(type === 'coin') {
     Sound.playCoin();
   }
@@ -6693,7 +6693,7 @@ function init(){
       Sound.playBigReward();
       setTimeout(()=>{hideModal('modal-redeem');msgEl.textContent='';},900);
     } else {
-      Sound.playError();
+      Sound.playVictory();
     }
   });
   document.getElementById('btn-redeem-cancel').addEventListener('click',()=>hideModal('modal-redeem'));
