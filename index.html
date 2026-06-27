@@ -4523,6 +4523,13 @@ const Sound = {
       this.ctx = new (window.AudioContext || window.webkitAudioContext)();
       this.enabled = Storage.getSoundEnabled();
       this.volume = Storage.getSoundVolume();
+      // 如果 localStorage 中没有设置过，写入默认值
+      if(localStorage.getItem('jbc.soundEnabled') === null) {
+        Storage.setSoundEnabled(true);
+      }
+      if(localStorage.getItem('jbc.soundVolume') === null) {
+        Storage.setSoundVolume(0.7);
+      }
     } catch(e) {
       console.warn('Web Audio API not supported:', e);
       this.enabled = false;
@@ -6602,6 +6609,9 @@ const TutorialGuide = {
 };
 
 function init(){
+  // 立即初始化音效系统
+  Sound.init();
+  
   // 首次用户交互时激活音频上下文
   const unlockAudio = () => {
     if(Sound.ctx && Sound.ctx.state === 'suspended') {
