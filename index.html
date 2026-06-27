@@ -1161,6 +1161,7 @@ svg{display:block}
     <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
     <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></symbol>
     <symbol id="i-info" viewBox="0 0 48 48"><circle cx="24" cy="24" r="18" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="24" y1="14" x2="24" y2="26" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="24" cy="32" r="2.5" fill="currentColor"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 48 48"><path d="M14 18v12h8l10 8V10L22 18h-8z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><path d="M36 18c2 2 3 5 3 8s-1 6-3 8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M40 14c4 4 6 9 6 10s-2 6-6 10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></symbol>
   </defs>
 </svg>
 
@@ -1220,7 +1221,7 @@ svg{display:block}
           <span class="arrow-right"><svg width="20" height="20"><use href="#i-chevron-right"/></svg></span>
         </div>
         <div class="menu-card wide" id="sound-settings" data-target="sound">
-          <div class="icon">🔊</div>
+          <div class="icon"><svg><use href="#i-volume"/></svg></div>
           <span>音效设置</span>
           <span class="arrow-right"><svg width="20" height="20"><use href="#i-chevron-right"/></svg></span>
         </div>
@@ -1280,7 +1281,7 @@ svg{display:block}
           </label>
         </div>
         <div class="sound-preview">
-          <button class="btn-preview" id="btn-sound-preview">🔊 试听音效</button>
+          <button class="btn-preview" id="btn-sound-preview">试听音效</button>
         </div>
       </div>
     </section>
@@ -2702,7 +2703,7 @@ function selectTheme(themeId) {
   
   if(theme.price === 0) {
     Storage.unlockTheme(theme.id);
-    toast('主题已解锁！');
+    toast('主题已解锁！', 'success');
     renderThemeSelector('theme-selector');
     return;
   }
@@ -2714,7 +2715,7 @@ function selectTheme(themeId) {
       () => {
         Storage.setCoins(Storage.getCoins() - theme.price);
         Storage.unlockTheme(theme.id);
-        toast('主题已解锁！');
+        toast('主题已解锁！', 'success');
         Storage.addRedeemHistory(theme.id, '购买主题：' + theme.name);
         renderThemeSelector('theme-selector');
         const shopCoins = document.getElementById('shop-coins');
@@ -2722,7 +2723,7 @@ function selectTheme(themeId) {
       }
     );
   } else {
-    toast('金币不足！');
+    toast('金币不足！', 'error');
   }
 }
 
@@ -4143,12 +4144,12 @@ const Shop = {
     this.updateAction();
     this.drawPreview();
     drawHomeCharacter();
-    toast('已穿戴 '+this.currentSkin.name);
+    toast('已穿戴 '+this.currentSkin.name, 'success');
   },
   unlockSkin(){
     const s=this.currentSkin;
-    if(s.exclusive){toast('该皮肤仅可通过抽奖或兑换码获得');return;}
-    if(Storage.getCoins()<s.price){toast('金币不足');return;}
+    if(s.exclusive){toast('该皮肤仅可通过抽奖或兑换码获得', 'error');return;}
+    if(Storage.getCoins()<s.price){toast('金币不足', 'error');return;}
     showConfirmModal(
       `兑换「${s.name}」`,
       `确定要花费 ${s.price} 金币兑换此皮肤吗？`,
@@ -4160,7 +4161,7 @@ const Shop = {
         this.drawPreview();
         drawHomeCharacter();
         document.getElementById('shop-coins').textContent=Storage.getCoins();
-        toast('已解锁 '+s.name);
+        toast('已解锁 '+s.name, 'success');
       }
     );
   },
@@ -4215,7 +4216,7 @@ const Lottery = {
   roll(){
     if(this.rolling) return;
     const isFree=Storage.hasFreeLottery();
-    if(!isFree && Storage.getCoins()<LOTTERY_COST){toast('金币不足');return;}
+    if(!isFree && Storage.getCoins()<LOTTERY_COST){toast('金币不足', 'error');return;}
     this.rolling=true;
     if(!isFree){
       Storage.setCoins(Storage.getCoins()-LOTTERY_COST);
@@ -4225,6 +4226,7 @@ const Lottery = {
       this.updateFreeStatus();
       this.updateButton();
     }
+    Sound.playSwoosh();
     const box=document.querySelector('.lottery-box');
     box.classList.add('shaking');
     const stage=document.getElementById('lottery-stage');
@@ -4714,6 +4716,253 @@ const Sound = {
   
   getVolume() {
     return this.volume;
+  },
+  
+  playGameOver() {
+    if(!this.enabled || !this.ctx) return;
+    this.resume();
+    
+    const osc = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const gain2 = this.ctx.createGain();
+    
+    osc.connect(gain);
+    osc2.connect(gain2);
+    gain.connect(this.ctx.destination);
+    gain2.connect(this.ctx.destination);
+    
+    osc.type = 'sine';
+    osc2.type = 'triangle';
+    
+    osc.frequency.setValueAtTime(440, this.ctx.currentTime);
+    osc.frequency.setValueAtTime(349.23, this.ctx.currentTime + 0.2);
+    osc.frequency.setValueAtTime(293.66, this.ctx.currentTime + 0.4);
+    osc.frequency.setValueAtTime(220, this.ctx.currentTime + 0.6);
+    
+    osc2.frequency.setValueAtTime(220, this.ctx.currentTime);
+    osc2.frequency.setValueAtTime(174.61, this.ctx.currentTime + 0.2);
+    osc2.frequency.setValueAtTime(146.83, this.ctx.currentTime + 0.4);
+    osc2.frequency.setValueAtTime(110, this.ctx.currentTime + 0.6);
+    
+    gain.gain.setValueAtTime(this.volume * 0.4, this.ctx.currentTime);
+    gain.gain.setValueAtTime(this.volume * 0.4, this.ctx.currentTime + 0.5);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.8);
+    
+    gain2.gain.setValueAtTime(this.volume * 0.3, this.ctx.currentTime);
+    gain2.gain.setValueAtTime(this.volume * 0.3, this.ctx.currentTime + 0.5);
+    gain2.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.8);
+    
+    osc.start(this.ctx.currentTime);
+    osc.stop(this.ctx.currentTime + 0.8);
+    osc2.start(this.ctx.currentTime);
+    osc2.stop(this.ctx.currentTime + 0.8);
+  },
+  
+  playSuccess() {
+    if(!this.enabled || !this.ctx) return;
+    this.resume();
+    
+    const osc = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    
+    osc.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    osc.type = 'sine';
+    osc2.type = 'sine';
+    
+    osc.frequency.setValueAtTime(523.25, this.ctx.currentTime);
+    osc.frequency.setValueAtTime(659.25, this.ctx.currentTime + 0.08);
+    osc.frequency.setValueAtTime(783.99, this.ctx.currentTime + 0.16);
+    osc.frequency.setValueAtTime(1046.50, this.ctx.currentTime + 0.24);
+    
+    osc2.frequency.setValueAtTime(659.25, this.ctx.currentTime);
+    osc2.frequency.setValueAtTime(783.99, this.ctx.currentTime + 0.08);
+    osc2.frequency.setValueAtTime(1046.50, this.ctx.currentTime + 0.16);
+    osc2.frequency.setValueAtTime(1318.51, this.ctx.currentTime + 0.24);
+    
+    gain.gain.setValueAtTime(this.volume * 0.35, this.ctx.currentTime);
+    gain.gain.setValueAtTime(this.volume * 0.35, this.ctx.currentTime + 0.3);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.5);
+    
+    osc.start(this.ctx.currentTime);
+    osc.stop(this.ctx.currentTime + 0.5);
+    osc2.start(this.ctx.currentTime);
+    osc2.stop(this.ctx.currentTime + 0.5);
+  },
+  
+  playError() {
+    if(!this.enabled || !this.ctx) return;
+    this.resume();
+    
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+    osc.frequency.setValueAtTime(150, this.ctx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(100, this.ctx.currentTime + 0.2);
+    
+    gain.gain.setValueAtTime(this.volume * 0.2, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+    
+    osc.start(this.ctx.currentTime);
+    osc.stop(this.ctx.currentTime + 0.25);
+  },
+  
+  playPop() {
+    if(!this.enabled || !this.ctx) return;
+    this.resume();
+    
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(900, this.ctx.currentTime + 0.06);
+    
+    gain.gain.setValueAtTime(this.volume * 0.25, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+    
+    osc.start(this.ctx.currentTime);
+    osc.stop(this.ctx.currentTime + 0.08);
+  },
+  
+  playSwoosh() {
+    if(!this.enabled || !this.ctx) return;
+    this.resume();
+    
+    const bufferSize = this.ctx.sampleRate * 0.3;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const output = buffer.getChannelData(0);
+    
+    for(let i = 0; i < bufferSize; i++) {
+      output[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+    }
+    
+    const noise = this.ctx.createBufferSource();
+    const filter = this.ctx.createBiquadFilter();
+    const gain = this.ctx.createGain();
+    
+    noise.buffer = buffer;
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(200, this.ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(2000, this.ctx.currentTime + 0.2);
+    filter.Q.value = 1;
+    
+    gain.gain.setValueAtTime(this.volume * 0.3, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+    
+    noise.start(this.ctx.currentTime);
+    noise.stop(this.ctx.currentTime + 0.3);
+  },
+  
+  playCoin() {
+    if(!this.enabled || !this.ctx) return;
+    this.resume();
+    
+    const osc = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    
+    osc.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    osc.type = 'sine';
+    osc2.type = 'sine';
+    
+    osc.frequency.setValueAtTime(987.77, this.ctx.currentTime);
+    osc.frequency.setValueAtTime(1318.51, this.ctx.currentTime + 0.08);
+    
+    osc2.frequency.setValueAtTime(1318.51, this.ctx.currentTime + 0.05);
+    osc2.frequency.setValueAtTime(1760, this.ctx.currentTime + 0.13);
+    
+    gain.gain.setValueAtTime(this.volume * 0.3, this.ctx.currentTime);
+    gain.gain.setValueAtTime(this.volume * 0.3, this.ctx.currentTime + 0.15);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.3);
+    
+    osc.start(this.ctx.currentTime);
+    osc.stop(this.ctx.currentTime + 0.3);
+    osc2.start(this.ctx.currentTime + 0.05);
+    osc2.stop(this.ctx.currentTime + 0.3);
+  },
+  
+  playCharge() {
+    if(!this.enabled || !this.ctx) return;
+    this.resume();
+    
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(100, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(400, this.ctx.currentTime + 0.5);
+    
+    gain.gain.setValueAtTime(0, this.ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(this.volume * 0.15, this.ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(this.volume * 0.15, this.ctx.currentTime + 0.4);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.5);
+    
+    osc.start(this.ctx.currentTime);
+    osc.stop(this.ctx.currentTime + 0.5);
+  },
+  
+  playTada() {
+    if(!this.enabled || !this.ctx) return;
+    this.resume();
+    
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    const duration = 0.12;
+    
+    notes.forEach((freq, i) => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime + i * duration);
+      
+      gain.gain.setValueAtTime(0, this.ctx.currentTime + i * duration);
+      gain.gain.linearRampToValueAtTime(this.volume * 0.3, this.ctx.currentTime + i * duration + 0.02);
+      gain.gain.setValueAtTime(this.volume * 0.3, this.ctx.currentTime + i * duration + duration - 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + i * duration + duration);
+      
+      osc.start(this.ctx.currentTime + i * duration);
+      osc.stop(this.ctx.currentTime + i * duration + duration);
+    });
+    
+    const osc2 = this.ctx.createOscillator();
+    const gain2 = this.ctx.createGain();
+    osc2.connect(gain2);
+    gain2.connect(this.ctx.destination);
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(1046.50, this.ctx.currentTime + notes.length * duration);
+    osc2.frequency.setValueAtTime(1318.51, this.ctx.currentTime + notes.length * duration + 0.15);
+    gain2.gain.setValueAtTime(0, this.ctx.currentTime + notes.length * duration);
+    gain2.gain.linearRampToValueAtTime(this.volume * 0.35, this.ctx.currentTime + notes.length * duration + 0.05);
+    gain2.gain.setValueAtTime(this.volume * 0.35, this.ctx.currentTime + notes.length * duration + 0.2);
+    gain2.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + notes.length * duration + 0.4);
+    osc2.start(this.ctx.currentTime + notes.length * duration);
+    osc2.stop(this.ctx.currentTime + notes.length * duration + 0.4);
   }
 };
 
@@ -4741,9 +4990,12 @@ const SoundSettings = {
     
     previewBtn.onclick = () => {
       Sound.playClick();
-      setTimeout(() => Sound.playJump(0.8), 200);
-      setTimeout(() => Sound.playLand(1.2, 50), 500);
-      setTimeout(() => Sound.playPerfect(), 800);
+      setTimeout(() => Sound.playPop(), 150);
+      setTimeout(() => Sound.playJump(0.8), 300);
+      setTimeout(() => Sound.playLand(1.2, 50), 600);
+      setTimeout(() => Sound.playPerfect(), 900);
+      setTimeout(() => Sound.playCoin(), 1200);
+      setTimeout(() => Sound.playSuccess(), 1500);
     };
     
     Router.show('sound');
@@ -4843,6 +5095,8 @@ const Game = {
     this.particles=[];
     this.floatTexts=[];
     this.charging=false; this.power=0;
+    
+    Sound.playSwoosh();
 
     const initAngle = (Math.random() - 0.5) * 0.6;
     const initDist = 80 + Math.random() * 100;
@@ -5346,6 +5600,7 @@ const Game = {
   end(revive){
     this.running=false;
     cancelAnimationFrame(this.rafId);
+    Sound.playGameOver();
     const best=Storage.getBest();
     const fmt = (n) => n < 100 ? String(n).padStart(2,'0') : String(n);
     document.getElementById('stat-best').textContent = fmt(best);
@@ -5807,12 +6062,20 @@ function showConfirmModal(title, message, onConfirm){
   });
   showModal('modal-confirm');
 }
-function toast(msg){
+function toast(msg, type){
   const t=document.createElement('div');
   t.className='toast';
   t.textContent=msg;
   document.body.appendChild(t);
   setTimeout(()=>t.remove(),2000);
+  
+  if(type === 'success') {
+    Sound.playSuccess();
+  } else if(type === 'error') {
+    Sound.playError();
+  } else if(type === 'coin') {
+    Sound.playCoin();
+  }
 }
 
 /* ============ 9. Redeem codes ============ */
@@ -6031,11 +6294,13 @@ const TutorialGuide = {
     this.currentStep = 1;
     this.updateStep();
     showModal('modal-tutorial-guide');
+    Sound.playTada();
   },
   next() {
     if(this.currentStep < this.totalSteps) {
       this.currentStep++;
       this.updateStep();
+      Sound.playPop();
     }
   },
   updateStep() {
@@ -6049,6 +6314,7 @@ const TutorialGuide = {
   finish() {
     hideModal('modal-tutorial-guide');
     Storage.setTutorialDone();
+    Sound.playSuccess();
   }
 };
 
@@ -6344,6 +6610,27 @@ function init(){
 
   // Init game
   Game.init();
+  
+  // 全局按钮点击音效
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('button, .menu-card, .shop-tab, .theme-item, .skin-item');
+    if(btn && !btn.closest('.game-canvas-container') && !btn.closest('#play')) {
+      Sound.playClick();
+    }
+  });
+  
+  // 弹窗显示/隐藏音效
+  const originalShowModal = showModal;
+  window.showModal = function(id) {
+    Sound.playPop();
+    originalShowModal(id);
+  };
+  
+  const originalHideModal = hideModal;
+  window.hideModal = function(id) {
+    Sound.playSwoosh();
+    originalHideModal(id);
+  };
 }
 
 Game.revive=function(){
