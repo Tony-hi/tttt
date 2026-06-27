@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <!-- 身体（方块）正面 -->
+  <rect x="35" y="45" width="50" height="40" fill="#8B7BB5"/>
+  
+  <!-- 方块顶面（3D效果） -->
+  <polygon points="35,45 60,35 85,45 60,55" fill="#C4B5DC"/>
+  
+  <!-- 方块右面（3D效果） -->
+  <polygon points="85,45 60,35 60,85 85,85" fill="#A090C0"/>
+  
+  <!-- 眼睛 -->
+  <circle cx="50" cy="60" r="5" fill="#2A2640"/>
+  <circle cx="70" cy="60" r="5" fill="#2A2640"/>
+  
+  <!-- 眼睛高光 -->
+  <circle cx="52" cy="58" r="2" fill="#ffffff"/>
+  <circle cx="72" cy="58" r="2" fill="#ffffff"/>
+  
+  <!-- 腮红 -->
+  <ellipse cx="42" cy="70" rx="6" ry="4" fill="rgba(255,150,150,0.5)"/>
+  <ellipse cx="78" cy="70" rx="6" ry="4" fill="rgba(255,150,150,0.5)"/>
+  
+  <!-- 微笑 -->
+  <path d="M52 70 Q60 78 68 70" stroke="#2A2640" stroke-width="2" stroke-linecap="round" fill="none"/>
+</svg>
