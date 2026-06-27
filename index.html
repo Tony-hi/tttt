@@ -1857,7 +1857,21 @@ const Storage = {
   setMyThemes(arr){localStorage.setItem(this.K_MY_THEMES,JSON.stringify(arr));},
   addMyTheme(id){const arr=this.getMyThemes();if(!arr.includes(id)){arr.push(id);this.setMyThemes(arr);}},
   removeMyTheme(id){const arr=this.getMyThemes();const idx=arr.indexOf(id);if(idx>-1){arr.splice(idx,1);this.setMyThemes(arr);}},
-  hasMyTheme(id){return this.getMyThemes().includes(id);}
+  hasMyTheme(id){return this.getMyThemes().includes(id);},
+  getSoundEnabled() {
+    const val = localStorage.getItem('jbc.sound.on');
+    return val === null ? true : val === '1';
+  },
+  setSoundEnabled(enabled) {
+    localStorage.setItem('jbc.sound.on', enabled ? '1' : '0');
+  },
+  getSoundVolume() {
+    const val = localStorage.getItem('jbc.sound.vol');
+    return val === null ? 0.7 : parseFloat(val);
+  },
+  setSoundVolume(volume) {
+    localStorage.setItem('jbc.sound.vol', volume.toString());
+  }
 };
 
 /* ============ 2. Skins & Wallpapers ============ */
@@ -4491,24 +4505,6 @@ const MyThemes = {
   updateCount(){
     const count = Storage.getMyThemes().length;
     document.getElementById('my-themes-count').textContent = `当前已选择 ${count} 个主题`;
-  },
-  
-  getSoundEnabled() {
-    const val = localStorage.getItem('jbc.soundEnabled');
-    return val === null ? true : val === 'true';
-  },
-  
-  setSoundEnabled(enabled) {
-    localStorage.setItem('jbc.soundEnabled', enabled ? 'true' : 'false');
-  },
-  
-  getSoundVolume() {
-    const val = localStorage.getItem('jbc.soundVolume');
-    return val === null ? 0.7 : parseFloat(val);
-  },
-  
-  setSoundVolume(volume) {
-    localStorage.setItem('jbc.soundVolume', volume.toString());
   }
 };
 
@@ -4521,18 +4517,21 @@ const Sound = {
   init() {
     try {
       this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-      this.enabled = Storage.getSoundEnabled();
-      this.volume = Storage.getSoundVolume();
-      // 如果 localStorage 中没有设置过，写入默认值
-      if(localStorage.getItem('jbc.soundEnabled') === null) {
-        Storage.setSoundEnabled(true);
-      }
-      if(localStorage.getItem('jbc.soundVolume') === null) {
-        Storage.setSoundVolume(0.7);
-      }
     } catch(e) {
       console.warn('Web Audio API not supported:', e);
-      this.enabled = false;
+      this.ctx = null;
+    }
+    // 音效默认开启，从 localStorage 读取设置
+    this.enabled = Storage.getSoundEnabled();
+    this.volume = Storage.getSoundVolume();
+    // 确保默认值写入 localStorage
+    if(localStorage.getItem('jbc.sound.on') === null) {
+      Storage.setSoundEnabled(true);
+      this.enabled = true;
+    }
+    if(localStorage.getItem('jbc.sound.vol') === null) {
+      Storage.setSoundVolume(0.7);
+      this.volume = 0.7;
     }
   },
   
