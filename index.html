@@ -127,6 +127,63 @@ svg{display:block}
   font-size:14px;color:var(--text-mute);text-align:center;
   line-height:1.8;margin-top:12px;
 }
+
+.view-sound{display:flex;flex-direction:column;align-items:center;padding:0}
+.sound-settings-container{
+  display:flex;flex-direction:column;align-items:center;
+  padding:80px 24px 24px;max-width:400px;width:100%;gap:24px;
+}
+.sound-toggle{
+  width:100%;padding:16px;background:rgba(255,255,255,0.05);
+  border-radius:16px;
+}
+.toggle-label{
+  display:flex;justify-content:space-between;align-items:center;
+}
+.toggle-text{font-size:16px;font-weight:600;color:var(--text)}
+.toggle-switch{
+  position:relative;width:56px;height:32px;
+}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{
+  position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;
+  background:var(--bg-3);border-radius:32px;transition:.3s;
+}
+.toggle-slider:before{
+  position:absolute;content:'';height:24px;width:24px;
+  left:4px;bottom:4px;background:var(--text);border-radius:50%;transition:.3s;
+}
+.toggle-switch input:checked + .toggle-slider{background:var(--green)}
+.toggle-switch input:checked + .toggle-slider:before{transform:translateX(24px)}
+.sound-volume{width:100%;padding:16px;background:rgba(255,255,255,0.05);border-radius:16px}
+.volume-label{
+  display:flex;flex-direction:column;gap:12px;
+}
+.volume-text{font-size:16px;font-weight:600;color:var(--text)}
+.volume-slider{
+  width:100%;height:8px;border-radius:4px;background:var(--bg-3);
+  outline:none;appearance:none;
+}
+.volume-slider::-webkit-slider-thumb{
+  appearance:none;width:24px;height:24px;border-radius:50%;
+  background:var(--primary);cursor:pointer;box-shadow:0 2px 8px rgba(139,123,181,.4);
+}
+.volume-value{
+  font-size:14px;color:var(--text-mute);text-align:center;
+}
+.sound-preview{width:100%;padding:16px}
+.btn-preview{
+  width:100%;padding:16px;border-radius:12px;
+  background:linear-gradient(135deg,var(--primary),var(--green));
+  color:var(--text);font-size:16px;font-weight:700;
+  border:none;cursor:pointer;transition:transform .2s,box-shadow .2s;
+}
+.btn-preview:hover{
+  transform:translateY(-2px);
+  box-shadow:0 6px 20px rgba(139,123,181,.4);
+}
+.btn-preview:active{transform:translateY(0)}
+
 .btn-back{
   position:absolute;top:18px;left:18px;
   width:48px;height:48px;border-radius:50%;
@@ -1162,6 +1219,11 @@ svg{display:block}
           <span>我的主题</span>
           <span class="arrow-right"><svg width="20" height="20"><use href="#i-chevron-right"/></svg></span>
         </div>
+        <div class="menu-card wide" id="sound-settings" data-target="sound">
+          <div class="icon">🔊</div>
+          <span>音效设置</span>
+          <span class="arrow-right"><svg width="20" height="20"><use href="#i-chevron-right"/></svg></span>
+        </div>
         <div class="menu-card wide" data-target="about">
           <div class="icon"><svg><use href="#i-info"/></svg></div>
           <span>关于</span>
@@ -1192,6 +1254,34 @@ svg{display:block}
         </div>
         <div class="about-divider"></div>
         <p class="about-desc">一款轻松有趣的跳一跳小游戏<br>让您在休闲时光享受快乐</p>
+      </div>
+    </section>
+
+    <section class="view view-sound" id="view-sound">
+      <button class="btn-back" id="btn-back-menu-sound" aria-label="返回">
+        <svg><use href="#i-arrow-left"/></svg>
+      </button>
+      <h2 class="page-title">音效设置</h2>
+      <div class="sound-settings-container">
+        <div class="sound-toggle">
+          <label class="toggle-label">
+            <span class="toggle-text">音效开关</span>
+            <div class="toggle-switch">
+              <input type="checkbox" id="sound-enabled" checked>
+              <span class="toggle-slider"></span>
+            </div>
+          </label>
+        </div>
+        <div class="sound-volume">
+          <label class="volume-label">
+            <span class="volume-text">音量</span>
+            <input type="range" id="sound-volume" min="0" max="100" value="70" class="volume-slider">
+            <span class="volume-value" id="volume-value">70%</span>
+          </label>
+        </div>
+        <div class="sound-preview">
+          <button class="btn-preview" id="btn-sound-preview">🔊 试听音效</button>
+        </div>
       </div>
     </section>
 
@@ -4390,6 +4480,273 @@ const MyThemes = {
   updateCount(){
     const count = Storage.getMyThemes().length;
     document.getElementById('my-themes-count').textContent = `当前已选择 ${count} 个主题`;
+  },
+  
+  getSoundEnabled() {
+    const val = localStorage.getItem('jbc.soundEnabled');
+    return val === null ? true : val === 'true';
+  },
+  
+  setSoundEnabled(enabled) {
+    localStorage.setItem('jbc.soundEnabled', enabled ? 'true' : 'false');
+  },
+  
+  getSoundVolume() {
+    const val = localStorage.getItem('jbc.soundVolume');
+    return val === null ? 0.7 : parseFloat(val);
+  },
+  
+  setSoundVolume(volume) {
+    localStorage.setItem('jbc.soundVolume', volume.toString());
+  }
+};
+
+/* ============ 6.5 Sound System ============ */
+const Sound = {
+  ctx: null,
+  enabled: true,
+  volume: 0.7,
+  
+  init() {
+    try {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+      this.enabled = Storage.getSoundEnabled();
+      this.volume = Storage.getSoundVolume();
+    } catch(e) {
+      console.warn('Web Audio API not supported:', e);
+      this.enabled = false;
+    }
+  },
+  
+  resume() {
+    if(this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+  },
+  
+  playClick() {
+    if(!this.enabled || !this.ctx) return;
+    this.resume();
+    
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.05);
+    
+    gain.gain.setValueAtTime(this.volume * 0.3, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+    
+    osc.start(this.ctx.currentTime);
+    osc.stop(this.ctx.currentTime + 0.08);
+  },
+  
+  playJump(power = 1) {
+    if(!this.enabled || !this.ctx) return;
+    this.resume();
+    
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+    
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    osc.type = 'sine';
+    const startFreq = 200 + power * 150;
+    const endFreq = 400 + power * 200;
+    osc.frequency.setValueAtTime(startFreq, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(endFreq, this.ctx.currentTime + 0.15);
+    osc.frequency.exponentialRampToValueAtTime(startFreq * 0.5, this.ctx.currentTime + 0.25);
+    
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(2000, this.ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(500, this.ctx.currentTime + 0.2);
+    
+    gain.gain.setValueAtTime(this.volume * 0.4, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+    
+    osc.start(this.ctx.currentTime);
+    osc.stop(this.ctx.currentTime + 0.25);
+  },
+  
+  playLand(intensity = 1, height = 0) {
+    if(!this.enabled || !this.ctx) return;
+    this.resume();
+    
+    const osc = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    const gain2 = this.ctx.createGain();
+    const noise = this.createNoise(0.15);
+    
+    osc.connect(gain);
+    osc2.connect(gain2);
+    noise.connect(this.ctx.destination);
+    gain.connect(this.ctx.destination);
+    gain2.connect(this.ctx.destination);
+    
+    osc.type = 'sine';
+    const baseFreq = 80 + intensity * 60 + height * 0.3;
+    osc.frequency.setValueAtTime(baseFreq, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.5, this.ctx.currentTime + 0.12);
+    
+    osc2.type = 'triangle';
+    osc2.frequency.setValueAtTime(baseFreq * 1.5, this.ctx.currentTime);
+    osc2.frequency.exponentialRampToValueAtTime(baseFreq * 0.8, this.ctx.currentTime + 0.08);
+    
+    const vol = this.volume * Math.min(intensity, 1.5) * 0.5;
+    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+    
+    gain2.gain.setValueAtTime(vol * 0.5, this.ctx.currentTime);
+    gain2.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+    
+    osc.start(this.ctx.currentTime);
+    osc.stop(this.ctx.currentTime + 0.15);
+    osc2.start(this.ctx.currentTime);
+    osc2.stop(this.ctx.currentTime + 0.1);
+  },
+  
+  playBounce(bounceCount = 1) {
+    if(!this.enabled || !this.ctx) return;
+    this.resume();
+    
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    osc.type = 'sine';
+    const freq = 300 + bounceCount * 100;
+    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.6, this.ctx.currentTime + 0.1);
+    
+    gain.gain.setValueAtTime(this.volume * 0.25, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+    
+    osc.start(this.ctx.currentTime);
+    osc.stop(this.ctx.currentTime + 0.12);
+  },
+  
+  playPerfect() {
+    if(!this.enabled || !this.ctx) return;
+    this.resume();
+    
+    const osc = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    
+    osc.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.ctx.destination);
+    
+    osc.type = 'sine';
+    osc2.type = 'sine';
+    
+    osc.frequency.setValueAtTime(523.25, this.ctx.currentTime);
+    osc.frequency.setValueAtTime(659.25, this.ctx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(783.99, this.ctx.currentTime + 0.2);
+    
+    osc2.frequency.setValueAtTime(659.25, this.ctx.currentTime);
+    osc2.frequency.setValueAtTime(783.99, this.ctx.currentTime + 0.1);
+    osc2.frequency.setValueAtTime(1046.50, this.ctx.currentTime + 0.2);
+    
+    gain.gain.setValueAtTime(this.volume * 0.3, this.ctx.currentTime);
+    gain.gain.setValueAtTime(this.volume * 0.3, this.ctx.currentTime + 0.25);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.4);
+    
+    osc.start(this.ctx.currentTime);
+    osc.stop(this.ctx.currentTime + 0.4);
+    osc2.start(this.ctx.currentTime);
+    osc2.stop(this.ctx.currentTime + 0.4);
+  },
+  
+  createNoise(duration) {
+    const bufferSize = this.ctx.sampleRate * duration;
+    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+    const output = buffer.getChannelData(0);
+    
+    for(let i = 0; i < bufferSize; i++) {
+      output[i] = Math.random() * 2 - 1;
+    }
+    
+    const noise = this.ctx.createBufferSource();
+    const gain = this.ctx.createGain();
+    const filter = this.ctx.createBiquadFilter();
+    
+    noise.buffer = buffer;
+    noise.connect(filter);
+    filter.connect(gain);
+    
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1000, this.ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(200, this.ctx.currentTime + duration);
+    
+    gain.gain.setValueAtTime(this.volume * 0.3, this.ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+    
+    noise.start(this.ctx.currentTime);
+    noise.stop(this.ctx.currentTime + duration);
+    
+    return gain;
+  },
+  
+  setEnabled(enabled) {
+    this.enabled = enabled;
+    Storage.setSoundEnabled(enabled);
+    if(enabled) this.playClick();
+  },
+  
+  setVolume(vol) {
+    this.volume = Math.max(0, Math.min(1, vol));
+    Storage.setSoundVolume(this.volume);
+  },
+  
+  getEnabled() {
+    return this.enabled;
+  },
+  
+  getVolume() {
+    return this.volume;
+  }
+};
+
+const SoundSettings = {
+  init() {
+    const enabledCheckbox = document.getElementById('sound-enabled');
+    const volumeSlider = document.getElementById('sound-volume');
+    const volumeValue = document.getElementById('volume-value');
+    const previewBtn = document.getElementById('btn-sound-preview');
+    
+    enabledCheckbox.checked = Sound.getEnabled();
+    const vol = Sound.getVolume();
+    volumeSlider.value = Math.round(vol * 100);
+    volumeValue.textContent = Math.round(vol * 100) + '%';
+    
+    enabledCheckbox.onchange = (e) => {
+      Sound.setEnabled(e.target.checked);
+    };
+    
+    volumeSlider.oninput = (e) => {
+      const val = parseInt(e.target.value);
+      volumeValue.textContent = val + '%';
+      Sound.setVolume(val / 100);
+    };
+    
+    previewBtn.onclick = () => {
+      Sound.playClick();
+      setTimeout(() => Sound.playJump(0.8), 200);
+      setTimeout(() => Sound.playLand(1.2, 50), 500);
+      setTimeout(() => Sound.playPerfect(), 800);
+    };
+    
+    Router.show('sound');
   }
 };
 
@@ -4456,6 +4813,7 @@ const Game = {
     this.resize();
     window.addEventListener('resize',()=>this.resize());
     window.addEventListener('orientationchange',()=>setTimeout(()=>this.resize(),300));
+    Sound.init();
   },
 
   resize(){
@@ -4609,6 +4967,7 @@ const Game = {
     this.charging=true;
     this.chargeStart=performance.now();
     document.getElementById('hud-hint').style.display='none';
+    Sound.playClick();
   },
 
   onPressEnd(){
@@ -4628,6 +4987,8 @@ const Game = {
     this.char.onGround=false;
     this.char.squash = 0;
     if(this.char.landedOn) this.char.landedOn.squash = 0;
+
+    Sound.playJump(power);
 
     const next = this.blocks[this.blocks.indexOf(this.char.landedOn) + 1];
     const jm = DevPanel.jumpMult;
@@ -4803,6 +5164,10 @@ const Game = {
   landOn(b, dx, dz){
     const wasNew = b !== this.char.landedOn;
 
+    const jumpHeight = this.char.y - this.char.prevY;
+    const intensity = Math.min(Math.abs(this.char.vy) / Math.sqrt(2 * this.GRAVITY * this.MAX_JUMP_HEIGHT), 1.5);
+    Sound.playLand(intensity, jumpHeight);
+
     this.char.x = b.x;
     this.char.z = b.z;
     this.char.y = b.height * (1 - (b.squash||0) * 0.3);
@@ -4832,6 +5197,7 @@ const Game = {
         const perfectBonus = Math.min(this.perfectStreak, 10);
         gain += perfectBonus;
         bonusText = '完美! +' + perfectBonus;
+        Sound.playPerfect();
       } else {
         this.perfectStreak = 0;
       }
@@ -5702,6 +6068,7 @@ function init(){
   document.getElementById('btn-back-menu-shop').addEventListener('click',()=>Router.show('menu'));
   document.getElementById('btn-back-menu-lottery').addEventListener('click',()=>Router.show('menu'));
   document.getElementById('btn-back-menu-about').addEventListener('click',()=>Router.show('menu'));
+  document.getElementById('btn-back-menu-sound').addEventListener('click',()=>Router.show('menu'));
 
   // Menu cards
   document.querySelectorAll('.menu-card').forEach(card=>{
@@ -5715,6 +6082,7 @@ function init(){
       else if(t==='benefits') Benefits.showModal();
       else if(t==='my-themes') MyThemes.show();
       else if(t==='about') Router.show('about');
+      else if(t==='sound') SoundSettings.init();
     });
   });
 
